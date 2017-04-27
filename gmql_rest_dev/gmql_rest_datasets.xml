@@ -1,0 +1,18 @@
+<tool id="gmlq_rest_datasets" name="GMLQ Datasets" version="0.1.0">
+  <description>List all the datasets available in the user's working space.</description>
+  <command interpreter="python">gmql_rest_datasets.py $output -user=$authToken -cmd=list  
+	  </command>
+  <inputs>
+	<param format="json" name="authToken" type="data" label="Select user"/>
+  </inputs>
+  <outputs>
+    <data format="tabular" name="output" label="GMQL Datasets" />
+  </outputs>
+  <help>
+  **What it does**
+  
+  It retrieve the list of available datasets for the current user. 
+  
+  </help>	
+	
+</tool>

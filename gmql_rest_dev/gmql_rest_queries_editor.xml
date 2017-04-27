@@ -1,0 +1,85 @@
+<tool id="gmql_rest_queries_editor" name="GMLQ Query Editor" version="0.1.0">
+  <description>Save, compile and run GMQL queries.</description>
+  <command><![CDATA[
+      #if $mode.exec_mode == "execute" :
+       mkdir -p results && cd results &&
+       python $__tool_directory__/gmql_rest_queries.py
+       -user=$authToken
+       -cmd=execute
+       -name=$file_name
+       -value="${query}"
+       -log=$log
+       -format=$mode.out_format
+      #else :
+       python $__tool_directory__/gmql_rest_queries.py
+       -user=$authToken
+       -cmd=$mode.exec_mode
+       -name=$file_name
+       -value="${query}"
+       #if $mode.exec_mode == "save" :
+       -log=$save_out
+       #else :
+       -log=$log
+       #end if
+      #end if
+	  ]]></command>
+  <inputs>
+	<param format="json" name="authToken" type="data" label="Select user"/>
+	<param name="file_name" type="text" label="Query Name" >
+		<validator type="regex" message="Only alphanumeric characters and underscore are allowed">[\w]+$</validator> 
+	</param>
+	<param name="saved_query" type="select" label="Saved Queries" optional="true">
+		<options from_file="../tools/gmql_rest_dev/qmql_queries.loc" >
+             <column name="name" index="0"/>
+             <column name="value" index="0"/>
+        </options>
+	</param>
+	<!-- TODO: if a saved query is selected, populate the file_name and query fields -->
+	<param name="query" type="text" area="True" size="10x80" label="Query" >
+		<sanitizer>
+        <valid initial="default">
+            <add value=";"/>
+        </valid>
+		<mapping initial="default">
+			<add source="X" target="__cn__" />
+		</mapping>
+    </sanitizer>
+	</param>
+    <conditional name="mode">
+      <param name="exec_mode" type="select" label="Save only, compile or run query">
+        <option value="save">Save only</option>
+		<option value="compile">Compile query</option>
+        <option value="execute">Execute query</option>
+      </param>
+      <when value="execute">
+			<param name="out_format" type="select" label="Output format">
+                <option value="gtf">GTF</option>
+                <option value="tab">TAB Delimited</option>
+            </param>
+          <!-- Not implemented (yet?): Execution Type -->
+      </when>
+    </conditional>
+    </inputs>
+	<outputs>
+        <data format="txt" name="log" label="${file_name} query log" >
+            <filter>mode['exec_mode'] == 'compile' or mode['exec_mode'] == 'execute'</filter>
+        </data>
+        <data format="txt" name="save_out" label="${file_name} saving outcome">
+            <filter>mode['exec_mode'] == 'save'</filter>
+        </data>
+        <collection name="query_result_gtf" type="list" label="Query Results">
+            <discover_datasets pattern="__designation__" format="gtf" directory="results" />
+               <filter>mode['exec_mode'] == 'execute' and mode['out_format'] == 'gtf'</filter>
+        </collection>
+        <collection name="query_result_tab" type="list" label="Query Results">
+            <discover_datasets pattern="__designation__" format="tabular" directory="results" />
+               <filter>mode['exec_mode'] == 'execute' and mode['out_format'] == 'tab'</filter>
+        </collection>
+
+	</outputs>
+
+    <help>
+        <!-- TODO -->
+    </help>
+
+</tool>

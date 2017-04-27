@@ -1,0 +1,12 @@
+<macros>
+    <xml name="requirements">
+        <requirements>
+            <yield/>
+        </requirements>
+    </xml>
+    <xml name="citations">
+        <citations>
+            <yield />
+        </citations>
+    </xml>
+</macros>

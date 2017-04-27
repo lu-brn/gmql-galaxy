@@ -1,0 +1,24 @@
+<macros>
+    <xml name="select_predicates" token_pred_type="pred" token_pred_type_title="Predicates" token_pred_elem="exp1" token_pred_elem_label="exp1 label">
+        <section name="@PRED_TYPE@" title="@PRED_TYPE_TITLE@" expanded="true">
+            <repeat name="predicates_list" title="Predicate" min="0" default="0" help="Atomic predicates are concatenated by means of the OR, AND logical operator">
+                <!-- TODO: get data from actual ds -->
+                <param name="log_op" label="logical operator" type="select" help="Leave empty if it's the first predicate of the list">
+                    <option value="none"> </option>
+                    <option value="AND">AND</option>
+                    <option value="OR">OR</option>
+                </param>
+                <param name="neg" label="negate predicate" optional="true" type="boolean" />
+                <param name="@PRED_ELEM@" label="@PRED_ELEM_LABEL@" type="text" />
+                <param name="exp" type="select">
+                    <option value="eq"><![CDATA[ == ]]></option>
+                    <option value="gt"><![CDATA[ > ]]></option>
+                    <option value="lt"><![CDATA[ < ]]></option>
+                    <option value="ge"><![CDATA[ >= ]]></option>
+                    <option value="le"><![CDATA[ <= ]]></option>
+                </param>
+                <param name="value" type="text" />
+            </repeat>
+        </section>
+    </xml>
+</macros>

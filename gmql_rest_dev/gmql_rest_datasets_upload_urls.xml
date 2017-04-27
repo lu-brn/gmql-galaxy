@@ -1,0 +1,65 @@
+<tool id="gmlq_rest_datasets_upload_urls" name="GMLQ Upload Samples from URLs" version="0.1.0">
+  <description>Upload a new dataset.</description>
+<!--
+  <requirements>
+	  <requirement type="package" version="0.11.1">validators</requirement>
+  </requirements>
+-->
+  <command interpreter="python">
+	  gmql_rest_datasets.py $output 
+	  -user=$authToken 
+	  -cmd=upload 
+	  -dataset=$name 
+	  #if $schema.schema_type == "custom" :
+	   -schema=$schema.schema_url 
+	  #else : 
+	   -schema=$schema.schema_type
+	  #end if
+	  -samples=$samples_urls
+	  </command>
+  <inputs>
+	<param format="json" name="authToken" type="data" label="Select user"/>
+	<param name="name" type="text" label="Name of the new dataset" >
+	<sanitizer invalid_char="">
+        <valid initial="string.letters,string.digits">
+			<add value="_" /> 
+			<add value="-" />
+		</valid>
+    </sanitizer>
+	</param>
+	<conditional name="schema">
+		<param name="schema_type" type="select" label="File type" >
+			<option value="bed">bed</option>
+			<option value="bedGraph">bedGraph</option>
+			<option value="gtf">gtf</option>
+			<option value="tab">tab</option>
+			<option value="NarrowPeak">NarrowPeak</option>
+			<option value="BroadPeak">BroadPeak</option>
+			<option value="vcf">vcf</option>
+			<option value="custom">Custom</option>			
+		</param>
+		<when value="custom">
+			<param name="schema_url" type="text" format="text" size="80" label="Schema URL">
+				<validator type="regex" message="Does not look as a valid url">[\w:/\.\?@#+-=]+$</validator>
+			</param>
+		</when>
+	</conditional>
+	<param name="samples_urls" type="text" format="text" area="True" size="10x80" label="Samples URLs" >
+		<validator type="regex" message="Please one url per line">[\w:/\.\?@#+-=]+(\n[\w:/\.\?@#+-=]+)*$</validator> 
+	</param>
+  </inputs>
+  <outputs>
+    <data format="txt" name="output" label="upload_result" />
+  </outputs>
+  <help>
+  **What it does**
+  
+  It allows to upload a new dataset on the user's private space. 
+  
+  **How it works**
+  
+  The user must provide a name for the new dataset, the locations of the samples and their reference schema. 
+  
+  </help>	
+	
+</tool>

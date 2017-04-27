@@ -1,0 +1,19 @@
+<tool id="gmlq_est_logout" name="GMLQ Logout" version="0.1.0">
+  <description>Logout from the GMQL platform</description>
+  <command interpreter="python">gmql_rest_auth.py $output -cmd=logout -user=$authToken
+	  </command>
+  <inputs>
+	<param format="json" name="authToken" type="data" label="Select user"/>
+  </inputs>
+  <outputs>
+    <data format="txt" name="output" label="result" />
+  </outputs>
+  <help>
+  **What it does**
+  
+  It allows to logout from the GMQL platform. A valid authToken must be available. 
+  
+  </help>	
+	
+</tool>
+

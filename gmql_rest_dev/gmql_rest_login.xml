@@ -1,0 +1,31 @@
+<tool id="gmlq_rest_login" name="GMLQ Login" version="0.1.0">
+  <description>Login in the GMQL platform</description>
+  <command interpreter="python">gmql_rest_auth.py $output -cmd=login -login_type=$authType.log_type
+	  </command>
+  <inputs>
+	<conditional name="authType">
+		<param name="log_type" type="select" label="Log as guest or registered?" >
+			<option value="guest">Guest</option>
+			<option value="registered">Registered User</option>			
+		</param>
+		<!-- For now, unused -->
+ 		<when value="registered">
+			<param name="user" type="text" label="Username" />
+			<param name="password" type="text" label="Password" />
+		</when>
+	</conditional>
+  </inputs>
+  <outputs>
+    <data format="json" name="output" label="GMQL ${authType.log_type} user" />
+  </outputs>
+  <help>
+  **What it does**
+  
+  It allows to login into the GMQL platform. Every other operation request the user to be logged. 
+  
+  At the moment the only way is as a guest.
+  
+  </help>	
+	
+</tool>
+

@@ -1,0 +1,24 @@
+<tool id="gmlq_rest_datasets_samples" name="GMLQ Datasets Samples" version="0.1.0">
+  <description>List the samples of a given dataset.</description>
+  <command interpreter="python">gmql_rest_datasets.py $output -user=$authToken -cmd=samples -dataset=$dataset
+	  </command>
+  <inputs>
+	<param name="authToken" type="data" format="json" label="Select User"/>
+	<param name="gmql_datasets" type="data" format="tabular" label="Working Datasets" />
+	<param name="dataset" type="select" label="Select Dataset">
+		<options from_dataset="gmql_datasets">
+			 <column name="value" index="0"/>			
+		</options>
+	</param>
+	</inputs>
+  <outputs>
+    <data format="tabular" name="output" label="${dataset} samples" />
+  </outputs>
+  <help>
+  **What it does**
+  
+  It retrieve the samples of the given dataset. 
+  
+  </help>	
+	
+</tool>

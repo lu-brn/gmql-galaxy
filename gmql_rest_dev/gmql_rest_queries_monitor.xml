@@ -1,0 +1,19 @@
+<tool id="gmlq_rest_queries_monitor" name="GMLQ Jobs Monitor" version="0.1.0">
+  <description>List the user's jobs and their status</description>
+  <command interpreter="python">
+      gmql_rest_queries.py
+      -user=$authToken
+      -cmd=jobs
+      -log=$jobs_list
+  </command>
+  <inputs>
+	<param format="json" name="authToken" type="data" label="Select user"/>
+  </inputs>
+  <outputs>
+    <data format="tabular" name="jobs_list" label="User Jobs" />
+  </outputs>
+  <help>
+      <!-- TODO -->
+  </help>
+
+</tool>
