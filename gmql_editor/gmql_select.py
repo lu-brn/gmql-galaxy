@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # ----------------------------------------------------------------------------
-# GMQL Editor: composition of a SELECT query.
+# GMQL Editor: composition of a new SELECT statement.
 # ----------------------------------------------------------------------------
 # Luana Brancato, luana.brancato@mail.polimi.it
 # ----------------------------------------------------------------------------
@@ -107,7 +107,7 @@ def create_select(source,params,target_q) :
     The result structure serves as the actual query skeleton and it's so formed: 
         - target_ds : a runtime generated identifier for the target dataset 
         - query body: type of statement and its attributes
-        - source_ds: reference to the file containing the info about the source dataset collection. """
+        - sources_ds: reference to the file containing the info about the source dataset collection. """
 
     # Open param file
 
@@ -126,7 +126,7 @@ def create_select(source,params,target_q) :
 
     # Add reference to source
     in_mode = params_json['input']['in_mode']
-    datamng.ref_single_input(source, target_q, in_mode, query)
+    datamng.ref_unary_input(source, in_mode, target_q, query)
 
     # Parse predicates
 
@@ -153,7 +153,10 @@ def create_select(source,params,target_q) :
 
     # Save the result query
 
-    datamng.save_result(source,target_q, in_mode, query)
+    if in_mode == 'q' :
+        datamng.save_result_1(target_q, query, source=source)
+    else :
+        datamng.save_result_1(target_q, query)
 
 
 def __main__():

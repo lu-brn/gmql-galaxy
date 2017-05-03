@@ -4,6 +4,11 @@
             <yield/>
         </requirements>
     </xml>
+    <xml name="stdio">
+        <stdio>
+            <exit_code range="1:" />
+        </stdio>
+    </xml>
     <xml name="citations">
         <citations>
             <yield />

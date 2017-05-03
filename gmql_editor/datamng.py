@@ -18,13 +18,10 @@ def create_new_target(query) :
     result = 'result_{time}'.format(time=current_time)
     query.update(target_ds=result)
 
-
-def ref_single_input(source, target_q, in_mode, query):
-    """Manage the input for unary operations. 
-    This can be a collection of dataset or the result of a previous query """
+def save_ref(source, in_mode, src_list, dst_path) :
 
     # Create a folder to collect references to collections files. (If this does not exist already)
-    dst = os.path.join(os.path.split(target_q)[0], 'collection_refs')
+    dst = os.path.join(os.path.split(dst_path)[0], 'collection_refs')
 
     try:
         os.makedirs(dst)
@@ -43,7 +40,7 @@ def ref_single_input(source, target_q, in_mode, query):
         # Copy the temp files with references to the input collection in that folder
         dst = os.path.join(dst, c)
         shutil.copy(source, dst)
-        query.update(source_ds=dst)
+        src_list.append(dst)
 
     else:
 
@@ -61,21 +58,106 @@ def ref_single_input(source, target_q, in_mode, query):
             in_ds = q_data.split('\t')[0]
         f_in.close
 
-        query.update(source_ds=in_ds)
+        src_list.append(in_ds)
 
-def save_result (source, target_q, in_mode, query):
-    """ Save the result query.
+    return src_list
+
+def ref_unary_input(source, in_mode, target_q, query):
+    """Manage the input for unary operations. 
+    This can be a collection of datasets or the result of a previous query """
+
+    src_list = list()
+    #Calls the save_ref utility which returns a list with the references to sources
+    src_list = save_ref(source, in_mode, src_list, target_q)
+
+    #Save src_list in the query
+    query.update(sources_ds=src_list[0])
+
+
+def ref_binary_input(source1, in_mode1, source2, in_mode2, target_q, query):
+    """Manage the input for binary operations. 
+    These can be a collection of datasets or the results of previous queries """
+
+    src_list = list()
+    # Calls the save_ref utility which returns a list with the references to sources
+    src_list = save_ref(source1, in_mode1, src_list, target_q)
+    src_list = save_ref(source2, in_mode2, src_list, target_q)
+
+    src_str = '{s1}\t{s2}'.format(s1=src_list[0],s2=src_list[1])
+    query.update(sources_ds=src_str)
+
+
+
+def save_result_1 (target_q, query, *args, **kwargs):
+    """ Save the result query for unary operations
     If the input is another query, this is updated """
 
-    if in_mode == 'q' :
+    source_q = kwargs.get('source', None)
 
-        with open(source, 'r') as f_in:
+    if source_q :
+        # Read the path of the source query and copy the content into target_q
+        with open(source_q, 'r') as f_in:
             q = f_in.readline().rstrip('\n')
         f_in.close
 
         shutil.copy(q, target_q)
 
+    # Update with the new statement
+
     with open(target_q, 'a') as f_out:
         f_out.write('{target}\t{query}\t{source}\n'.format(target=query['target_ds'], query=query['target_q'],
-                                                           source=query['source_ds']))
+                                                           source=query['sources_ds']))
     f_out.close
+
+def save_result_2 (target_q, query, *args, **kwargs):
+    """ Save the result query for binary operations
+    If the input are another queries, these are merged and updated with the new statement """
+
+    q1 = kwargs.get('source1', None)
+    q2 = kwargs.get('source2', None)
+
+
+    if q1 :
+
+        if q2 :
+
+            with open(q1,'r') as f_q1 :
+                path_q1 = f_q1.readline().rstrip('\n')
+            f_q1.close()
+
+            shutil.copy(path_q1, target_q)
+
+            with open(target_q,'a') as f_out :
+
+                with open(q2, 'r') as f_q2:
+                    path_q2 = f_q2.readline().rstrip('\n')
+                f_q2.close()
+
+                with open(path_q2,'r') as f_in :
+                    f_out.write(f_in.read())
+                f_in.close()
+
+            f_out.close()
+
+        else :
+            with open(q1,'r') as f_q1 :
+                path_q1 = f_q1.readline().rstrip('\n')
+            f_q1.close()
+
+            shutil.copy(path_q1, target_q)
+
+
+    else :
+        if q2 :
+            with open(q2,'r') as f_q2 :
+                path_q2 = f_q2.readline().rstrip('\n')
+            f_q2.close()
+
+            shutil.copy(path_q2, target_q)
+
+
+
+
+    with open(target_q, 'a') as f_out:
+        f_out.write('{target}\t{query}\t{source}\n'.format(target=query['target_ds'], query='MAP ()',
+                                                           source=query['sources_ds']))

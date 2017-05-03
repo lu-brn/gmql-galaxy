@@ -1,9 +1,10 @@
-<tool id="gmql_select" name="GMQL: Create SELECT query" version="0.1.0">
+<tool id="gmql_select" name="GMQL: SELECT statement" version="0.1.0">
     <macros>
         <import>macros.xml</import>
         <import>select_macros.xml</import>
     </macros>
     <expand macro="requirements"/>
+    <expand macro="stdio" />
     <command><![CDATA[
         python $__tool_directory__/gmql_select.py $source $params $query
     ]]></command>
@@ -55,7 +56,7 @@
         <!-- TODO: semi-join predicates -->
     </inputs>
     <outputs>
-        <data name="query" format="gmql_query" label="SELECT query"/>
+        <data name="query" format="gmql_query" label="SELECT statement"/>
     </outputs>
     <!--<tests>
         <test>
