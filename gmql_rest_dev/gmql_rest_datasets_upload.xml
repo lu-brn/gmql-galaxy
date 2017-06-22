@@ -1,0 +1,139 @@
+<tool id="gmlq_rest_datasets_upload" name="GMLQ Upload Samples" version="0.1.2">
+
+  <command><![CDATA[
+      python $__tool_directory__/gmql_rest_datasets.py $output
+	  -user=$authToken
+	  -dataset=$name
+	  #if $upload.source == 'remote'
+	   -cmd=upload_url
+	   #if $upload.schema.schema_type == "custom" :
+	    -schema=$upload.schema.schema_url
+	   #else :
+	    -schema=$upload.schema.schema_type
+	   #end if
+	   -samples=$upload.samples_urls
+	  #else:
+	   -cmd=upload
+	   #if $upload.schema_local.schema_type == "custom" :
+	    -schema=$upload.schema_local.schema
+	   #else :
+	    -schema=$upload.schema_local.schema_type
+	   #end if
+	    -samples=$samples
+	  #end if
+	  ]]></command>
+    <configfiles>
+        <configfile name="samples" >#if $upload.source == 'local' :
+            #for $file in $upload.samples
+            #echo '%s\t%s\n'%($file.name,$file)
+            #end for
+            #end if
+        </configfile>
+    </configfiles>
+  <inputs>
+	<param format="json" name="authToken" type="data" label="Select user"/>
+	<param name="name" type="text" label="Name of the new dataset" >
+		<validator type="regex" message="Only alphanumeric characters and underscore are allowed">[\w]+$</validator>
+	</param>
+	<conditional name="upload">
+		<param name="source" type="select" label="Upload from local or another server" display="radio" multiple="false">
+            <option value="local">Local</option>
+            <option value="remote">Provide Urls</option>
+        </param>
+		<when value="remote">
+			<conditional name="schema">
+				<param name="schema_type" type="select" label="File type" >
+					<option value="bed">bed</option>
+					<option value="bedGraph">bedGraph</option>
+					<option value="gtf">gtf</option>
+					<option value="tab">tab</option>
+					<option value="NarrowPeak">NarrowPeak</option>
+					<option value="BroadPeak">BroadPeak</option>
+					<option value="vcf">vcf</option>
+					<option value="custom">Custom</option>
+				</param>
+				<when value="custom">
+					<param name="schema_url" type="text" format="text" size="80" label="Schema URL">
+						<validator type="regex" message="Does not look as a valid url">[\w:/\.\?@#+-=]+$</validator>
+					</param>
+				</when>
+			</conditional>
+			<param name="samples_urls" type="text" format="text" area="True" size="10x80" label="Samples URLs" >
+				<validator type="regex" message="Please one url per line">[\w:/\.\?@#+-=]+(\n[\w:/\.\?@#+-=]+)*$</validator>
+			</param>
+        </when>
+		<when value="local">
+            <conditional name="schema_local">
+				<param name="schema_type" type="select" label="File type" >
+					<option value="bed">bed</option>
+					<option value="bedGraph">bedGraph</option>
+					<option value="gtf">gtf</option>
+					<option value="tab">tab</option>
+					<option value="NarrowPeak">NarrowPeak</option>
+					<option value="BroadPeak">BroadPeak</option>
+					<option value="vcf">vcf</option>
+					<option value="custom">Custom</option>
+				</param>
+				<when value="custom">
+					<param name="schema" type="data" format="xml" label="Schema XML Definition" />
+				</when>
+			</conditional>
+			<param name="samples" type="data_collection" label="Sample or metadata file: " />
+		</when>
+	</conditional>
+  </inputs>
+  <outputs>
+    <data format="txt" name="output" label="upload_result" />
+  </outputs>
+  <tests>
+        <test>
+            <param name="authToken" value="dataset_34.dat" />
+            <param name="name" value="testcmd" />
+            <conditional name="upload">
+                <param name="source" value="remote" />
+                <conditional name="schema" >
+                    <param name="schema_type" value="custom" />
+                    <param name="schema_url" value="http://www.bioinformatics.deib.polimi.it/canakoglu/guest_data/HG19_ANN.schema" />
+                </conditional>
+                <param name="samples_urls" value="http://www.bioinformatics.deib.polimi.it/canakoglu/guest_data/RefSeqGenesExons_hg19.bed" />
+            </conditional>
+            <assert_command>
+                <has_text text="-cmd=upload_url"/>
+                <has_text text="-schema=http://www.bioinformatics.deib.polimi.it/canakoglu/guest_data/HG19_ANN.schema"/>
+                <has_text text="-samples=http://www.bioinformatics.deib.polimi.it/canakoglu/guest_data/RefSeqGenesExons_hg19.bed" />
+            </assert_command>
+        </test>
+        <test>
+            <param name="authToken" value="dataset_34.dat" />
+            <param name="name" value="testcmd" />
+            <conditional name="upload">
+                <param name="source" value="local" />
+                <conditional name="schema_local" >
+                    <param name="schema_type" value="custom" />
+                    <param name="schema" value="HG19_ANN.xml" />
+                </conditional>
+                <param name="samples" >
+                    <collection type="list">
+                        <element name="1" value="sample2.bed"/>
+                        <element name="2" value="sample2.bed.meta" />
+                    </collection>
+                </param>
+            </conditional>
+            <assert_command>
+                <has_text text="-cmd=upload" />
+            </assert_command>
+        </test>
+  </tests>
+  <help>
+  **What it does**
+  
+  It allows to upload a new dataset on the user's private space. 
+  
+  **How it works**
+
+  The user must provide a name for the new dataset, the locations of the samples and their reference schema.
+  It is possible to either provide remote locations or pick samples from local.
+  
+  </help>	
+	
+</tool>

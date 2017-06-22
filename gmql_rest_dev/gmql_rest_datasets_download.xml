@@ -1,16 +1,17 @@
-<tool id="gmlq_rest_datasets_download" name="GMLQ Download Dataset" version="0.1.0">
+<tool id="gmlq_rest_datasets_download" name="GMLQ Download Dataset" version="0.1.1">
   <description>Download a given dataset from the user's working space.</description>
-  <command interpreter="python">gmql_rest_datasets.py $output -user=$authToken -cmd=download -dataset=$dataset -clean=$clean
-	  </command>
+  <command><![CDATA[
+        python $__tool_directory__/gmql_rest_datasets.py $output -user=$authToken -cmd=download -dataset=$dataset
+	  ]]></command>
   <inputs>
 	<param name="authToken" type="data" format="json" label="Select User"/>
-	<param name="gmql_datasets" type="data" format="tabular" label="Working Datasets" />
+	<param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
 	<param name="dataset" type="select" label="Select Dataset">
 		<options from_dataset="gmql_datasets">
-			 <column name="value" index="0"/>			
+            <column name="value" index="0"/>
+            <filter column="1" type="static_value" value="public" keep="false"/>
 		</options>
 	</param>
-	<param name="clean" type="boolean" label="Clean and rebuild existing archives?" />
 	</inputs>
   <outputs>
     <data format="zip" name="output" label="${dataset}" />
@@ -18,7 +19,7 @@
   <help>
   **What it does**
   
-  Download the given gifset as a compressed zip archive. Note that the users can download only datasets in their private area.
+  Download the given dataset as a compressed zip archive. Note that the users can download only datasets in their private area.
   
   </help>
 	

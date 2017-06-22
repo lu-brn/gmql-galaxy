@@ -6,73 +6,48 @@
 # Luana Brancato, luana.brancato@mail.polimi.it
 # ----------------------------------------------------------------------------
 
-from rest_api_calls import read_token, auth_url_get, auth_url_post
-from gmql_rest_datasets import list_samples, get_sample
+from rest_api_calls import *
+from gmql_rest_datasets import list_samples, get_sample, get_sample_meta
 
 import argparse
 import json
 import sys, os
 from time import sleep
 import tempfile
-import csv
-from pprint import pprint
 
-GMQL_URL = "http://genomic.elet.polimi.it/gmql-rest"
-
-# Default Execution type for now is spark
-execution = "spark"
+module_execution = 'query_exec'
+module_monitor = 'query_monitor'
 
 
-def save_query(user, filename, query, log_file, jobid='null'):
-    """Save a query given its fileName, the query, and its jobid (when it is an already existing file)"""
-
-    # Jobid is null for new queries; otherwise use the existing ones
-    # TODO: save a pre-loaded query
-
-    jobid = save(user, filename, query)
-
-    with open(log_file, 'w') as f:
-        f.write("{file} has been  saved.\n Jobid = {job}".format(file=filename, job=jobid))
-    f.close()
-
-    # TODO: Update queries history
-
-    return jobid
-
-
-def save(user, filename, query, jobid='null'):
-    """Helper function that saves a query and returns its jobid
-    (but without additional operations like logging or updating queries history"""
-
-    url = "{gmql}/queries/save/{file}/{jobid}".format(gmql=GMQL_URL,file=filename,jobid=jobid)
+def clean_input(query):
+    """Helper function that cleans the input query string from the galaxy formatting """
 
     query = query.replace('__dq__', '"')
     query = query.replace('__sq__', "'")
     query = query.replace('__cn__', '\n')
 
-    # A successful saving return the jobid
-    jobid = auth_url_post(user, url, query, 'text/plain')
-
-    return jobid.read()
+    return query
 
 
 def compile_query(user, filename, query, log_file):
     """Compile the given query"""
 
-    # First save the query
-    jobid = save(user, filename, query)
+    call = 'compile'
 
-    # Then ask it to be compiled
-    url = "{gmql}/queries/compilev2/{jobid}/{execution}".format(gmql=GMQL_URL,jobid=jobid,execution=execution)
+   # Clean the input
+    query = clean_input(query)
 
-    # Compilation returns the result dataset name.
-    # The actual outcome and eventual error message must be retrieved from the job log
-    response = auth_url_get(user, url)
-    target_ds = response.read().decode('utf8')
-    log = read_status(user, target_ds)
+   # Then ask it to be compiled
+    url = compose_url(module_execution, call)
 
-    status = log['gmqlJobStatusXML']['status']
-    message = log['gmqlJobStatusXML']['message']
+    response = auth_url_post(user, url, query, 'text/plain')
+
+    decoder = json.JSONDecoder()
+    outcome = decoder.decode(response.read())
+
+    status = outcome['job']['status']
+    message = outcome['job']['message']
+    target_ds = outcome['job']['id']
 
     if status == 'COMPILE_SUCCESS':
         with open(log_file, 'w') as f:
@@ -88,28 +63,32 @@ def compile_query(user, filename, query, log_file):
 def run_query(user, filename, query, log_file, rs_format):
     """Run the given query. It returns an execution log and the resulting dataset."""
 
-    # First save the query
-    jobid = save(user, filename, query)
+    call = 'run'
+
+    # First clean the input
+    query = clean_input(query)
 
     # Then ask it to be executed
-    if rs_format == "gtf":
-        is_gtf = "true"
-    else:
-        is_gtf = "false"
 
     status = "NEW"
 
-    url = "{gmql}/queries/runv2/{jobid}/{output}/{execution}".format(gmql=GMQL_URL,jobid=jobid,output=is_gtf,execution=execution)
-    response = auth_url_get(user, url)
-    target_ds = response.read().decode('utf8')
+    url = compose_url(module_execution, call)
+    url = url.format(name=filename,output=rs_format)
+
+    response = auth_url_post(user, url, query,'text/plain')
+
+    decoder = json.JSONDecoder()
+    outcome = decoder.decode(response.read())
+
+    jobid = outcome['job']['id']
 
     while status != "SUCCESS" and status != "EXEC_FAILED" and status != "DS_CREATION_FAILED":
-        log = read_status(user, target_ds)
-        status = log['gmqlJobStatusXML']['status']
+        log = read_status(user, jobid)
+        status = log['status']
         sleep(5)
 
-    message = log['gmqlJobStatusXML']['message']
-    time = log['gmqlJobStatusXML']['execTime']
+    message = log['message']
+    time = log['executionTime']
 
     if status == "EXEC_FAILED" or status == "DS_CREATION_FAILED":
         with open(log_file, 'w') as f:
@@ -118,8 +97,8 @@ def run_query(user, filename, query, log_file, rs_format):
         stop_err("Execution failed.\nSee log for details")
 
     if status == "SUCCESS":
-        ext_log = read_complete_log(user, target_ds)
-        job_list = ext_log['jobList']['jobs']
+        ext_log = read_complete_log(user, jobid)
+        job_list = ext_log['log']
         jobs = ""
         for j in job_list:
             jobs = "{j_list}{j}\n".format(j_list=jobs, j=j)
@@ -132,7 +111,7 @@ def run_query(user, filename, query, log_file, rs_format):
                     "{jobs}\n".format(status=status, message=message, execTime=time, jobs=jobs))
         f.close()
 
-        ds = log['gmqlJobStatusXML']['datasetNames']
+        ds = log['datasets'][0]['name']
 
         # Retrieve the list of the samples in the resulting dataset
         # The list is stored in a temporary file
@@ -140,40 +119,50 @@ def run_query(user, filename, query, log_file, rs_format):
         list_samples(user,temp.name,ds)
 
         # Create a list of the samples
-        samples = list()
         with open(temp.name,"r") as t :
-            dic = csv.DictReader(t,delimiter="\t")
-            for item in dic:
-                samples.append(item.get("sample"))
+            #lines = t.readlines()
+            samples = map(lambda x: x.split('\t')[1].rstrip('\n'), t)
         t.close()
 
         for s in samples :
             # Get the sample
-            get_sample(user,"{name}".format(name=s), ds, s)
+            get_sample(user,"samples_{name}.{ext}".format(name=s.replace('_',''),ext=rs_format), ds, s)
             # Get its metadata
-            get_sample(user,"{name}.meta".format(name=s), ds, s,"true")
+            get_sample_meta(user,"metadata_{name}.meta".format(name=s.replace('_',''),ext=rs_format), ds, s)
 
         os.remove(temp.name)
 
 
-def read_status(user, target):
-    """Given the resulting dataset name, it retrieves the status of the current operation
-    (as a JSON file)"""
-    url = "{gmql}/jobs/{target_ds}/trace".format(gmql=GMQL_URL,target_ds=target)
 
-    stat_obj = auth_url_get(user, url)
+def read_status(user, jobid):
+    """Given the job id, it retrieves the status of the current operation
+    (as a JSON file)"""
+
+    call = 'status'
+
+    url = compose_url(module_monitor, call)
+    url = url.format(jobid=jobid)
+
+    response = auth_url_get(url, user)
+
     decoder = json.JSONDecoder()
-    stat = decoder.decode(stat_obj.read())
+    status = decoder.decode(response.read())
 
-    return stat
+    return status
 
 
-def read_complete_log(user, target):
-    """Given the resulting dataset name, it retrieves the complete log of the latest operation
+
+def read_complete_log(user, jobid):
+    """Given the jobid, it retrieves the complete log of the latest operation
     (as a JSON file)"""
-    url = "{gmql}/jobs/{target_ds}/log".format(gmql=GMQL_URL,target_ds=target)
 
-    log_obj = auth_url_get(user, url)
+    call = 'log'
+
+    url = compose_url(module_monitor, call)
+    url = url.format(jobid=jobid)
+
+    log_obj = auth_url_get(url, user)
+
     decoder = json.JSONDecoder()
     log = decoder.decode(log_obj.read())
 
@@ -183,27 +172,31 @@ def read_complete_log(user, target):
 def show_jobs(user, output):
     """Retrieve the list of the user's jobs"""
 
-    url = "{gmql}/jobs".format(gmql=GMQL_URL)
-    job_obj = auth_url_get(user, url)
-    decoder = json.JSONDecoder()
-    job_js = decoder.decode(job_obj.read())
+    call = 'jobs'
 
-    job_list = job_js['jobList']['jobs']
-    job_out = list()
+    url = compose_url(module_monitor, call)
+
+    outcome = auth_url_get(url, user)
+    decoder = json.JSONDecoder()
+    jobs = decoder.decode(outcome.read())
+
+    jobs_list = jobs['jobs']
+    jobs_out = list()
 
     # For each job in the list retrieve the relative status info
-    for j in job_list:
+    for j in jobs_list:
         job = dict()
-        job.update(id=j)
-        status = read_status(user, j)
-        job.update(message=status['gmqlJobStatusXML']['message'],
-                   status=status['gmqlJobStatusXML']['status'],
-                   ds=status['gmqlJobStatusXML']['datasetNames'],
-                   time=status['gmqlJobStatusXML']['execTime'])
-        job_out.append(job)
+        j_id = j['id']
+        job.update(id=j_id)
+        status = read_status(user, j_id)
+        job.update(message=status['message'],
+                   status=status['status'],
+                   ds=status['datasets'][0]['name'],
+                   time=status['executionTime'])
+        jobs_out.append(job)
 
     with open(output, 'w') as f:
-        for j in job_out:
+        for j in jobs_out:
             f.write("{jobid}\t"
                     "{status}\t"
                     "{message}\t"
@@ -230,8 +223,6 @@ def __main__():
 
     args = parser.parse_args()
 
-    if args.cmd == 'save':
-        save_query(args.user, args.name, args.value, args.log)
     if args.cmd == 'compile':
         compile_query(args.user, args.name, args.value, args.log)
     if args.cmd == 'execute':

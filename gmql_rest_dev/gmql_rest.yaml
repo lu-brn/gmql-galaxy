@@ -1,0 +1,37 @@
+---
+GMQL_URL :
+    http://genomic.elet.polimi.it/gmql-rest-test #server to use
+access:
+    prefix: ''
+    operations:
+        user: [user]
+        guest: [guest]
+        register: [register]
+        login: [login]
+        logout: [logout]
+repository: #operation over user repository
+    prefix: datasets
+    operations:
+        list_datasets : []
+        list_samples : ['{datasetName}']
+        delete_dataset : ['{datasetName}']
+        download_zip : ['{datasetName}', zip]
+        download_sample : ['{datasetName}','{sample}',region]
+        download_meta : ['{datasetName}','{sample}',metadata]
+        upload_url : ['{datasetName}',uploadSampleUrls]
+        upload_data : ['{datasetName}',uploadSample]
+    params:
+        upload_url: schemaType
+        upload_data: schemaType
+query_exec: # compile and run gmql queries
+    prefix: queries
+    operations:
+        compile: [compile]
+        run: [run,'{name}','{output}']
+query_monitor : # monitor gmql queries status
+    prefix: jobs
+    operations:
+        jobs: []
+        log: ['{jobid}',log]
+        stop: ['{jobid}',stop]
+        status: ['{jobid}',trace]
