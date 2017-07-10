@@ -54,6 +54,7 @@
         <!--</collection>-->
         <collection name="query_results" type="list" label="${file_name} Results">
             <discover_datasets pattern="(?P&lt;designation&gt;.*)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
+            <filter>mode['exec_mode'] == 'execute'</filter>
         </collection>
 	</outputs>
 

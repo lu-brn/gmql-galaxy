@@ -45,9 +45,9 @@ def compile_query(user, filename, query, log_file):
     decoder = json.JSONDecoder()
     outcome = decoder.decode(response.read())
 
-    status = outcome['job']['status']
-    message = outcome['job']['message']
-    target_ds = outcome['job']['id']
+    status = outcome['status']
+    message = outcome['message']
+    target_ds = outcome['id']
 
     if status == 'COMPILE_SUCCESS':
         with open(log_file, 'w') as f:
@@ -80,7 +80,7 @@ def run_query(user, filename, query, log_file, rs_format):
     decoder = json.JSONDecoder()
     outcome = decoder.decode(response.read())
 
-    jobid = outcome['job']['id']
+    jobid = outcome['id']
 
     while status != "SUCCESS" and status != "EXEC_FAILED" and status != "DS_CREATION_FAILED":
         log = read_status(user, jobid)
