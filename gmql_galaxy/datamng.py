@@ -19,6 +19,10 @@ def create_new_target(query) :
     query.update(target_ds=result)
 
 def save_ref(source, in_mode, src_list, dst_path) :
+    """A input can be:
+     - A collection within the local instance of galaxy
+     - A remote collection withing the GMQL Server
+     - The result of a previous query """
 
     # Create a folder to collect references to collections files. (If this does not exist already)
     dst = os.path.join(os.path.split(dst_path)[0], 'collection_refs')
@@ -34,13 +38,21 @@ def save_ref(source, in_mode, src_list, dst_path) :
         # Read the identifier of the collection
 
         with open(source, 'r') as f_in:
-            c = f_in.readline().rstrip()
-        f_in.close
+            c = f_in.readline().rstrip('\n')
+
 
         # Copy the temp files with references to the input collection in that folder
         dst = os.path.join(dst, c)
         shutil.copy(source, dst)
         src_list.append(dst)
+
+    elif in_mode == 'r' :
+        #We only need to retrieve the collection name into the repository
+
+        with open(source, 'r') as f_in:
+            c = f_in.readline().rstrip('\n')
+
+        src_list.append(c)
 
     else:
 
@@ -48,7 +60,7 @@ def save_ref(source, in_mode, src_list, dst_path) :
 
         with open(source, 'r') as f_in:
             q = f_in.readline().rstrip('\n')
-        f_in.close
+
 
         # Reach the query data and retrieve the input name
 
@@ -56,15 +68,14 @@ def save_ref(source, in_mode, src_list, dst_path) :
             stms = f_in.readlines()
             q_data = stms[-1].rstrip('\n')
             in_ds = q_data.split('\t')[0]
-        f_in.close
+
 
         src_list.append(in_ds)
 
     return src_list
 
 def ref_unary_input(source, in_mode, target_q, query):
-    """Manage the input for unary operations. 
-    This can be a collection of datasets or the result of a previous query """
+    """Manage the input for unary operations."""
 
     src_list = list()
     #Calls the save_ref utility which returns a list with the references to sources
@@ -75,7 +86,7 @@ def ref_unary_input(source, in_mode, target_q, query):
 
 
 def ref_binary_input(source1, in_mode1, source2, in_mode2, target_q, query):
-    """Manage the input for binary operations. 
+    """Manage the input for binary operations.
     These can be a collection of datasets or the results of previous queries """
 
     src_list = list()
@@ -98,7 +109,7 @@ def save_result_1 (target_q, query, *args, **kwargs):
         # Read the path of the source query and copy the content into target_q
         with open(source_q, 'r') as f_in:
             q = f_in.readline().rstrip('\n')
-        f_in.close
+
 
         shutil.copy(q, target_q)
 
@@ -107,11 +118,11 @@ def save_result_1 (target_q, query, *args, **kwargs):
     with open(target_q, 'a') as f_out:
         f_out.write('{target}\t{query}\t{source}\n'.format(target=query['target_ds'], query=query['target_q'],
                                                            source=query['sources_ds']))
-    f_out.close
+
 
 def save_result_2 (target_q, query, *args, **kwargs):
     """ Save the result query for binary operations
-    If the input are another queries, these are merged and updated with the new statement """
+    If the input are queries, these are merged and updated with the new statement """
 
     q1 = kwargs.get('source1', None)
     q2 = kwargs.get('source2', None)
@@ -157,7 +168,7 @@ def save_result_2 (target_q, query, *args, **kwargs):
 
 
 
-
+    #TODO: change, now it's set to work only with MAP
     with open(target_q, 'a') as f_out:
-        f_out.write('{target}\t{query}\t{source}\n'.format(target=query['target_ds'], query='MAP ()',
+        f_out.write('{target}\t{query}\t{source}\n'.format(target=query['target_ds'], query='MAP\t ',
                                                            source=query['sources_ds']))

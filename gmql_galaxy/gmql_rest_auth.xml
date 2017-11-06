@@ -1,19 +1,21 @@
 <tool id="gmlq_rest_login" name="GMLQ Access" version="0.1.2">
-  <description>Manage the registration, login and logout of users to the GMQL platform.</description>
+  <description>Manage the registration, login and logout of users to the GMQL system.</description>
   <command><![CDATA[
         python $__tool_directory__/gmql_rest_auth.py
         #if $user_ops.operation == 'login'
-         -output=$login_output
          -cmd=login
          -login_type=$user_ops.auth.log_type
           #if $user_ops.auth.log_type == 'registered' :
            -username=$user_ops.auth.username
            -password=$user_ops.auth.password
+           -output=$login_user_output
+          #else :
+           -output=$login_guest_output
           #end if
         #elif $user_ops.operation == 'logout' :
           -output=$logout_output
           -cmd=logout
-          -user=$user_ops.user
+          -user=$user_ops.authToken
         #else :
           -output=$register_output
           -cmd=register
@@ -24,12 +26,13 @@
       <configfile name="new_user_data">#if $user_ops.operation == 'register' :
           #import json
           #set $data = dict ()
-          $data.update(firstName=$user_ops.new_firstName.value,lastName=$user_ops.new_lastName.value, username=$user_ops.new_username.value, \
+          $data.update(firstName=$user_ops.new_firstName.value,lastName=$user_ops.new_lastName.value, username=$user_ops.new_username.value,
           email=$user_ops.new_email.value, password=$user_ops.new_password.value)
           #set $data_file = json.dumps($data)
           #echo $data_file
           #end if
       </configfile>
+        <inputs name="params" filename="params.json"/>
   </configfiles>
   <inputs>
     <conditional name="user_ops">
@@ -55,36 +58,50 @@
 	        </conditional>
         </when>
         <when value="logout">
-            <param format="gmql_user" type="data" name="user" label="Select User to logout" />
+            <param format="gmql_user" name="authToken" type="data" label="Select user">
+                <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
+            </param>
         </when>
         <when value="register">
             <param name="new_firstName" type="text" label="First Name">
-                <validator type="regex" message="String not valid">[a-zA-Z0-9_.-]+[\sa-zA-Z0-9_.-]*$</validator>
+                <validator type="regex" message="String not valid">[a-zA-Z0-9_.]+[\sa-zA-Z0-9_.]*$</validator>
             </param>
             <param name="new_lastName" type="text" label="Last Name">
-                <validator type="regex" message="String not valid">[a-zA-Z0-9_.-]+[\sa-zA-Z0-9_.-]*$</validator>
+                <validator type="regex" message="String not valid">[a-zA-Z0-9_.]+[\sa-zA-Z0-9_.]*$</validator>
             </param>
             <param name="new_username" type="text" label="Preferred username">
-                <validator type="regex" message="String not valid">[a-zA-Z0-9_.-]+$</validator>
+                <validator type="regex" message="String not valid">[a-zA-Z0-9_.]+$</validator>
             </param>
             <param name="new_email" type="text" label="E-mail address">
                 <validator type="regex" message="Insert a valid email-address">[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$</validator>
             </param>
             <param name="new_password" type="text" label="Choose a password">
-                <validator type="regex" message="String not valid">[a-zA-Z0-9_.-]+$</validator>
+                <validator type="regex" message="String not valid">[a-zA-Z0-9_.]+$</validator>
             </param>
         </when>
     </conditional>
   </inputs>
   <outputs>
-    <data format="gmql_user" name="login_output" label="GMQL ${user_ops.auth.log_type} user" >
-        <filter>user_ops['operation'] == 'login'</filter>
+    <data format="gmql_user" name="login_guest_output" label="Guest - GMQL User" >
+        <filter>user_ops['operation'] == 'login' and user_ops['auth']['log_type'] == 'guest'</filter>
+        <actions>
+            <action name="column_names" type="metadata" default="name,token,valid" />
+        </actions>
     </data>
-    <data format="txt" name="logout_output" label="Logout Result" >
+    <data format="gmql_user" name="login_user_output" label="${user_ops.auth.username.value} - GMQL User" >
+        <filter>user_ops['operation'] == 'login' and user_ops['auth']['log_type'] == 'registered'</filter>
+        <actions>
+            <action name="column_names" type="metadata" default="name,token,valid" />
+        </actions>
+    </data>
+    <data format="txt" name="logout_output" label="${authToken.name.split()[0].rstrip('')} Logout Result" >
         <filter>user_ops['operation'] == 'logout'</filter>
     </data>
-    <data format="gmql_user" name="register_output" label="GMQL Registered user">
+    <data format="gmql_user" name="register_output" label="${user_ops.auth.username.value} - GMQL User">
         <filter>user_ops['operation'] == 'register'</filter>
+        <actions>
+            <action name="column_names" type="metadata" default="name,token,valid" />
+        </actions>
     </data>
   </outputs>
   <help>

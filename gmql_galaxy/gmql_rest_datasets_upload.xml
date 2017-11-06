@@ -1,5 +1,4 @@
-<tool id="gmlq_rest_datasets_upload" name="GMLQ Upload Samples" version="0.1.2">
-
+<tool id="gmlq_rest_datasets_upload" name="GMLQ Upload Dataset" version="0.1.2">
   <command><![CDATA[
       python $__tool_directory__/gmql_rest_datasets.py $output
 	  -user=$authToken
@@ -31,7 +30,9 @@
         </configfile>
     </configfiles>
   <inputs>
-	<param format="json" name="authToken" type="data" label="Select user"/>
+	<param format="gmql_user" name="authToken" type="data" label="Select user">
+            <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
+    </param>
 	<param name="name" type="text" label="Name of the new dataset" >
 		<validator type="regex" message="Only alphanumeric characters and underscore are allowed">[\w]+$</validator>
 	</param>
@@ -78,12 +79,12 @@
 					<param name="schema" type="data" format="xml" label="Schema XML Definition" />
 				</when>
 			</conditional>
-			<param name="samples" type="data_collection" label="Sample or metadata file: " />
+			<param name="samples" type="data_collection" label="Data: " />
 		</when>
 	</conditional>
   </inputs>
   <outputs>
-    <data format="txt" name="output" label="upload_result" />
+    <data format="txt" name="output" label="Upload Result of ${name} to GMQL" />
   </outputs>
   <tests>
         <test>

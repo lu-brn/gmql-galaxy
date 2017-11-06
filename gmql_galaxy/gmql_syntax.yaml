@@ -1,0 +1,6 @@
+---
+STATEMENT:
+    '{o_variable} = {operation} ( {parameters} ) {i_variables} ;'
+operation:
+    select: SELECT
+    map: MAP

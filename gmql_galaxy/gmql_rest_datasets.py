@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# ----------------------------------------------------------------------------
 # Galaxy plugin to REST access to the GMQL services
 # (Datasets)
 # ----------------------------------------------------------------------------
@@ -10,8 +8,9 @@ import argparse
 
 import validators
 from galaxy.datatypes import sniff
+import tempfile
 
-from rest_api_calls import *
+from utilities import *
 
 import logging
 
@@ -50,7 +49,10 @@ def list_samples(user, output, ds, owner=''):
     else :
         url = url.format(datasetName=ds)
 
-    response = auth_url_get(url, user)
+    try :
+        response = auth_url_get(url, user)
+    except urllib2.URLError as e:
+        stop_err("Dataset not found for this user.\nCheck if it is the owner of this dataset.")
 
     decoder = json.JSONDecoder()
     samples = decoder.decode(response.read())
@@ -59,7 +61,7 @@ def list_samples(user, output, ds, owner=''):
 
     with open(output, 'w') as f_out:
         for s in list_s:
-            f_out.write("{id}\t{name}\n".format(id=s['id'], name=s['name']))
+            f_out.write("{id}\t{name}\t{ext}\n".format(id=s['id'], name=s['name'],ext=s['path'].rsplit('.',1)[1]))
     f_out.close
 
 
@@ -67,11 +69,18 @@ def list_samples(user, output, ds, owner=''):
 def delete_dataset(user, output, ds):
     """Delete a dataset from the user's private space"""
 
+    #logging.basicConfig(filename='/home/luana/gmql-galaxy/ds.log', level=logging.DEBUG, filemode='w')
+
     call = 'delete_dataset'
     url = compose_url(module,call)
     url = url.format(datasetName=ds)
 
-    response = auth_url_delete(user, url)
+    #logging.debug('%s\n'%(url))
+
+    try:
+        response = auth_url_delete(user, url)
+    except urllib2.URLError as e:
+        stop_err("Dataset not found for this user.\nCheck if it is the owner of this dataset.")
 
 
     decoder = json.JSONDecoder()
@@ -133,21 +142,29 @@ def upload_samples_url(user, output, dataset, schema, samples):
 def upload_samples(user, output, dataset, schema, samples):
     """Upload a dataset from the local instance"""
 
+    logging.basicConfig(filename='/home/luana/gmql-galaxy/upload.log', level=logging.DEBUG, filemode='w')
+
     #Compose the url for the REST call
     call = 'upload_data'
     url = compose_url(module, call)
     url = url.format(datasetName=dataset)
+
+
 
     # Create a new instance of a MultiPartForm object
     form = MultiPartForm()
 
     # If the schema type is give, add the option to the url.
 
+    logging.debug(schema)
+
     if schema in ['bed','bedGraph','gtf','tab','NarrowPeak','BroadPeak','vcf'] :
         url = add_url_param(url, module, call, schema)
     else :
         # Prepare the schema given to be sent in the request
-        form.add_file('schemaFile','schema', open(schema))
+        form.add_file('schema','{ds}.xml'.format(ds=dataset), open(schema))
+
+    logging.debug(url)
 
     # Read samples file path and add them to the form object
     # The structure is
@@ -155,7 +172,8 @@ def upload_samples(user, output, dataset, schema, samples):
 
     with open(samples, "r") as file:
         s = map(lambda x: x.split('\t'), file)
-        s.pop() # I need to get rid of list element, which is empty
+        logging.debug(s.__str__())
+        s.pop() # I need to get rid of last element, which is empty
         map(lambda x: form.add_file('file%d' % (s.index(x) + 1), x[0], open(x[1].rstrip('\n'))), s)
 
     # Post call
@@ -164,7 +182,7 @@ def upload_samples(user, output, dataset, schema, samples):
     response = auth_url_post(user, url, body, form.get_content_type())
 
     # Write output
-    # TODO: unfold result and read what has been imported
+    #TODO: Unfold result
 
     with open(output, 'w') as f_out:
         f_out.write(response.read())
@@ -179,7 +197,10 @@ def download_samples(user, output, dataset):
     url = url.format(datasetName=dataset)
 
     # Fetch the archive.
-    data = auth_url_get(url, user)
+    try :
+        data = auth_url_get(url, user)
+    except urllib2.URLError as e:
+        stop_err("Dataset not found for this user.\nCheck if it is the owner of this dataset.")
 
     try:
         result, is_multi_byte = sniff.stream_to_open_named_file(data, os.open(output, os.O_WRONLY), output)
@@ -220,6 +241,41 @@ def get_sample_meta(user, output, dataset, name):
     except Exception as e:
         stop_err('Unable to fetch :\n%s' % (e))
 
+def import_samples(user, ds) :
+
+    logging.basicConfig(filename='/home/luana/gmql-galaxy/ds.log', level=logging.DEBUG, filemode='w')
+
+    # Retrieve the list of the samples in the resulting dataset
+    # The list is stored in a temporary file
+    temp = tempfile.NamedTemporaryFile(delete=False)
+    list_samples(user, temp.name, ds)
+
+    # Retrieve names and extensions of the samples
+    with open(temp.name, "r") as t:
+        #samples = map(lambda x: x.split('\t')[1].rstrip('\n'), t)
+        samples = map(lambda x: helper_samples(x), t)
+        logging.debug(samples.__str__())
+    t.close()
+
+    for s in samples:
+        # Get the sample
+        #logging.debug(s)
+        logging.debug("{name}.{ext}".format(name=s['name'],ext=s['ext']),ds,s['name'])
+        get_sample(user,"{name}.{ext}".format(name=s['name'],ext=s['ext']),ds,s['name'])
+        # Get its metadata
+        logging.debug("{name}.{ext}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
+        get_sample_meta(user,"{name}.{ext}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
+
+    os.remove(temp.name)
+
+def helper_samples(s):
+    """From a list of samples retrieve name and extension"""
+    split = s.split('\t')
+    sample = dict()
+    sample.update(name=split[1])
+    sample.update(ext=split[2].rstrip('\n'))
+
+    return sample
 
 
 def stop_err(msg):
@@ -244,14 +300,16 @@ def __main__():
         list_datasets(args.user, args.output)
     if args.cmd == 'samples':
         list_samples(args.user, args.output, args.dataset, args.owner)
+    if args.cmd == 'delete':
+        delete_dataset(args.user, args.output, args.dataset)
     if args.cmd == 'upload_url':
         upload_samples_url(args.user, args.output, args.dataset, args.schema, args.samples)
     if args.cmd == 'upload' :
         upload_samples(args.user, args.output, args.dataset, args.schema, args.samples)
-    if args.cmd == 'download':
-        download_samples(args.user, args.output, args.dataset)
-    if args.cmd == 'delete':
-        delete_dataset(args.user, args.output, args.dataset)
+    if args.cmd == 'import':
+        import_samples(args.user, args.dataset)
+    if args.cmd == 'download' :
+        download_samples(args.user,args.output,args.dataset)
 
 
 if __name__ == "__main__":

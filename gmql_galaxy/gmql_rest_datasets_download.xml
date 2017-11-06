@@ -1,0 +1,44 @@
+<tool id="gmlq_rest_datasets_download" name="GMLQ Import Dataset" version="0.1.1">
+  <command><![CDATA[
+        #if $download.operation == 'import' :
+         mkdir -p dataset && cd dataset &&
+         python $__tool_directory__/gmql_rest_datasets.py '' -user=$authToken -cmd=import -dataset=$dataset
+        #else :
+         python $__tool_directory__/gmql_rest_datasets.py $ds_archive -user=$authToken -cmd=download -dataset=$dataset
+        #end if
+	  ]]></command>
+  <inputs>
+	<param format="gmql_user" name="authToken" type="data" label="Select user">
+            <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
+	</param>
+	<param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
+	<param name="dataset" type="select" label="Select Dataset">
+		<options from_dataset="gmql_datasets">
+            <column name="value" index="0"/>
+            <filter column="1" type="static_value" value="public" keep="false"/>
+		</options>
+	</param>
+    <conditional name="download">
+        <param name="operation" type="select" display="radio" multiple="false" label="Select the desired action" >
+            <option value="import">Import data as a collection</option>
+            <option value="zip">Download zip archive</option>
+        </param>
+        <when value="import">
+            <!-- do nothing !-->
+        </when>
+        <when value="zip">
+            <!-- do nothing !-->
+        </when>
+    </conditional>
+	</inputs>
+  <outputs>
+      <data format="zip" name="ds_archive" label="${dataset} Compressed Archive" >
+          <filter>download['operation'] == 'zip'</filter>
+      </data>
+	  <collection name="query_results" type="list" label="${dataset}">
+            <discover_datasets pattern="(?P&lt;designation&gt;.*)\.(?P&lt;ext&gt;[^\._]+)?" directory="dataset" />
+            <filter>download['operation'] == 'import'</filter>
+      </collection>
+  </outputs>
+	
+</tool>

@@ -1,0 +1,53 @@
+<tool id="gmlq_rest_queries_monitor" name="GMLQ Jobs Monitor" version="0.1.1">
+  <description>List the user's jobs and their status</description>
+  <command><![CDATA[
+      python $__tool_directory__/gmql_rest_queries.py
+      -user=$authToken
+      #if $control.operation == 'list'
+       -cmd=jobs
+       -log=$jobs_list
+      #else :
+       -cmd=stop
+       -log=$stop_output
+       -job=$control.job
+      #end if
+      ]]></command>
+  <inputs>
+	<param format="gmql_user" name="authToken" type="data" label="Select user">
+            <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
+    </param>
+    <conditional name="control">
+            <param name="operation" type="select" display="radio" multiple="false" label="Select the desired action" >
+                <option value="list">View Active Queries</option>
+                <option value="stop">Stop a running query</option>
+            </param>
+                <when value="list">
+                  <!-- do nothing -->
+                </when>
+                <when value="stop">
+                    <param name="user_jobs" type="data" format="tabular" label="Select User's jobs list" />
+                    <param name="job" type="select" label="Select running job to stop">
+		                <options from_dataset="user_jobs">
+                            <column name="value" index="0" />
+                            <filter column="1" type="static_value" value="RUNNING" />
+                        </options>
+                    </param>
+                </when>
+    </conditional>
+  </inputs>
+  <outputs>
+    <data format="tabular" name="jobs_list" label="${authToken.name.split()[0].rstrip('')} Jobs" >
+      <filter>control['operation'] == 'list'</filter>
+      <actions>
+            <action name="column_names" type="metadata" default="Job ID, Status, Message, Datasets names, Elapsed time" />
+      </actions>
+    </data>
+    <data format="txt" name="stop_output" label="Stopping Outcome (Job ${control.job})" >
+        <filter>control['operation'] == 'stop'</filter>
+    </data>
+  </outputs>
+  <help>
+      <!-- TODO -->
+  </help>
+
+</tool>

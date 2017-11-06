@@ -19,6 +19,8 @@
             #echo 'sample\t%s\t%s\n'%($file.name,$file)
             #end if
             #end for
+            #else if $input.in_mode == 'r' :
+            #echo '%s\n'%($input.ds_rep_source)
             #else:
             #echo '%s\n'%($input.q_source)
             #end if
@@ -29,23 +31,30 @@
         <conditional name="input">
             <param name = "in_mode" type="select" display="radio" multiple="false"
                    label="Take as input an existing collection or the result of non materialized query">
-                <option value="c">Existing Collection</option>
+                <option value="c">Existing Collection within Galaxy</option>
+                <option value="r">Existing Collection in the GMQL Repository</option>
                 <option value="q">Non materialized query</option>
             </param>
             <when value="c">
                 <param name="ds_source" type="data_collection" collection_type="list" label="Input dataset"/>
             </when>
+            <when value="r">
+                <param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
+                <param name="ds_rep_source" type="select" label="Input Dataset">
+                    <options from_dataset="gmql_datasets">
+                         <column name="value" index="0" />
+                    </options>
+                </param>
+            </when>
             <when value="q">
                 <param name="q_source" type="data" format="gmql_query" label="Input is the result of this query: " />
             </when>
         </conditional>
-        <!--<conditional name="output_mode">
-            <param name="mode" type="select" display="radio" multiple="false"
+        <param name="materialize" type="select" display="radio" multiple="false"
                    label="Materialize results or only generate query?">
-                <option value="q">Query Only</option>
-                <option value="m">Materialize</option>
-            </param>
-        </conditional> -->
+                <option value="y">Yes</option>
+                <option value="n">No</option>
+        </param>
         <!-- Metadata predicates -->
         <expand macro="select_predicates" pred_type="meta_pred" pred_type_title="Metadata Predicates"
                 pred_elem="attribute" pred_elem_label="attribute name" />
@@ -56,7 +65,7 @@
         <!-- TODO: semi-join predicates -->
     </inputs>
     <outputs>
-        <data name="query" format="gmql_query" label="SELECT statement"/>
+        <data name="query" format="gmql_query" label="SELECT query"/>
     </outputs>
     <!--<tests>
         <test>

@@ -1,13 +1,13 @@
-#!/usr/bin/env python
-# ----------------------------------------------------------------------------
 # GMQL Editor: composition of a new MAP statement.
 # ----------------------------------------------------------------------------
 # Luana Brancato, luana.brancato@mail.polimi.it
 # ----------------------------------------------------------------------------
 
-import datamng
 import argparse
 import json
+
+import datamng
+
 
 def create_map(source1, source2, params, target_q):
     """ Create a gmql MAP statement starting from the given params
@@ -44,14 +44,14 @@ def create_map(source1, source2, params, target_q):
     #Save the result
     if in_mode1 == 'q' :
         if in_mode2 == 'q' :
-            datamng.save_result_2(target_q,query,source1=source1,source2=source2)
+            datamng.save_result_2(target_q, query, source1=source1, source2=source2)
         else :
-            datamng.save_result_2(target_q,query,source1=source1)
+            datamng.save_result_2(target_q, query, source1=source1)
     else :
         if in_mode2 == 'q' :
-            datamng.save_result_2(target_q,query,source2=source2)
+            datamng.save_result_2(target_q, query, source2=source2)
         else :
-            datamng.save_result_2(target_q,query)
+            datamng.save_result_2(target_q, query)
 
 
 

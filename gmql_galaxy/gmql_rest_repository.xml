@@ -1,0 +1,88 @@
+<tool id="gmql_rest_repository" name="GMQL Repository Access" version="0.1.2">
+    <description>View, browse and delete datasets in the user's space on the GMQL system.</description>
+    <command><![CDATA[
+        python $__tool_directory__/gmql_rest_datasets.py
+        #set $cmd = $rep.operation
+        #if $cmd == 'list' :
+         $out_list
+        #elif $cmd == 'samples' :
+         $out_samples
+         -dataset=$rep.dataset.ds_name
+         -owner=$rep.dataset.owner
+        #else :
+         $out_result
+         -dataset=$rep.dataset_del
+        #end if
+        -user=$authToken
+        -cmd=$cmd
+    ]]></command>
+    <inputs>
+        <param format="gmql_user" name="authToken" type="data" label="Select user">
+            <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
+        </param>
+        <conditional name="rep">
+            <param name="operation" type="select" display="radio" multiple="false" label="Select the desired action" >
+            <option value="list">View datasets</option>
+            <option value="samples">View a dataset's samples</option>
+            <option value="delete">Delete a dataset</option>
+        </param>
+            <when value="list">
+                <!-- do nothing -->
+            </when>
+            <when value="samples">
+                <param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
+	                <conditional name="dataset">
+                        <param name="owner" type="select" label="Private or public dataset" display="radio" multiple="false">
+                            <option value="user">Private</option>
+                            <option value="public">Public</option>
+                        </param>
+                        <when value="user">
+                            <param name="ds_name" type="select" label="Select Dataset">
+		                        <options from_dataset="gmql_datasets">
+                                    <column name="value" index="0" />
+                                    <filter column="1" type="static_value" value="public" keep="false"/>
+                                </options>
+	                        </param>
+                        </when>
+                        <when value="public">
+                            <param name="ds_name" type="select" label="Select Dataset">
+		                        <options from_dataset="gmql_datasets">
+                                    <column name="value" index="0" />
+                                    <filter column="1" type="static_value" value="public" />
+ 		                        </options>
+	                        </param>
+                        </when>
+                    </conditional>
+            </when>
+            <when value="delete">
+                <param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
+	            <param name="dataset_del" type="select" label="Select Dataset">
+		            <options from_dataset="gmql_datasets">
+                            <column name="value" index="0" />
+                            <filter column="1" type="static_value" value="public" keep="false"/>
+		            </options>
+                </param>
+            </when>
+        </conditional>
+    </inputs>
+    <outputs>
+        <data format="gmql_repository" name="out_list" label="${authToken.name.split()[0].rstrip('')} GMQL Datasets">
+            <filter>rep['operation'] == 'list'</filter>
+            <actions>
+                <action name="column_names" type="metadata" default="dataset,owner" />
+            </actions>
+        </data>
+        <data format="tabular" name="out_samples" label="${rep.dataset.ds_name} samples from ${authToken.name.split()[0].rstrip('')} GMQL Datasets" >
+            <filter>rep['operation'] == 'samples'</filter>
+            <actions>
+                <action name="column_names" type="metadata" default="id,sample,ext" />
+            </actions>
+        </data>
+        <data format="txt" name="out_result" label="Delete ${rep.dataset_del} dataset outcome">
+            <filter>rep['operation'] == 'delete'</filter>
+        </data>
+    </outputs>
+    <help>
+        <!-- TODO -->
+    </help>
+</tool>

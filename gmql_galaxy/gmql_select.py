@@ -1,11 +1,9 @@
-#!/usr/bin/env python
-# ----------------------------------------------------------------------------
 # GMQL Editor: composition of a new SELECT statement.
 # ----------------------------------------------------------------------------
 # Luana Brancato, luana.brancato@mail.polimi.it
 # ----------------------------------------------------------------------------
 
-import datamng
+from datamng import *
 
 import argparse
 import json
@@ -106,7 +104,7 @@ def create_select(source,params,target_q) :
     """ Create a gmql SELECT statement starting from the given params
     The result structure serves as the actual query skeleton and it's so formed: 
         - target_ds : a runtime generated identifier for the target dataset 
-        - query body: type of statement and its attributes
+        - query body: type of statement and its parameters
         - sources_ds: reference to the file containing the info about the source dataset collection. """
 
     # Open param file
@@ -122,11 +120,11 @@ def create_select(source,params,target_q) :
 
     # Reference to the target
 
-    datamng.create_new_target(query)
+    create_new_target(query)
 
     # Add reference to source
     in_mode = params_json['input']['in_mode']
-    datamng.ref_unary_input(source, in_mode, target_q, query)
+    ref_unary_input(source, in_mode, target_q, query)
 
     # Parse predicates
 
@@ -149,15 +147,20 @@ def create_select(source,params,target_q) :
     mix_pred = list( filter( lambda x: x, [pm,pr]))
     mix_pred = ' ; '.join(mix_pred)
 
-    query.update(target_q = 'SELECT ( {predicates} )'.format(predicates=mix_pred))
+    query.update(target_q = 'SELECT\t{predicates}'.format(predicates=mix_pred))
 
     # Save the result query
 
     if in_mode == 'q' :
-        datamng.save_result_1(target_q, query, source=source)
+        save_result_1(target_q, query, source=source)
     else :
-        datamng.save_result_1(target_q, query)
+        save_result_1(target_q, query)
 
+    # TODO: temporary here; will be moved in a specific module
+
+    materialize = params_json['materialize']
+
+   #TODO
 
 def __main__():
     parser = argparse.ArgumentParser()

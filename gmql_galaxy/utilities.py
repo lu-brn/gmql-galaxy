@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# ----------------------------------------------------------------------------
-# Helper functions to perform REST calls on the GMQL server. 
+# Helper functions to perform REST calls on the GMQL server.
 # ----------------------------------------------------------------------------
 # Luana Brancato, luana.brancato@mail.polimi.it
 # ----------------------------------------------------------------------------
@@ -16,6 +14,7 @@ import itertools
 
 import logging
 
+
 def load_parts(module, call) :
     """Given the module and the single operation, returns the fragments for the url to call"""
 
@@ -23,7 +22,6 @@ def load_parts(module, call) :
 
     with open(y_path,'r') as yamlf :
         cfg = yaml.load(yamlf)
-    yamlf.close()
 
     parts = list ()
 
@@ -65,20 +63,33 @@ def add_url_param(baseurl, module, op, value) :
 
 
 def read_token(input):
-    """It takes the file with json object containing an user valid authToken and returns its value as a simple string. """
+    """It takes the tabular file with the information over the user
+     name   authToken   valid_flag
+     It checks if the user is still valid and extract the authToken for the REST calls"""
 
-    with open(input, 'r') as f_in:
-        try:
-            user = json.load(f_in)
-        except ValueError:
-            stop_err("The token is not a valid json file")
+    with open(input,'r') as f_in :
+        user = f_in.readline().rstrip('\n').split('\t')
 
-    if user['valid'] :
-        token = user['authToken']
-    else:
+    if user[2] :
+        token = user[1]
+    else :
         stop_err("This session is no longer valid")
 
+
     return token
+
+def expire_user(input):
+    """Set the validity flag of a user token to false"""
+
+    with open(input,'r') as f:
+        user = f.readline().rstrip('\n').split('\t')
+
+    user[2] = False
+
+    with open(input,'w') as f :
+         f.write('{fullName}\t{token}\t{valid}\n'.format(fullName=user[0], token=user[1],
+                                                            valid=user[2]))
+
 
 
 def url_get(url, response_type='application/json') :
@@ -102,26 +113,36 @@ def auth_url_get(url, user, response_type='application/json'):
     """GET authenticated requests to fetch remote data.
     If not specified otherwise, the response is expected to be a json"""
 
+    logging.basicConfig(filename='/home/luana/gmql-galaxy/utilities.log', level=logging.DEBUG, filemode='a')
+
     req_out = urllib2.Request(url)
     req_out.add_header('X-Auth-Token', read_token(user))
     req_out.add_header('Accept', response_type)
+
+    #logging.debug("url: %s"%(url))
 
     try:
         res_out = urllib2.urlopen(req_out)
     except urllib2.URLError as e:
         if hasattr(e, 'reason'):
-            stop_err('{code}: {reason}'.format(code=e.code, reason=e.reason))
-        elif hasattr(e, 'code'):
+            logging.debug(e.__str__())
             if (e.code == 401):
+                expire_user(user)
                 stop_err("You are not authorized to do this. \nPlease login first.")
-            else:
-                stop_err("The server cannot be reached. \nCode: {code}".format(code=e.code))
+            elif (e.code == 404) :
+                raise e
+            else :
+                stop_err('Error {code}: {reason}'.format(code=e.code, reason=e.reason))
+        else:
+            stop_err("The server cannot be reached. \nCode: {code}".format(code=e.code))
 
     return res_out
 
 def url_post(url, content, content_type='application/json', response_type='application/json') :
     """POST request without user token.
     For login and register operations. """
+
+    logging.basicConfig(filename='/home/luana/gmql-galaxy/auth.log', level=logging.DEBUG, filemode='a')
 
     req_out = urllib2.Request(url)
 
@@ -133,6 +154,7 @@ def url_post(url, content, content_type='application/json', response_type='appli
         response = urllib2.urlopen(req_out)
     except urllib2.URLError as e:
         if hasattr(e, 'reason'):
+            logging.debug("Exception: %s"%(e.__str__()))
             stop_err('{code}: {reason}'.format(code=e.code, reason=e.reason))
         elif hasattr(e, 'code'):
             stop_err("The server cannot be reached. \nCode: {code}".format(code=e.code))
@@ -165,12 +187,14 @@ def auth_url_post(user, url, content, content_type='application/json', response_
         res_out = urllib2.urlopen(req_out)
     except urllib2.URLError as e:
         if hasattr(e, 'reason'):
-            stop_err('{code}: {reason}'.format(code=e.code,reason=e.reason))
-        elif hasattr(e, 'code'):
-            if e.code == 401:
+            logging.debug(e.__str__())
+            if (e.code == 401):
+                expire_user(user)
                 stop_err("You are not authorized to do this. \nPlease login first.")
             else:
-                stop_err("The server cannot be reached. \nCode: {code}".format(code=e.code))
+                stop_err('Error {code}: {reason}'.format(code=e.code, reason=e.reason))
+        else:
+            stop_err("The server cannot be reached. \nCode: {code}".format(code=e.code))
 
     return res_out
 
@@ -190,12 +214,16 @@ def auth_url_delete(user, url, response_type='application/json'):
         res_out = urllib2.urlopen(req_out)
     except urllib2.URLError as e:
         if hasattr(e, 'reason'):
-            stop_err('{code}: {reason}'.format(code=e.code, reason=e.reason))
-        elif hasattr(e, 'code'):
-            if e.code == 401:
+            logging.debug(e.__str__())
+            if (e.code == 401):
+                expire_user(user)
                 stop_err("You are not authorized to do this. \nPlease login first.")
-            else :
-                stop_err("The server cannot be reached. \nCode: {code}".format(code=e.code))
+            elif (e.code == 404) :
+                raise e
+            else:
+                stop_err('Error {code}: {reason}'.format(code=e.code, reason=e.reason))
+        else:
+            stop_err("The server cannot be reached. \nCode: {code}".format(code=e.code))
 
 
     response = res_out.read()
@@ -224,6 +252,7 @@ class MultiPartForm(object) :
 
         self.files.append((fieldname,filename, mimetype, body))
 
+
         return
 
 
@@ -247,7 +276,6 @@ class MultiPartForm(object) :
         flattened.append('')
 
         return '\r\n'.join(flattened)
-
 
 
 
