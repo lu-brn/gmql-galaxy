@@ -6,7 +6,7 @@
         <registration>
             <!-- GMQL Custom datatypes -->
             <!-- The following are only subclass of existing types in order to control the flow between the GMQL repository tools -->
-            <datatype extension="gmql_user" type="galaxy.datatypes.text:Json" subclass="True" />
+            <datatype extension="gmql_user" type="galaxy.datatypes.tabular:Tabular" subclass="True" />
             <datatype extension="gmql_query" type="galaxy.datatypes.tabular:Tabular" subclass="True"/>
             <datatype extension="gmql_repository" type="galaxy.datatypes.tabular:Tabular" subclass="True" />
             <datatype extension="meta" type="galaxy.datatypes.tabular:Tabular" subclass="True" />

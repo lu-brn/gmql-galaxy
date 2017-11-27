@@ -3,6 +3,7 @@
       python $__tool_directory__/gmql_rest_datasets.py $output
 	  -user=$authToken
 	  -dataset=$name
+	  -opt_out1=$output1
 	  #if $upload.source == 'remote'
 	   -cmd=upload_url
 	   #if $upload.schema.schema_type == "custom" :
@@ -55,12 +56,29 @@
 				</param>
 				<when value="custom">
 					<param name="schema_url" type="text" format="text" size="80" label="Schema URL">
-						<validator type="regex" message="Does not look as a valid url">[\w:/\.\?@#+-=]+$</validator>
+						<validator type="regex" message="Does not look as a valid url">[\w:/\.\?@#+-=&amp;]+$</validator>
+                        <sanitizer>
+                             <valid initial="default">
+                                <remove value="&amp;"/>
+                             </valid>
+                            <mapping initial="default">
+                                <add source="&amp;" target="__amp__" />
+                            </mapping>
+                        </sanitizer>
 					</param>
 				</when>
 			</conditional>
-			<param name="samples_urls" type="text" format="text" area="True" size="10x80" label="Samples URLs" >
-				<validator type="regex" message="Please one url per line">[\w:/\.\?@#+-=]+(\n[\w:/\.\?@#+-=]+)*$</validator>
+			<param name="samples_urls" type="text" format="text" area="True" size="10x80" label="Samples URLs">
+				<validator type="regex" message="Please one url per line">[\w:/\.\?@#+-=%&amp;]+(\n[\w:/\.\?@#+-=%&amp;]+)*$</validator>
+                <sanitizer>
+                    <valid initial="default">
+                        <remove value="&amp;"/>
+                    </valid>
+                    <mapping initial="default">
+                        <add source="X" target="__cn__" />
+                        <add source="&amp;" target="__amp__" />
+                    </mapping>
+                </sanitizer>
 			</param>
         </when>
 		<when value="local">
@@ -84,7 +102,17 @@
 	</conditional>
   </inputs>
   <outputs>
-    <data format="txt" name="output" label="Upload Result of ${name} to GMQL" />
+    <!--<data format="txt" name="output" label="Upload Result of ${name} to GMQL" /> -->
+      <data format="tabular" name="output1" label="${name} updated samples" >
+            <actions>
+                <action name="column_names" type="metadata" default="id,sample,ext" />
+            </actions>
+      </data>
+      <data format="gmql_repository" name="output" label="${authToken.name.split()[0].rstrip('')} GMQL Datasets">
+            <actions>
+                <action name="column_names" type="metadata" default="dataset,owner" />
+            </actions>
+      </data>
   </outputs>
   <tests>
         <test>

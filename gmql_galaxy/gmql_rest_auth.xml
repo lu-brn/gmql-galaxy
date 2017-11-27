@@ -15,7 +15,7 @@
         #elif $user_ops.operation == 'logout' :
           -output=$logout_output
           -cmd=logout
-          -user=$user_ops.authToken
+          -user=$user_ops.user
         #else :
           -output=$register_output
           -cmd=register
@@ -58,7 +58,7 @@
 	        </conditional>
         </when>
         <when value="logout">
-            <param format="gmql_user" name="authToken" type="data" label="Select user">
+            <param format="gmql_user" name="user" type="data" label="Select user">
                 <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
             </param>
         </when>
@@ -94,7 +94,7 @@
             <action name="column_names" type="metadata" default="name,token,valid" />
         </actions>
     </data>
-    <data format="txt" name="logout_output" label="${authToken.name.split()[0].rstrip('')} Logout Result" >
+    <data format="txt" name="logout_output" label="${user_ops.user.name.split()[0].rstrip('')} Logout Result" >
         <filter>user_ops['operation'] == 'logout'</filter>
     </data>
     <data format="gmql_user" name="register_output" label="${user_ops.auth.username.value} - GMQL User">

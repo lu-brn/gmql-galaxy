@@ -20,6 +20,7 @@ repository: #operation over user repository
         download_meta : ['{datasetName}','{sample}',metadata]
         upload_url : ['{datasetName}',uploadSampleUrls]
         upload_data : ['{datasetName}',uploadSample]
+        schema : ['{datasetName}',schema]
     params:
         upload_url: schemaType
         upload_data: schemaType

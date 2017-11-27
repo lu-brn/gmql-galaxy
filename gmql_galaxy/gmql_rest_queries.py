@@ -8,7 +8,7 @@ import argparse
 import tempfile
 from time import sleep
 
-from gmql_rest_datasets import list_samples, get_sample, get_sample_meta
+from gmql_rest_datasets import list_samples, get_sample, get_sample_meta, get_schema
 from utilities import *
 from gmql_compositor import *
 
@@ -16,7 +16,7 @@ module_execution = 'query_exec'
 module_monitor = 'query_monitor'
 
 
-def check_input(q_type, query):
+def check_input(query,q_type='new'):
 
     if q_type == 'local' :
         # Retrieve the query data and convert it in an actual one and then clean it
@@ -27,6 +27,8 @@ def check_input(q_type, query):
 
     query = query.replace('__dq__', '"')
     query = query.replace('__sq__', "'")
+    query = query.replace('__gt__', ">")
+    query = query.replace('__lt__', "<")
     query = query.replace('__cn__', '\n')
 
 
@@ -36,10 +38,14 @@ def check_input(q_type, query):
 def compile_query(user, filename, q_type, query, log_file):
     """Compile the given query"""
 
+    #logging.basicConfig(filename='/home/luana/gmql-galaxy/queries.log', level=logging.DEBUG, filemode='w')
+
     call = 'compile'
 
     #Check the input
-    query_cl = check_input(q_type, query)
+    query_cl = check_input(query, q_type)
+
+    #logging.debug(query_cl)
 
      # Then ask it to be compiled
     url = compose_url(module_execution, call)
@@ -64,7 +70,7 @@ def compile_query(user, filename, q_type, query, log_file):
         stop_err("Compilation failed.\nSee log for details.")
 
 
-def run_query(user, filename, q_type, query, log_file, rs_format):
+def run_query(user, filename, q_type, query, log_file, rs_format, rs_schema):
     """Run the given query. It returns an execution log and the resulting dataset."""
 
     call = 'run'
@@ -132,9 +138,13 @@ def run_query(user, filename, q_type, query, log_file, rs_format):
             # Get the sample
             get_sample(user,"sample_{name}.{ext}".format(name=s.replace('_',''),ext=rs_format), ds, s)
             # Get its metadata
-            get_sample_meta(user,"metadata_{name}.meta".format(name=s.replace('_',''),ext=rs_format), ds, s)
+            # TODO: temporary don't get metadata
+            #get_sample_meta(user,"metadata_{name}.meta".format(name=s.replace('_',''),ext=rs_format), ds, s)
 
         os.remove(temp.name)
+
+        #retrieve the schema of the resulting dataset
+        get_schema(user,ds,rs_schema)
 
 
 
@@ -192,11 +202,19 @@ def show_jobs(user, output):
         job = dict()
         j_id = j['id']
         job.update(id=j_id)
-        status = read_status(user, j_id)
-        job.update(message=status['message'],
-                   status=status['status'],
-                   ds=status['datasets'][0]['name'],
-                   time=status['executionTime'])
+        trace = read_status(user, j_id)
+
+        status = trace['status']
+        if status == 'SUCCESS' :
+            job.update(message=trace['message'],
+                       status=status,
+                       ds=trace['datasets'][0]['name'],
+                       time=trace['executionTime'])
+        else :
+            job.update(message=trace['message'],
+                       status=status,
+                       ds=trace['datasets'][0]['name'])
+
         jobs_out.append(job)
 
     with open(output, 'w') as f:
@@ -244,6 +262,7 @@ def __main__():
     parser.add_argument("-log")
     parser.add_argument("-job")
     parser.add_argument("-format")
+    parser.add_argument("-schema")
     parser.add_argument("-result_dir")
 
 
@@ -256,9 +275,9 @@ def __main__():
             compile_query(args.user, args.name, args.query, args.queryLocal, args.log)
     if args.cmd == 'execute':
         if args.query == 'new' :
-            run_query(args.user, args.name, args.query, args.queryNew, args.log, args.format)
+            run_query(args.user, args.name, args.query, args.queryNew, args.log, args.format, args.schema)
         else :
-            run_query(args.user, args.name, args.query, args.queryLocal, args.log, args.format)
+            run_query(args.user, args.name, args.query, args.queryLocal, args.log, args.format, args.schema)
     if args.cmd == 'jobs':
         show_jobs(args.user, args.log)
     if args.cmd == 'stop' :

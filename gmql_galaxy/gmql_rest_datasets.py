@@ -69,8 +69,6 @@ def list_samples(user, output, ds, owner=''):
 def delete_dataset(user, output, ds):
     """Delete a dataset from the user's private space"""
 
-    #logging.basicConfig(filename='/home/luana/gmql-galaxy/ds.log', level=logging.DEBUG, filemode='w')
-
     call = 'delete_dataset'
     url = compose_url(module,call)
     url = url.format(datasetName=ds)
@@ -91,8 +89,10 @@ def delete_dataset(user, output, ds):
     f_out.close
 
 
-def upload_samples_url(user, output, dataset, schema, samples):
+def upload_samples_url(user, output, output1, dataset, schema, samples):
     """Upload a dataset given the urls of the samples and their schema"""
+
+    logging.basicConfig(filename='/home/luana/gmql-galaxy/ds.log', level=logging.DEBUG, filemode='w')
 
     #Compose the url for the REST call
     call = 'upload_url'
@@ -100,6 +100,10 @@ def upload_samples_url(user, output, dataset, schema, samples):
     url = url.format(datasetName=dataset)
 
     content = dict()
+
+    # Put back escaped '&'
+    samples = samples.replace('__amp__', '&')
+    schema = schema.replace('__amp__', '&')
 
     # If schema type is given, add the option to the url. Otherwise, it check if the provided schema is a valid url.
 
@@ -110,8 +114,13 @@ def upload_samples_url(user, output, dataset, schema, samples):
         if isinstance(check_schema, validators.utils.ValidationFailure): stop_err("Schema URL not valid")
         content.update(schema_file=schema)
 
+
+    logging.debug(samples)
+
     # Samples are listed one per line. It lists them looking for the new line marker ('__cn__')
     samples_list = samples.split('__cn__')
+
+    logging.debug(samples_list)
 
     # The regexp in input can allow a final empty string. The following removes it if present.
     if not samples_list[-1]:
@@ -120,6 +129,7 @@ def upload_samples_url(user, output, dataset, schema, samples):
     # For each sample url, check if it is valid. If at least ones is not, upload fails
     # and which one is saved in the outcome.
     for s in samples_list:
+        logging.debug(s)
         check_url = validators.url(s)
         if isinstance(check_url, validators.utils.ValidationFailure):
             with open(output, 'w') as f_out:
@@ -133,13 +143,14 @@ def upload_samples_url(user, output, dataset, schema, samples):
 
     response = auth_url_post(user, url, content)
 
-    #TODO: unfold result and read what has been imported
+    #Return the list of updated samples
+    list_samples(user,output1,dataset)
 
-    with open(output, 'w') as f_out:
-        f_out.write(response.read())
-    f_out.close
+    #Return the new list of datasets
+    list_datasets(user, output)
 
-def upload_samples(user, output, dataset, schema, samples):
+
+def upload_samples(user, output, output1, dataset, schema, samples):
     """Upload a dataset from the local instance"""
 
     logging.basicConfig(filename='/home/luana/gmql-galaxy/upload.log', level=logging.DEBUG, filemode='w')
@@ -179,13 +190,14 @@ def upload_samples(user, output, dataset, schema, samples):
     # Post call
 
     body = str(form)
+
     response = auth_url_post(user, url, body, form.get_content_type())
 
-    # Write output
-    #TODO: Unfold result
+    #Return the list of updated samples
+    list_samples(user,output1,dataset)
 
-    with open(output, 'w') as f_out:
-        f_out.write(response.read())
+    #Return the new list of datasets
+    list_datasets(user, output)
 
 
 def download_samples(user, output, dataset):
@@ -263,8 +275,9 @@ def import_samples(user, ds) :
         logging.debug("{name}.{ext}".format(name=s['name'],ext=s['ext']),ds,s['name'])
         get_sample(user,"{name}.{ext}".format(name=s['name'],ext=s['ext']),ds,s['name'])
         # Get its metadata
-        logging.debug("{name}.{ext}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
-        get_sample_meta(user,"{name}.{ext}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
+        #TODO: temporary don't get metadata
+        #logging.debug("{name}.{ext}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
+        #get_sample_meta(user,"{name}.{ext}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
 
     os.remove(temp.name)
 
@@ -277,6 +290,23 @@ def helper_samples(s):
 
     return sample
 
+def get_schema(user, ds, file) :
+    """Get the schema field of the input dataset and save it in file"""
+
+    call = "schema"
+
+    url = compose_url(module, call)
+    url = url.format(datasetName=ds)
+
+    response = auth_url_get(url, user)
+
+    schema = json.load(response)
+
+    with open(file,'w') as f_out:
+        for f in schema['fields'] :
+            f_out.write('{field}\t{type}\n'.format(field=f['name'],type=f['type']))
+
+
 
 def stop_err(msg):
     sys.stderr.write("%s\n" % msg)
@@ -287,6 +317,7 @@ def __main__():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("output")
+    parser.add_argument("-opt_out1")
     parser.add_argument("-user")
     parser.add_argument("-cmd")
     parser.add_argument("-dataset")
@@ -303,9 +334,9 @@ def __main__():
     if args.cmd == 'delete':
         delete_dataset(args.user, args.output, args.dataset)
     if args.cmd == 'upload_url':
-        upload_samples_url(args.user, args.output, args.dataset, args.schema, args.samples)
+        upload_samples_url(args.user, args.output, args.opt_out1, args.dataset, args.schema, args.samples)
     if args.cmd == 'upload' :
-        upload_samples(args.user, args.output, args.dataset, args.schema, args.samples)
+        upload_samples(args.user, args.output, args.opt_out1, args.dataset, args.schema, args.samples)
     if args.cmd == 'import':
         import_samples(args.user, args.dataset)
     if args.cmd == 'download' :

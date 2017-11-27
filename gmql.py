@@ -33,7 +33,7 @@ class Gdm ( Tabular ):
 
         GDM files have at least 6 required fields.
         (Actually in the format definition only the first 5 are mandatory, but the ones returned by the system have
-        always 6).
+        always at least 6).
 
         Required fields must be tab separated.
 

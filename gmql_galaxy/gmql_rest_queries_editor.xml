@@ -15,6 +15,7 @@
        #end if
        -log=$log
        -format=$mode.out_format
+       -schema=$schema_out
       #else :
        python $__tool_directory__/gmql_rest_queries.py
        -user=$authToken
@@ -29,6 +30,11 @@
        -log=$log
       #end if
 	  ]]></command>
+  <configfiles>
+      <configfile name="schema_out" >
+
+      </configfile>
+  </configfiles>
   <inputs>
 	<param format="gmql_user" name="authToken" type="data" label="Select user">
             <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
@@ -42,7 +48,7 @@
             <option value="local">Local Query</option>
         </param>
         <when value="new">
-            <param name="query_n" type="text" area="True" size="10x80" label="Query" >
+            <param name="query_n" type="text" area="True" size="10x150" label="Query" >
                 <sanitizer>
                 <valid initial="default">
                     <add value=";"/>
@@ -64,20 +70,24 @@
       </param>
       <when value="execute">
 			<param name="out_format" type="select" label="Output format">
-                <option value="gtf">GTF</option>
                 <option value="gdm">TAB Delimited (GDM)</option>
+                <option value="gtf">GTF</option>
             </param>
       </when>
     </conditional>
     </inputs>
 	<outputs>
         <data format="txt" name="log" label="${file_name} query log" />
-        <!--<collection name="query_results" type="list:list" label="${file_name} Results">-->
-            <!--<discover_datasets pattern="(?P&lt;identifier_0&gt;[^_]+)_(?P&lt;identifier_1&gt;[^_]+)\.(?P&lt;ext&gt;[^\._]+)?"  directory="results" />-->
-        <!--</collection>-->
         <collection name="query_results" type="list" label="${file_name}">
             <discover_datasets pattern="(?P&lt;designation&gt;.*)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
             <filter>mode['exec_mode'] == 'execute'</filter>
+            <!--<actions>
+                <conditional name="mode.out_format">
+                    <when value="gdm">
+                        <action name="column_names" type="metadata" default="','.join(map(lambda x: x.split('\t')[0]),open(${schema_out},'r'))" />
+                    </when>
+                </conditional>
+            </actions>-->
         </collection>
 	</outputs>
 

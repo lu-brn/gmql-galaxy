@@ -39,7 +39,7 @@
     <data format="tabular" name="jobs_list" label="${authToken.name.split()[0].rstrip('')} Jobs" >
       <filter>control['operation'] == 'list'</filter>
       <actions>
-            <action name="column_names" type="metadata" default="Job ID, Status, Message, Datasets names, Elapsed time" />
+            <action name="column_names" type="metadata" default="Job ID, Status, Message, Datasets name, Elapsed time" />
       </actions>
     </data>
     <data format="txt" name="stop_output" label="Stopping Outcome (Job ${control.job})" >

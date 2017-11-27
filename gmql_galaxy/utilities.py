@@ -168,9 +168,6 @@ def auth_url_post(user, url, content, content_type='application/json', response_
     If not specified otherwise, the response is expected to be a json."""
 
     logging.basicConfig(filename='/home/luana/gmql-galaxy/post.log',level=logging.DEBUG, filemode='w')
-    logging.debug('Starting Logger\n')
-    logging.debug('Content Type %s\n' %(content_type))
-    logging.debug('Accept: %s\n' % (response_type))
     logging.debug(('Content: %s\n' %(content)))
 
 
