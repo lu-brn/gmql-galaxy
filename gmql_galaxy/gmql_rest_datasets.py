@@ -275,9 +275,8 @@ def import_samples(user, ds) :
         logging.debug("{name}.{ext}".format(name=s['name'],ext=s['ext']),ds,s['name'])
         get_sample(user,"{name}.{ext}".format(name=s['name'],ext=s['ext']),ds,s['name'])
         # Get its metadata
-        #TODO: temporary don't get metadata
         #logging.debug("{name}.{ext}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
-        #get_sample_meta(user,"{name}.{ext}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
+        get_sample_meta(user,"{name}.{ext}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
 
     os.remove(temp.name)
 

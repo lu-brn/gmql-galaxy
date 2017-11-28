@@ -138,8 +138,7 @@ def run_query(user, filename, q_type, query, log_file, rs_format, rs_schema):
             # Get the sample
             get_sample(user,"sample_{name}.{ext}".format(name=s.replace('_',''),ext=rs_format), ds, s)
             # Get its metadata
-            # TODO: temporary don't get metadata
-            #get_sample_meta(user,"metadata_{name}.meta".format(name=s.replace('_',''),ext=rs_format), ds, s)
+            get_sample_meta(user,"metadata_{name}.meta".format(name=s.replace('_',''),ext=rs_format), ds, s)
 
         os.remove(temp.name)
 
