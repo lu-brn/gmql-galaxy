@@ -144,8 +144,9 @@ def get(url, user=None, response_type='json') :
     elif status_code == requests.codes.not_found :
         stop_err("Resource not found for this user.")
     else :
-        stop_err("Error {code}: {reason}".format(code=status_code,
-                                                 reason=response.reason))
+        stop_err("Error {code}: {reason}\n{message}".format(code=status_code,
+                                                            reason=response.reason,
+                                                            message=response.content))
 
 
 def post(url, payload, user=None, params=None, content_type='json', response_type='json') :
@@ -192,8 +193,9 @@ def post(url, payload, user=None, params=None, content_type='json', response_typ
         expire_user(user)
         stop_err("You are not authorized to do this. \nPlease login first.")
     else :
-        stop_err("Error {code}: {reason}".format(code=status_code,
-                                                 reason=response.reason))
+        stop_err("Error {code}: {reason}\n{message}".format(code=status_code,
+                                                 reason=response.reason,
+                                                 message=response.content))
 
 
 
