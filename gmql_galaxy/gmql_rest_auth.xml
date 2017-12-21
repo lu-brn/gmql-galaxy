@@ -97,7 +97,7 @@
     <data format="txt" name="logout_output" label="${user_ops.user.name.split()[0].rstrip('')} Logout Result" >
         <filter>user_ops['operation'] == 'logout'</filter>
     </data>
-    <data format="gmql_user" name="register_output" label="${user_ops.auth.username.value} - GMQL User">
+    <data format="gmql_user" name="register_output" label="${user_ops.new_username.value} - GMQL User">
         <filter>user_ops['operation'] == 'register'</filter>
         <actions>
             <action name="column_names" type="metadata" default="name,token,valid" />

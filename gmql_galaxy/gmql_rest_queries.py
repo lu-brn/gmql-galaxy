@@ -47,13 +47,10 @@ def compile_query(user, filename, q_type, query, log_file):
 
     #logging.debug(query_cl)
 
-     # Then ask it to be compiled
+    # Then ask it to be compiled
     url = compose_url(module_execution, call)
 
-    response = auth_url_post(user, url, query_cl, 'text/plain')
-
-    decoder = json.JSONDecoder()
-    outcome = decoder.decode(response.read())
+    outcome = post(url, query_cl, user=user, content_type='text')
 
     status = outcome['status']
     message = outcome['message']
@@ -85,10 +82,7 @@ def run_query(user, filename, q_type, query, log_file, rs_format, rs_schema):
     url = compose_url(module_execution, call)
     url = url.format(name=filename,output=rs_format)
 
-    response = auth_url_post(user, url, query_cl,'text/plain')
-
-    decoder = json.JSONDecoder()
-    outcome = decoder.decode(response.read())
+    outcome = post(url, query_cl, user=user, content_type='text')
 
     jobid = outcome['id']
 
@@ -156,10 +150,7 @@ def read_status(user, jobid):
     url = compose_url(module_monitor, call)
     url = url.format(jobid=jobid)
 
-    response = auth_url_get(url, user)
-
-    decoder = json.JSONDecoder()
-    status = decoder.decode(response.read())
+    status = get(url, user=user, response_type='json')
 
     return status
 
@@ -174,10 +165,7 @@ def read_complete_log(user, jobid):
     url = compose_url(module_monitor, call)
     url = url.format(jobid=jobid)
 
-    log_obj = auth_url_get(url, user)
-
-    decoder = json.JSONDecoder()
-    log = decoder.decode(log_obj.read())
+    log = get(url, user=user, response_type='json')
 
     return log
 
@@ -189,9 +177,7 @@ def show_jobs(user, output):
 
     url = compose_url(module_monitor, call)
 
-    outcome = auth_url_get(url, user)
-    decoder = json.JSONDecoder()
-    jobs = decoder.decode(outcome.read())
+    jobs = get(url, user=user, response_type='json')
 
     jobs_list = jobs['jobs']
     jobs_out = list()
@@ -229,20 +215,15 @@ def show_jobs(user, output):
 def stop_query(user,jobid,output) :
     """Stop the execution of the given job"""
 
-    logging.basicConfig(filename='/home/luana/gmql-galaxy/monitor.log', level=logging.DEBUG, filemode='a')
-
     call = 'stop'
 
     url = compose_url(module_monitor, call)
     url = url.format(jobid=jobid)
 
-    logging.debug("jobid: %s"%(jobid))
-    logging.debug("url: %s"%(url))
-
-    outcome = auth_url_get(url, user)
+    outcome = get(url, user=user, response_type='json')
 
     with open(output,'w') as f_out :
-        f_out.write(outcome.read())
+        json.dump(outcome, f_out)
 
 
 

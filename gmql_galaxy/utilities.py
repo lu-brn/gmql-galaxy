@@ -9,8 +9,8 @@ import urllib2
 import json
 import yaml
 import mimetypes
-import mimetools
 import itertools
+import requests
 
 import logging
 
@@ -46,8 +46,8 @@ def compose_url(module, call) :
 
     return url
 
-def add_url_param(baseurl, module, op, value) :
-    """Given a base url, add the given query param"""
+def add_url_param(params, module, op, value,) :
+    """Given the params dict, add a new pair of key:value with the given value and the key set for given module and operation"""
 
     y_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'gmql_rest.yaml')
 
@@ -55,11 +55,11 @@ def add_url_param(baseurl, module, op, value) :
         cfg = yaml.load(yamlf)
     yamlf.close()
 
-    param = cfg[module]['params'][op]
+    key = cfg[module]['params'][op]
 
-    url = '{url}?{param}={value}'.format(url=baseurl, param=param, value=value)
+    params.update({key : value})
 
-    return url
+    return params
 
 
 def read_token(input):
@@ -91,52 +91,146 @@ def expire_user(input):
                                                             valid=user[2]))
 
 
+def get(url, user=None, response_type='json') :
+    """GET Request
+    :param url: url where to fetch the requested resource
+    :param user: for authenticated requests; if not provided make an unauthenticated request (es. for login)
+    :param response_type: type of the fetched response.
+        JSON ( Default )
+        TEXT
+        ZIP
+        FILE
+    """
 
-def url_get(url, response_type='application/json') :
-    """GET request without user token"""
+    ##logging.basicConfig(filename='/home/luana/gmql-galaxy/utilities.log', level=logging.DEBUG, filemode='w')
 
-    req_out = urllib2.Request(url)
-    req_out.add_header('Accept', response_type)
+    #Set request headers
+    headers = dict ()
 
-    try:
-        response = urllib2.urlopen(req_out)
-    except urllib2.URLError as e:
-        if hasattr(e, 'reason'):
-            stop_err('{code}: {reason}'.format(code=e.code, reason=e.reason))
-        elif hasattr(e, 'code'):
-            stop_err("The server cannot be reached. \nCode: {code}".format(code=e.code))
+    if user :
+        headers.update({'X-AUTH-TOKEN' : read_token(user)})
 
-    return response
+    if response_type == 'text' :
+        headers.update({'Accept' : 'text/plain'})
+    elif response_type == 'zip' :
+        pass
+    elif response_type == 'file' :
+        headers.update({'Accept' : 'file'})
+    else :
+        headers.update({'Accept' : 'application/json'})
 
 
-def auth_url_get(url, user, response_type='application/json'):
-    """GET authenticated requests to fetch remote data.
-    If not specified otherwise, the response is expected to be a json"""
+    #Make the request
+    response = requests.get(url, headers=headers)
 
-    logging.basicConfig(filename='/home/luana/gmql-galaxy/utilities.log', level=logging.DEBUG, filemode='a')
+    #logging.debug('GET request headers: %s'%(response.request.headers))
 
-    req_out = urllib2.Request(url)
-    req_out.add_header('X-Auth-Token', read_token(user))
-    req_out.add_header('Accept', response_type)
+    #Check returned server status
+    status_code = response.status_code
 
-    #logging.debug("url: %s"%(url))
+    #logging.debug('Server Status: %s'%(status_code))
 
-    try:
-        res_out = urllib2.urlopen(req_out)
-    except urllib2.URLError as e:
-        if hasattr(e, 'reason'):
-            logging.debug(e.__str__())
-            if (e.code == 401):
-                expire_user(user)
-                stop_err("You are not authorized to do this. \nPlease login first.")
-            elif (e.code == 404) :
-                raise e
-            else :
-                stop_err('Error {code}: {reason}'.format(code=e.code, reason=e.reason))
-        else:
-            stop_err("The server cannot be reached. \nCode: {code}".format(code=e.code))
+    #Read result. If Server OK, read according to response_type. Raise an error otherwise.
+    if status_code == requests.codes.ok :
+        if response_type == 'json' :
+            return response.json()
+        elif response_type == 'text' :
+            return response.text
+        else :
+            return response
+    elif status_code == requests.codes.unauthorized :
+        expire_user(user)
+        stop_err("You are not authorized to do this. \nPlease login first.")
+    elif status_code == requests.codes.not_found :
+        stop_err("Resource not found for this user.")
+    else :
+        stop_err("Error {code}: {reason}".format(code=status_code,
+                                                 reason=response.reason))
 
-    return res_out
+
+def post(url, payload, user=None, params=None, content_type='json', response_type='json') :
+    """ POST Request
+    :param url: url where to post data
+    :param payload: payload for the post request. Type is specified by content_type.
+    :param user:  for authenticated requests; if not provided make an unauthenticated request (es. for registration)
+    :param params: optional query parameters
+    :param content_type
+    :param response_type: Default is json
+    """
+
+    logging.basicConfig(filename='/home/luana/gmql-galaxy/post.log', level=logging.DEBUG, filemode='w')
+
+    s = requests.Session()
+
+    # Set request headers
+    headers = dict()
+
+    if user:
+        headers.update({'X-AUTH-TOKEN': read_token(user)})
+
+    headers.update({'Accept': 'application/json'})
+
+    if content_type == 'text' :
+        headers.update({'Content-Type' : 'text/plain'})
+        response = requests.post(url, params=params, headers=headers, data=payload)
+    elif content_type == 'multiform' :
+        response = requests.post(url, params=params, headers=headers, files=payload)
+    else :
+        headers.update({'Content-Type': 'application/json'})
+        response = requests.post(url, params=params, headers=headers, json=payload)
+
+    logging.debug(response.request.url)
+    logging.debug(response.request.headers)
+    logging.debug(response.request.body)
+
+    # Check returned server status
+    status_code = response.status_code
+
+    if status_code == requests.codes.ok :
+        return response.json()
+    elif status_code == requests.codes.unauthorized :
+        expire_user(user)
+        stop_err("You are not authorized to do this. \nPlease login first.")
+    else :
+        stop_err("Error {code}: {reason}".format(code=status_code,
+                                                 reason=response.reason))
+
+
+
+def delete(url, user=None, response_type='json') :
+    """DELETE request
+    :param url: url where to post data
+    :param user:  for authenticated requests; if not provided make an unauthenticated request (es. for registration)
+    :param response_type: Default is json
+    """
+
+    # Set request headers
+    headers = dict()
+
+    if user:
+        headers.update({'X-AUTH-TOKEN': read_token(user)})
+
+    headers.update({'Accept': 'application/json'})
+
+    #Make the request
+    response = requests.delete(url, headers=headers)
+
+    #Check returned server status
+    status_code = response.status_code
+
+
+    #If Server OK, read result. Raise an error otherwise.
+    if status_code == requests.codes.ok :
+            return response.json()
+    elif status_code == requests.codes.unauthorized :
+        expire_user(user)
+        stop_err("You are not authorized to do this. \nPlease login first.")
+    elif status_code == requests.codes.not_found :
+        stop_err("Resource not found for this user.")
+    else :
+        stop_err("Error {code}: {reason}".format(code=status_code,
+                                                 reason=response.reason))
+
 
 def url_post(url, content, content_type='application/json', response_type='application/json') :
     """POST request without user token.
@@ -167,113 +261,43 @@ def auth_url_post(user, url, content, content_type='application/json', response_
     """POST authenticated request.
     If not specified otherwise, the response is expected to be a json."""
 
-    logging.basicConfig(filename='/home/luana/gmql-galaxy/post.log',level=logging.DEBUG, filemode='w')
-    logging.debug(('Content: %s\n' %(content)))
+    #logging.basicConfig(filename='/home/luana/gmql-galaxy/post.log',level=logging.DEBUG, filemode='w')
 
-
-    req_out = urllib2.Request(url)
-
-    req_out.add_header('X-Auth-Token', read_token(user))
-    req_out.add_header('Content-Type', content_type)
-    req_out.add_header('Accept', response_type)
-    req_out.add_data(content)
-
-
-
-    try:
-        res_out = urllib2.urlopen(req_out)
-    except urllib2.URLError as e:
-        if hasattr(e, 'reason'):
-            logging.debug(e.__str__())
-            if (e.code == 401):
-                expire_user(user)
-                stop_err("You are not authorized to do this. \nPlease login first.")
-            else:
-                stop_err('Error {code}: {reason}'.format(code=e.code, reason=e.reason))
-        else:
-            stop_err("The server cannot be reached. \nCode: {code}".format(code=e.code))
-
-    return res_out
-
-
-def auth_url_delete(user, url, response_type='application/json'):
-    """DELETE authenticated request to delete remote data.
-    If not specified otherwise, the response is expected to be a json"""
-
-    req_out = urllib2.Request(url)
-
-    req_out.get_method = lambda: "DELETE"
-
-    req_out.add_header('X-Auth-Token', read_token(user))
-    req_out.add_header('Accept',response_type)
-
-    try:
-        res_out = urllib2.urlopen(req_out)
-    except urllib2.URLError as e:
-        if hasattr(e, 'reason'):
-            logging.debug(e.__str__())
-            if (e.code == 401):
-                expire_user(user)
-                stop_err("You are not authorized to do this. \nPlease login first.")
-            elif (e.code == 404) :
-                raise e
-            else:
-                stop_err('Error {code}: {reason}'.format(code=e.code, reason=e.reason))
-        else:
-            stop_err("The server cannot be reached. \nCode: {code}".format(code=e.code))
-
-
-    response = res_out.read()
+    headers = {'X-AUTH-TOKEN' : read_token(user), 'Accept' : response_type}
+    response = requests.post(url,files=content,headers=headers)
 
     return response
 
 
-class MultiPartForm(object) :
-    """Manage multiple files forms for POST requests """
-
-    def __init__(self):
-
-        self.files = []
-        self.boundary = mimetools.choose_boundary()
-
-        return
-
-    def get_content_type(self):
-        return 'multipart/form-data; boundary=%s' % self.boundary
-
-    def add_file(self, fieldname, filename, fileHandle, mimetype=None):
-
-        body = fileHandle.read()
-        if mimetype is None :
-            mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
-
-        self.files.append((fieldname,filename, mimetype, body))
-
-
-        return
-
-
-    def __str__(self) :
-
-        parts = []
-        boundary = '--------------------------' + self.boundary
-
-        parts.extend(
-            [boundary,
-             'Content-Disposition: form-data: name="%s"; filename="%s"' % (field_name, filename),
-             'Content-Type: %s' % content_type,
-             '',
-             body,
-             ]
-            for field_name, filename, content_type, body in self.files
-        )
-
-        flattened = list(itertools.chain(*parts))
-        flattened.append('--------------------------' + self.boundary)
-        flattened.append('')
-
-        return '\r\n'.join(flattened)
-
+    #
+    #
+    # req_out = urllib2.Request(url)
+    # req_out.add_header('X-AUTH-TOKEN', read_token(user))
+    # req_out.add_header('Content-Type', content_type)
+    # req_out.add_header('Accept', response_type)
+    # req_out.add_data(content)
+    #
+    # logging.debug(req_out.headers)
+    # logging.debug(('%s\n' % (content)))
+    #
+    #
+    # try:
+    #     res_out = urllib2.urlopen(req_out)
+    # except urllib2.URLError as e:
+    #     if hasattr(e, 'reason')
+    #         logging.debug('error: %s'%(e.__str__()))
+    #         #logging.debug('msg: %s'%(e.read()))
+    #         if (e.code == 401):
+    #             expire_user(user)
+    #             stop_err("You are not authorized to do this. \nPlease login first.")
+    #         else:
+    #             stop_err('Error {code}: {reason}\n{message}'.format(code=e.code,
+    #                                                                 reason=e.reason,
+    #                                                                 message=e.read()))
+    #     else:
+    #         stop_err("The server cannot be reached. \nCode: {code}".format(code=e.code))
+    #
+    # return res_out
 
 
 

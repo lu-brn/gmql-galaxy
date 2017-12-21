@@ -23,11 +23,7 @@ def list_datasets(user, output):
     call = 'list_datasets'
     url = compose_url(module,call)
 
-    response = auth_url_get(url, user)
-
-    decoder = json.JSONDecoder()
-    datasets = decoder.decode(response.read())
-
+    datasets = get(url, user=user)
     list_datasets = datasets['datasets']
 
     with open(output,'w') as f:
@@ -49,21 +45,12 @@ def list_samples(user, output, ds, owner=''):
     else :
         url = url.format(datasetName=ds)
 
-    try :
-        response = auth_url_get(url, user)
-    except urllib2.URLError as e:
-        stop_err("Dataset not found for this user.\nCheck if it is the owner of this dataset.")
-
-    decoder = json.JSONDecoder()
-    samples = decoder.decode(response.read())
-
+    samples = get(url, user=user)
     list_s = samples['samples']
 
     with open(output, 'w') as f_out:
         for s in list_s:
             f_out.write("{id}\t{name}\t{ext}\n".format(id=s['id'], name=s['name'],ext=s['path'].rsplit('.',1)[1]))
-    f_out.close
-
 
 
 def delete_dataset(user, output, ds):
@@ -73,26 +60,14 @@ def delete_dataset(user, output, ds):
     url = compose_url(module,call)
     url = url.format(datasetName=ds)
 
-    #logging.debug('%s\n'%(url))
-
-    try:
-        response = auth_url_delete(user, url)
-    except urllib2.URLError as e:
-        stop_err("Dataset not found for this user.\nCheck if it is the owner of this dataset.")
-
-
-    decoder = json.JSONDecoder()
-    outcome = decoder.decode(response)
+    outcome = delete(url, user=user)
 
     with open(output, 'w') as f_out:
         f_out.write("Outcome: {result}".format(result=outcome['result']))
-    f_out.close
 
 
 def upload_samples_url(user, output, output1, dataset, schema, samples):
     """Upload a dataset given the urls of the samples and their schema"""
-
-    logging.basicConfig(filename='/home/luana/gmql-galaxy/ds.log', level=logging.DEBUG, filemode='w')
 
     #Compose the url for the REST call
     call = 'upload_url'
@@ -107,20 +82,18 @@ def upload_samples_url(user, output, output1, dataset, schema, samples):
 
     # If schema type is given, add the option to the url. Otherwise, it check if the provided schema is a valid url.
 
+    params = dict ()
+
     if schema in ['bed','bedGraph','gtf','tab','NarrowPeak','BroadPeak','vcf'] :
-        url = add_url_param(url, module, call, schema)
+        params = add_url_param(params, module, call, schema)
     else:
         check_schema = validators.url(schema)
         if isinstance(check_schema, validators.utils.ValidationFailure): stop_err("Schema URL not valid")
         content.update(schema_file=schema)
 
 
-    logging.debug(samples)
-
     # Samples are listed one per line. It lists them looking for the new line marker ('__cn__')
     samples_list = samples.split('__cn__')
-
-    logging.debug(samples_list)
 
     # The regexp in input can allow a final empty string. The following removes it if present.
     if not samples_list[-1]:
@@ -129,21 +102,19 @@ def upload_samples_url(user, output, output1, dataset, schema, samples):
     # For each sample url, check if it is valid. If at least ones is not, upload fails
     # and which one is saved in the outcome.
     for s in samples_list:
-        logging.debug(s)
         check_url = validators.url(s)
         if isinstance(check_url, validators.utils.ValidationFailure):
             with open(output, 'w') as f_out:
                 f_out.write("This resource couldn't be loaded (invalid url)\n")
                 f_out.write("Line %d: %s" % (samples_list.index(s) + 1, s))
-            f_out.close
             stop_err("Some URLs are not valid.\nCheck the output file for details.")
 
     content.update(data_files=samples_list)
-    content = json.dumps(content)
 
-    response = auth_url_post(user, url, content)
+    post(url, content, user=user, params=params)
 
     #Return the list of updated samples
+    #TODO: reduce to a single output with the imported samples, from the post response
     list_samples(user,output1,dataset)
 
     #Return the new list of datasets
@@ -153,29 +124,23 @@ def upload_samples_url(user, output, output1, dataset, schema, samples):
 def upload_samples(user, output, output1, dataset, schema, samples):
     """Upload a dataset from the local instance"""
 
-    logging.basicConfig(filename='/home/luana/gmql-galaxy/upload.log', level=logging.DEBUG, filemode='w')
-
     #Compose the url for the REST call
     call = 'upload_data'
     url = compose_url(module, call)
     url = url.format(datasetName=dataset)
 
-
-
-    # Create a new instance of a MultiPartForm object
-    form = MultiPartForm()
+    #Files dict for payload
+    files = dict ()
 
     # If the schema type is give, add the option to the url.
+    params = dict ()
 
-    logging.debug(schema)
 
     if schema in ['bed','bedGraph','gtf','tab','NarrowPeak','BroadPeak','vcf'] :
-        url = add_url_param(url, module, call, schema)
+        params = add_url_param(params, module, call, schema)
     else :
-        # Prepare the schema given to be sent in the request
-        form.add_file('schema','{ds}.xml'.format(ds=dataset), open(schema))
-
-    logging.debug(url)
+        # Add the schema given to the payload dictionary
+        files.update({'schema' : ('{ds}.xml'.format(ds=dataset), open(schema, 'rb'))})
 
     # Read samples file path and add them to the form object
     # The structure is
@@ -183,17 +148,15 @@ def upload_samples(user, output, output1, dataset, schema, samples):
 
     with open(samples, "r") as file:
         s = map(lambda x: x.split('\t'), file)
-        logging.debug(s.__str__())
         s.pop() # I need to get rid of last element, which is empty
-        map(lambda x: form.add_file('file%d' % (s.index(x) + 1), x[0], open(x[1].rstrip('\n'))), s)
+        map(lambda x: files.update({'file%d' % (s.index(x) + 1) : (x[0], open(x[1].rstrip('\n'), 'rb'))}), s)
 
     # Post call
 
-    body = str(form)
-
-    response = auth_url_post(user, url, body, form.get_content_type())
+    post(url, files, user=user, params=params, content_type='multiform')
 
     #Return the list of updated samples
+    #TODO: reduce to a single output with the imported samples, from the post response
     list_samples(user,output1,dataset)
 
     #Return the new list of datasets
@@ -209,18 +172,12 @@ def download_samples(user, output, dataset):
     url = url.format(datasetName=dataset)
 
     # Fetch the archive.
-    try :
-        data = auth_url_get(url, user)
-    except urllib2.URLError as e:
-        stop_err("Dataset not found for this user.\nCheck if it is the owner of this dataset.")
 
-    try:
-        result, is_multi_byte = sniff.stream_to_open_named_file(data, os.open(output, os.O_WRONLY), output)
-    except Exception as e:
-        stop_err('Unable to fetch :\n%s' % (e))
+    data = get(url, user=user, response_type='zip')
 
-    return result
-
+    with open(output, 'wb') as fd:
+        for chunk in data.iter_content(chunk_size=128):
+            fd.write(chunk)
 
 def get_sample(user, output, dataset, name):
     """Retrieve a sample given its name and the dataset it belongs to"""
@@ -230,12 +187,11 @@ def get_sample(user, output, dataset, name):
     url = compose_url(module,call)
     url = url.format(datasetName=dataset,sample=name)
 
-    data = auth_url_get(url, user, 'file')
+    data = get(url, user=user, response_type='file')
 
-    try:
-        result, is_multi_byte = sniff.stream_to_open_named_file(data, os.open(output, os.O_WRONLY | os.O_CREAT), output)
-    except Exception as e:
-        stop_err('Unable to fetch :\n%s' % (e))
+    with open(output, 'wb') as fd:
+        for chunk in data.iter_content(chunk_size=128):
+            fd.write(chunk)
 
 
 def get_sample_meta(user, output, dataset, name):
@@ -246,12 +202,11 @@ def get_sample_meta(user, output, dataset, name):
     url = compose_url(module, call)
     url = url.format(datasetName=dataset, sample=name)
 
-    data = auth_url_get(url, user, 'file')
+    data = get(url, user=user, response_type='file')
 
-    try:
-        result, is_multi_byte = sniff.stream_to_open_named_file(data, os.open(output, os.O_WRONLY | os.O_CREAT), output)
-    except Exception as e:
-        stop_err('Unable to fetch :\n%s' % (e))
+    with open(output, 'wb') as fd:
+        for chunk in data.iter_content(chunk_size=128):
+            fd.write(chunk)
 
 def import_samples(user, ds) :
 
@@ -271,12 +226,11 @@ def import_samples(user, ds) :
 
     for s in samples:
         # Get the sample
-        #logging.debug(s)
-        logging.debug("{name}.{ext}".format(name=s['name'],ext=s['ext']),ds,s['name'])
-        get_sample(user,"{name}.{ext}".format(name=s['name'],ext=s['ext']),ds,s['name'])
+        #get_sample(user,"{name}.{ext}".format(name=s['name'],ext=s['ext']),ds,s['name'])
+        get_sample(user, "samples_{name}.{ext}".format(name=s['name'], ext=s['ext']), ds, s['name'])
         # Get its metadata
-        #logging.debug("{name}.{ext}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
-        get_sample_meta(user,"{name}.{ext}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
+        #get_sample_meta(user,"{name}.{ext}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
+        get_sample_meta(user,"metadata_{name}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
 
     os.remove(temp.name)
 
@@ -297,9 +251,7 @@ def get_schema(user, ds, file) :
     url = compose_url(module, call)
     url = url.format(datasetName=ds)
 
-    response = auth_url_get(url, user)
-
-    schema = json.load(response)
+    schema = get(url, user=user)
 
     with open(file,'w') as f_out:
         for f in schema['fields'] :

@@ -7,7 +7,6 @@
 import argparse
 
 from utilities import *
-import logging
 
 module = 'access'
 
@@ -19,9 +18,7 @@ def guest_login(output):
     call = 'guest'
     url = compose_url(module, call)
 
-    response = url_get(url)
-
-    user = json.load(response)
+    user = get(url)
 
     # Set the user as valid
     user.update(valid=True)
@@ -41,11 +38,8 @@ def login(output, username, password) :
 
     user_data = dict ()
     user_data.update(username=username,password=password)
-    request = json.dumps(user_data)
 
-    response = url_post(url, request)
-
-    user = json.load(response)
+    user = post(url, user_data)
 
     user.update(valid=True)
 
@@ -58,10 +52,10 @@ def logout(user,output):
     call = 'logout'
 
     url = compose_url(module, call)
-    response = auth_url_get(url, user)
+    response = get(url, user, response_type='text')
 
     with open(output, 'w') as f_out:
-         f_out.write(response.read())
+         f_out.write(response)
 
     # Flag the token as invalid and save back the user
 
@@ -76,13 +70,11 @@ def register(new_user, output) :
     with open(new_user,'r') as f_in :
         nu = json.loads(f_in.read())
 
-    user_data = json.dumps(nu)
-    response = url_post(url, user_data)
-
     # The registration call returns a valid token and some info about the new user. Add
     # the validity flag and create the new user file in galaxy
 
-    user = json.load(response)
+    user = post(url, nu)
+
     user.update(valid=True)
 
     with open(output, 'w') as f_out :

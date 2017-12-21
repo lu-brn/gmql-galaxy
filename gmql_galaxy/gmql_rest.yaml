@@ -22,8 +22,8 @@ repository: #operation over user repository
         upload_data : ['{datasetName}',uploadSample]
         schema : ['{datasetName}',schema]
     params:
-        upload_url: schemaType
-        upload_data: schemaType
+        upload_url: schemaName
+        upload_data: schemaName
 query_exec: # compile and run gmql queries
     prefix: queries
     operations:

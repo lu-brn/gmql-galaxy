@@ -22,10 +22,26 @@
 	    -samples=$samples
 	  #end if
 	  ]]></command>
-    <configfiles>
+    <!-- If samples and metadata are in a flat list -->
+    <!--<configfiles>
         <configfile name="samples" >#if $upload.source == 'local' :
             #for $file in $upload.samples
             #echo '%s\t%s\n'%($file.name,$file)
+            #end for
+            #end if
+        </configfile>
+    </configfiles>-->
+    <!-- If samples and metadata are in a nested list -->
+    <configfiles>
+        <configfile name="samples" >#if $upload.source == 'local'
+            #for $i in $upload.samples
+            #if $i.is_collection :
+            #for $file in $i
+            #echo '%s\t%s\n'%($file.element_identifier,$file)
+            #end for
+            #else :
+            #echo '%s\t%s\n'%($i.name,$i)
+            #end if
             #end for
             #end if
         </configfile>
