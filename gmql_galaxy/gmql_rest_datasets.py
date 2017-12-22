@@ -66,7 +66,7 @@ def delete_dataset(user, output, ds):
         f_out.write("Outcome: {result}".format(result=outcome['result']))
 
 
-def upload_samples_url(user, output, output1, dataset, schema, samples):
+def upload_samples_url(user, output, dataset, schema, samples):
     """Upload a dataset given the urls of the samples and their schema"""
 
     #Compose the url for the REST call
@@ -111,18 +111,16 @@ def upload_samples_url(user, output, output1, dataset, schema, samples):
 
     content.update(data_files=samples_list)
 
-    post(url, content, user=user, params=params)
+    result = post(url, content, user=user, params=params)
 
     #Return the list of updated samples
-    #TODO: reduce to a single output with the imported samples, from the post response
-    list_samples(user,output1,dataset)
-
-    #Return the new list of datasets
-    list_datasets(user, output)
+    list_imported(result, output)
 
 
-def upload_samples(user, output, output1, dataset, schema, samples):
+def upload_samples(user, output, dataset, schema, samples):
     """Upload a dataset from the local instance"""
+
+    logging.basicConfig(filename='/home/luana/gmql-galaxy/upload.log', level=logging.DEBUG, filemode='w')
 
     #Compose the url for the REST call
     call = 'upload_data'
@@ -148,19 +146,52 @@ def upload_samples(user, output, output1, dataset, schema, samples):
 
     with open(samples, "r") as file:
         s = map(lambda x: x.split('\t'), file)
+        logging.debug(s)
         s.pop() # I need to get rid of last element, which is empty
         map(lambda x: files.update({'file%d' % (s.index(x) + 1) : (x[0], open(x[1].rstrip('\n'), 'rb'))}), s)
 
     # Post call
 
-    post(url, files, user=user, params=params, content_type='multiform')
+    result = post(url, files, user=user, params=params, content_type='multiform')
 
     #Return the list of updated samples
-    #TODO: reduce to a single output with the imported samples, from the post response
-    list_samples(user,output1,dataset)
+    list_imported(result, output)
 
-    #Return the new list of datasets
-    list_datasets(user, output)
+
+def list_imported(result, output) :
+    """When uploading a ds, the server returns a json object describing what has been imported
+    INPUT JSON FIELDS -
+    imported: samples imported with their metadata
+    autoMetadata: samples imported without metadata (those have been auto generated) """
+
+    samples = list ()
+
+    if 'imported' in result :
+        imported = result.get('imported')
+        if imported:
+            samples.append(result.get('imported'))
+    if 'autoMetadata' in result :
+        am = result.get('autoMetadata')
+        if am :
+            samples.append(result.get('autoMetadata'))
+
+    logging.debug("samples: \n%s"%(samples))
+
+    with open(output, 'w') as f_out:
+        for l in samples:
+            for s in l :
+                if 'id' in s and s['id']:
+                    id = s['id']
+                else :
+                    id = l.index(s) + 1
+                if 'path' in s :
+                    ext = s['path'].rsplit('.')[1]
+                else :
+                    ext = s['name'].rsplit('.')[1]
+
+                name = s['name']
+
+                f_out.write("{id}\t{name}\t{ext}\n".format(id=id, name=name,ext=ext))
 
 
 def download_samples(user, output, dataset):
@@ -285,9 +316,9 @@ def __main__():
     if args.cmd == 'delete':
         delete_dataset(args.user, args.output, args.dataset)
     if args.cmd == 'upload_url':
-        upload_samples_url(args.user, args.output, args.opt_out1, args.dataset, args.schema, args.samples)
+        upload_samples_url(args.user, args.output, args.dataset, args.schema, args.samples)
     if args.cmd == 'upload' :
-        upload_samples(args.user, args.output, args.opt_out1, args.dataset, args.schema, args.samples)
+        upload_samples(args.user, args.output, args.dataset, args.schema, args.samples)
     if args.cmd == 'import':
         import_samples(args.user, args.dataset)
     if args.cmd == 'download' :

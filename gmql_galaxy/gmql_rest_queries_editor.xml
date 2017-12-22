@@ -78,16 +78,9 @@
     </inputs>
 	<outputs>
         <data format="txt" name="log" label="${file_name} query log" />
-        <collection name="query_results" type="list" label="${file_name}">
-            <discover_datasets pattern="(?P&lt;designation&gt;.*)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
+        <collection name="query_results" type="list:list" label="${file_name}">
+            <discover_datasets pattern="(?P&lt;identifier_0&gt;[^_]+)_(?P&lt;identifier_1&gt;.+)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
             <filter>mode['exec_mode'] == 'execute'</filter>
-            <!--<actions>
-                <conditional name="mode.out_format">
-                    <when value="gdm">
-                        <action name="column_names" type="metadata" default="','.join(map(lambda x: x.split('\t')[0]),open(${schema_out},'r'))" />
-                    </when>
-                </conditional>
-            </actions>-->
         </collection>
 	</outputs>
 

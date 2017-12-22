@@ -3,7 +3,6 @@
       python $__tool_directory__/gmql_rest_datasets.py $output
 	  -user=$authToken
 	  -dataset=$name
-	  -opt_out1=$output1
 	  #if $upload.source == 'remote'
 	   -cmd=upload_url
 	   #if $upload.schema.schema_type == "custom" :
@@ -22,16 +21,6 @@
 	    -samples=$samples
 	  #end if
 	  ]]></command>
-    <!-- If samples and metadata are in a flat list -->
-    <!--<configfiles>
-        <configfile name="samples" >#if $upload.source == 'local' :
-            #for $file in $upload.samples
-            #echo '%s\t%s\n'%($file.name,$file)
-            #end for
-            #end if
-        </configfile>
-    </configfiles>-->
-    <!-- If samples and metadata are in a nested list -->
     <configfiles>
         <configfile name="samples" >#if $upload.source == 'local'
             #for $i in $upload.samples
@@ -118,57 +107,12 @@
 	</conditional>
   </inputs>
   <outputs>
-    <!--<data format="txt" name="output" label="Upload Result of ${name} to GMQL" /> -->
-      <data format="tabular" name="output1" label="${name} updated samples" >
+     <data format="tabular" name="output" label="${name} updated samples" >
             <actions>
                 <action name="column_names" type="metadata" default="id,sample,ext" />
             </actions>
       </data>
-      <data format="gmql_repository" name="output" label="${authToken.name.split()[0].rstrip('')} GMQL Datasets">
-            <actions>
-                <action name="column_names" type="metadata" default="dataset,owner" />
-            </actions>
-      </data>
   </outputs>
-  <tests>
-        <test>
-            <param name="authToken" value="dataset_34.dat" />
-            <param name="name" value="testcmd" />
-            <conditional name="upload">
-                <param name="source" value="remote" />
-                <conditional name="schema" >
-                    <param name="schema_type" value="custom" />
-                    <param name="schema_url" value="http://www.bioinformatics.deib.polimi.it/canakoglu/guest_data/HG19_ANN.schema" />
-                </conditional>
-                <param name="samples_urls" value="http://www.bioinformatics.deib.polimi.it/canakoglu/guest_data/RefSeqGenesExons_hg19.bed" />
-            </conditional>
-            <assert_command>
-                <has_text text="-cmd=upload_url"/>
-                <has_text text="-schema=http://www.bioinformatics.deib.polimi.it/canakoglu/guest_data/HG19_ANN.schema"/>
-                <has_text text="-samples=http://www.bioinformatics.deib.polimi.it/canakoglu/guest_data/RefSeqGenesExons_hg19.bed" />
-            </assert_command>
-        </test>
-        <test>
-            <param name="authToken" value="dataset_34.dat" />
-            <param name="name" value="testcmd" />
-            <conditional name="upload">
-                <param name="source" value="local" />
-                <conditional name="schema_local" >
-                    <param name="schema_type" value="custom" />
-                    <param name="schema" value="HG19_ANN.xml" />
-                </conditional>
-                <param name="samples" >
-                    <collection type="list">
-                        <element name="1" value="sample2.bed"/>
-                        <element name="2" value="sample2.bed.meta" />
-                    </collection>
-                </param>
-            </conditional>
-            <assert_command>
-                <has_text text="-cmd=upload" />
-            </assert_command>
-        </test>
-  </tests>
   <help>
   **What it does**
   

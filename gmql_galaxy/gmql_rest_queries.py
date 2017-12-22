@@ -130,7 +130,7 @@ def run_query(user, filename, q_type, query, log_file, rs_format, rs_schema):
 
         for s in samples :
             # Get the sample
-            get_sample(user,"sample_{name}.{ext}".format(name=s.replace('_',''),ext=rs_format), ds, s)
+            get_sample(user,"samples_{name}.{ext}".format(name=s.replace('_',''),ext=rs_format), ds, s)
             # Get its metadata
             get_sample_meta(user,"metadata_{name}.meta".format(name=s.replace('_',''),ext=rs_format), ds, s)
 
