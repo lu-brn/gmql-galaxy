@@ -84,7 +84,7 @@ def upload_samples_url(user, output, dataset, schema, samples):
 
     params = dict ()
 
-    if schema in ['bed','bedGraph','gtf','tab','NarrowPeak','BroadPeak','vcf'] :
+    if schema in ['bed','bedGraph','NarrowPeak','BroadPeak','vcf'] :
         params = add_url_param(params, module, call, schema)
     else:
         check_schema = validators.url(schema)
@@ -134,7 +134,7 @@ def upload_samples(user, output, dataset, schema, samples):
     params = dict ()
 
 
-    if schema in ['bed','bedGraph','gtf','tab','NarrowPeak','BroadPeak','vcf'] :
+    if schema in ['bed','bedGraph','NarrowPeak','BroadPeak','vcf'] :
         params = add_url_param(params, module, call, schema)
     else :
         # Add the schema given to the payload dictionary
@@ -187,7 +187,11 @@ def list_imported(result, output) :
                 if 'path' in s :
                     ext = s['path'].rsplit('.')[1]
                 else :
-                    ext = s['name'].rsplit('.')[1]
+                    n = s['name'].rsplit('.')
+                    if n.__len__()>1 :
+                        ext = n[1]
+                    else :
+                        ext = ''
 
                 name = s['name']
 

@@ -52,8 +52,6 @@
 				<param name="schema_type" type="select" label="File type" >
 					<option value="bed">bed</option>
 					<option value="bedGraph">bedGraph</option>
-					<option value="gtf">gtf</option>
-					<option value="tab">tab</option>
 					<option value="NarrowPeak">NarrowPeak</option>
 					<option value="BroadPeak">BroadPeak</option>
 					<option value="vcf">vcf</option>
