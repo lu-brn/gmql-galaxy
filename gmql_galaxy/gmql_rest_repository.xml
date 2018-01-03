@@ -10,10 +10,10 @@
          -dataset=$rep.dataset.ds_name
          -owner=$rep.dataset.owner
         #elif $cmd == 'delete' :
-         $out_result
+         $updated_list
          -dataset=$rep.dataset_del
         #else :
-         $out_result_ren
+         $updated_list
          -dataset=$rep.dataset_ren
          -new_name=$rep.new_name
         #end if
@@ -95,12 +95,18 @@
                 <action name="column_names" type="metadata" default="id,sample,ext" />
             </actions>
         </data>
-        <data format="txt" name="out_result_ren" label="Rename ${rep.dataset_ren} dataset outcome">
+       <data format="gmql_repository" name="updated_list" label="${authToken.name.split()[0].rstrip('')} GMQL Datasets">
+            <filter>rep['operation'] == 'rename' or rep['operation'] == 'delete'</filter>
+            <actions>
+                <action name="column_names" type="metadata" default="dataset,owner" />
+            </actions>
+       </data>
+        <!--<data format="txt" name="out_result_ren" label="Rename ${rep.dataset_ren} dataset outcome">
             <filter>rep['operation'] == 'rename'</filter>
         </data>
         <data format="txt" name="out_result" label="Delete ${rep.dataset_del} dataset outcome">
             <filter>rep['operation'] == 'delete'</filter>
-        </data>
+        </data>-->
     </outputs>
     <help>
         <!-- TODO -->

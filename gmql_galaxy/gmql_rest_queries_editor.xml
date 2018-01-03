@@ -16,6 +16,7 @@
        -log=$log
        -format=$mode.out_format
        -schema=$schema_out
+       -add_output=$updated_list
       #else :
        python $__tool_directory__/gmql_rest_queries.py
        -user=$authToken
@@ -82,6 +83,12 @@
             <discover_datasets pattern="(?P&lt;identifier_0&gt;[^_]+)_(?P&lt;identifier_1&gt;.+)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
             <filter>mode['exec_mode'] == 'execute'</filter>
         </collection>
+        <data format="gmql_repository" name="updated_list" label="${authToken.name.split()[0].rstrip('')} GMQL Datasets">
+            <filter>mode['exec_mode'] == 'execute'</filter>
+            <actions>
+                <action name="column_names" type="metadata" default="dataset,owner" />
+           </actions>
+       </data>
 	</outputs>
 
     <help>

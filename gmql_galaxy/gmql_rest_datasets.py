@@ -62,8 +62,11 @@ def rename_dataset(user, output, ds, new):
 
     outcome = get(url, user=user)
 
-    with open(output, 'w') as f_out:
-        f_out.write("Outcome: {result}".format(result=outcome['result']))
+    # Return the updated list of user's datasets
+    list_datasets(user, output)
+
+    # Write on stdout the operation outcome
+    sys.stdout.write("Rename: {result}".format(result=outcome['result']))
 
 
 def delete_dataset(user, output, ds):
@@ -75,11 +78,14 @@ def delete_dataset(user, output, ds):
 
     outcome = delete(url, user=user)
 
-    with open(output, 'w') as f_out:
-        f_out.write("Outcome: {result}".format(result=outcome['result']))
+    #Return the updated list of user's datasets
+    list_datasets(user, output)
+
+    #Write on stdout the operation outcome
+    sys.stdout.write("Delete: {result}".format(result=outcome['result']))
 
 
-def upload_samples_url(user, output, dataset, schema, samples):
+def upload_samples_url(user, output, dataset, schema, samples, updatedDsList):
     """Upload a dataset given the urls of the samples and their schema"""
 
     #Compose the url for the REST call
@@ -129,8 +135,11 @@ def upload_samples_url(user, output, dataset, schema, samples):
     #Return the list of updated samples
     list_imported(result, output)
 
+    #Return the updated list of samples
+    list_datasets(user, updatedDsList)
 
-def upload_samples(user, output, dataset, schema, samples):
+
+def upload_samples(user, output, dataset, schema, samples, updatedDsList):
     """Upload a dataset from the local instance"""
 
     logging.basicConfig(filename='/home/luana/gmql-galaxy/upload.log', level=logging.DEBUG, filemode='w')
@@ -169,6 +178,11 @@ def upload_samples(user, output, dataset, schema, samples):
 
     #Return the list of updated samples
     list_imported(result, output)
+
+
+    #Return the updated list of samples
+    list_datasets(user, updatedDsList)
+
 
 
 def list_imported(result, output) :
@@ -324,6 +338,7 @@ def __main__():
     parser.add_argument("-new_name")
     parser.add_argument("-schema")
     parser.add_argument("-samples")
+    parser.add_argument("-add_output")
 
     args = parser.parse_args()
 
@@ -336,9 +351,9 @@ def __main__():
     if args.cmd == 'delete':
         delete_dataset(args.user, args.output, args.dataset)
     if args.cmd == 'upload_url':
-        upload_samples_url(args.user, args.output, args.dataset, args.schema, args.samples)
+        upload_samples_url(args.user, args.output, args.dataset, args.schema, args.samples, args.add_output)
     if args.cmd == 'upload' :
-        upload_samples(args.user, args.output, args.dataset, args.schema, args.samples)
+        upload_samples(args.user, args.output, args.dataset, args.schema, args.samples, args.add_output)
     if args.cmd == 'import':
         import_samples(args.user, args.dataset)
     if args.cmd == 'download' :

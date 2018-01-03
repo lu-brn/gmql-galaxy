@@ -20,6 +20,7 @@
 	   #end if
 	    -samples=$samples
 	  #end if
+	    -add_output=$updated_list
 	  ]]></command>
     <configfiles>
         <configfile name="samples" >#if $upload.source == 'local'
@@ -108,6 +109,11 @@
                 <action name="column_names" type="metadata" default="id,sample,ext" />
             </actions>
       </data>
+      <data format="gmql_repository" name="updated_list" label="${authToken.name.split()[0].rstrip('')} GMQL Datasets">
+           <actions>
+                <action name="column_names" type="metadata" default="dataset,owner" />
+            </actions>
+       </data>
   </outputs>
   <help>
   **What it does**

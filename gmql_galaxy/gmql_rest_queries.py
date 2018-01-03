@@ -8,7 +8,7 @@ import argparse
 import tempfile
 from time import sleep
 
-from gmql_rest_datasets import list_samples, get_sample, get_sample_meta, get_schema
+from gmql_rest_datasets import list_samples, get_sample, get_sample_meta, get_schema, list_datasets
 from utilities import *
 from gmql_compositor import *
 
@@ -67,7 +67,7 @@ def compile_query(user, filename, q_type, query, log_file):
         stop_err("Compilation failed.\nSee log for details.")
 
 
-def run_query(user, filename, q_type, query, log_file, rs_format, rs_schema):
+def run_query(user, filename, q_type, query, log_file, rs_format, rs_schema, updatedDsList):
     """Run the given query. It returns an execution log and the resulting dataset."""
 
     call = 'run'
@@ -139,6 +139,8 @@ def run_query(user, filename, q_type, query, log_file, rs_format, rs_schema):
         #retrieve the schema of the resulting dataset
         get_schema(user,ds,rs_schema)
 
+        # Return the updated list of samples
+        list_datasets(user, updatedDsList)
 
 
 def read_status(user, jobid):
@@ -244,6 +246,7 @@ def __main__():
     parser.add_argument("-format")
     parser.add_argument("-schema")
     parser.add_argument("-result_dir")
+    parser.add_argument("-add_output")
 
 
     args = parser.parse_args()
@@ -255,9 +258,9 @@ def __main__():
             compile_query(args.user, args.name, args.query, args.queryLocal, args.log)
     if args.cmd == 'execute':
         if args.query == 'new' :
-            run_query(args.user, args.name, args.query, args.queryNew, args.log, args.format, args.schema)
+            run_query(args.user, args.name, args.query, args.queryNew, args.log, args.format, args.schema, args.add_output)
         else :
-            run_query(args.user, args.name, args.query, args.queryLocal, args.log, args.format, args.schema)
+            run_query(args.user, args.name, args.query, args.queryLocal, args.log, args.format, args.schema, args.add_output)
     if args.cmd == 'jobs':
         show_jobs(args.user, args.log)
     if args.cmd == 'stop' :
