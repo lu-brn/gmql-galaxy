@@ -53,6 +53,19 @@ def list_samples(user, output, ds, owner=''):
             f_out.write("{id}\t{name}\t{ext}\n".format(id=s['id'], name=s['name'],ext=s['path'].rsplit('.',1)[1]))
 
 
+def rename_dataset(user, output, ds, new):
+    """Rename a dataset from the user's private space"""
+
+    call = 'rename_dataset'
+    url = compose_url(module,call)
+    url = url.format(datasetName=ds, newDatasetName=new)
+
+    outcome = get(url, user=user)
+
+    with open(output, 'w') as f_out:
+        f_out.write("Outcome: {result}".format(result=outcome['result']))
+
+
 def delete_dataset(user, output, ds):
     """Delete a dataset from the user's private space"""
 
@@ -308,6 +321,7 @@ def __main__():
     parser.add_argument("-cmd")
     parser.add_argument("-dataset")
     parser.add_argument("-owner")
+    parser.add_argument("-new_name")
     parser.add_argument("-schema")
     parser.add_argument("-samples")
 
@@ -317,6 +331,8 @@ def __main__():
         list_datasets(args.user, args.output)
     if args.cmd == 'samples':
         list_samples(args.user, args.output, args.dataset, args.owner)
+    if args.cmd == 'rename' :
+        rename_dataset(args.user, args.output, args.dataset, args.new_name)
     if args.cmd == 'delete':
         delete_dataset(args.user, args.output, args.dataset)
     if args.cmd == 'upload_url':

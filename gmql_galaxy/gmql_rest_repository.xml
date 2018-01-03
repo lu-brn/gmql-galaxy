@@ -1,5 +1,5 @@
 <tool id="gmql_rest_repository" name="GMQL Repository Access" version="0.1.2">
-    <description>View, browse and delete datasets in the user's space on the GMQL system.</description>
+    <description>View, browse, rename or delete datasets in the user's space on the GMQL system.</description>
     <command><![CDATA[
         python $__tool_directory__/gmql_rest_datasets.py
         #set $cmd = $rep.operation
@@ -9,9 +9,13 @@
          $out_samples
          -dataset=$rep.dataset.ds_name
          -owner=$rep.dataset.owner
-        #else :
+        #elif $cmd == 'delete' :
          $out_result
          -dataset=$rep.dataset_del
+        #else :
+         $out_result_ren
+         -dataset=$rep.dataset_ren
+         -new_name=$rep.new_name
         #end if
         -user=$authToken
         -cmd=$cmd
@@ -24,6 +28,7 @@
             <param name="operation" type="select" display="radio" multiple="false" label="Select the desired action" >
             <option value="list">View datasets</option>
             <option value="samples">View a dataset's samples</option>
+            <option value="rename">Rename a dataset</option>
             <option value="delete">Delete a dataset</option>
         </param>
             <when value="list">
@@ -54,9 +59,21 @@
                         </when>
                     </conditional>
             </when>
+            <when value="rename">
+                <param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
+                <param name="dataset_ren" type="select" label="Select Dataset to rename">
+                    <options from_dataset="gmql_datasets">
+                        <column name="value" index="0" />
+                        <filter column="1" type="static_value" value="public" keep="false" />
+                    </options>
+                </param>
+                <param name="new_name" type="text" label="New Dataset Name" >
+		            <validator type="regex" message="Only alphanumeric characters and underscore are allowed">[\w]+$</validator>
+	            </param>
+            </when>
             <when value="delete">
                 <param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
-	            <param name="dataset_del" type="select" label="Select Dataset">
+	            <param name="dataset_del" type="select" label="Select Dataset to delete">
 		            <options from_dataset="gmql_datasets">
                             <column name="value" index="0" />
                             <filter column="1" type="static_value" value="public" keep="false"/>
@@ -77,6 +94,9 @@
             <actions>
                 <action name="column_names" type="metadata" default="id,sample,ext" />
             </actions>
+        </data>
+        <data format="txt" name="out_result_ren" label="Rename ${rep.dataset_ren} dataset outcome">
+            <filter>rep['operation'] == 'rename'</filter>
         </data>
         <data format="txt" name="out_result" label="Delete ${rep.dataset_del} dataset outcome">
             <filter>rep['operation'] == 'delete'</filter>

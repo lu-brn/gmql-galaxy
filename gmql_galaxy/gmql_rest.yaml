@@ -15,6 +15,7 @@ repository: #operation over user repository
         list_datasets : []
         list_samples : ['{datasetName}']
         delete_dataset : ['{datasetName}']
+        rename_dataset : ['{datasetName}', rename, '{newDatasetName}']
         download_zip : ['{datasetName}', zip]
         download_sample : ['{datasetName}','{sample}',region]
         download_meta : ['{datasetName}','{sample}',metadata]
