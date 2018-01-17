@@ -1,6 +1,10 @@
 ---
 STATEMENT:
-    '{o_variable} = {operation} ( {parameters} ) {i_variables} ;'
-operation:
-    select: SELECT
-    map: MAP
+    '{o_variable} = {operator}({parameters}) {i_variables} ;'
+MATERIALIZE:
+    'MATERIALIZE {variable} INTO {file_name};'
+PARAMETERS:
+    select:
+        metadata: '{p}'
+        region: 'region: {p}'
+        semijoin: 'semijoin: {p}'

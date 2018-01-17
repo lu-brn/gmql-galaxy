@@ -16,12 +16,7 @@ module_execution = 'query_exec'
 module_monitor = 'query_monitor'
 
 
-def check_input(query,q_type='new'):
-
-    if q_type == 'local' :
-        # Retrieve the query data and convert it in an actual one and then clean it
-        cm = Compositor()
-        query = cm.read_query(query)
+def check_input(query):
 
     # Clean the input from Galaxy escape characters.
 
@@ -35,17 +30,18 @@ def check_input(query,q_type='new'):
     return query
 
 
-def compile_query(user, filename, q_type, query, log_file):
+def compile_query(user, filename, query, log_file):
     """Compile the given query"""
-
-    #logging.basicConfig(filename='/home/luana/gmql-galaxy/queries.log', level=logging.DEBUG, filemode='w')
 
     call = 'compile'
 
-    #Check the input
-    query_cl = check_input(query, q_type)
+    #Read query from file
+    with open(query, 'r') as f_in:
+        query_text = f_in.read()
 
-    #logging.debug(query_cl)
+    #Check the input
+    query_cl = check_input(query_text)
+
 
     # Then ask it to be compiled
     url = compose_url(module_execution, call)
@@ -67,13 +63,17 @@ def compile_query(user, filename, q_type, query, log_file):
         stop_err("Compilation failed.\nSee log for details.")
 
 
-def run_query(user, filename, q_type, query, log_file, rs_format, rs_schema, updatedDsList):
+def run_query(user, filename, query, log_file, rs_format, rs_schema, updatedDsList):
     """Run the given query. It returns an execution log and the resulting dataset."""
 
     call = 'run'
 
-    # First clean the input
-    query_cl = check_input(query)
+    # Read query from file
+    with open(query, 'r') as f_in:
+        query_text = f_in.read()
+
+    # Check the input
+    query_cl = check_input(query_text)
 
     # Then ask it to be executed
 
@@ -252,15 +252,9 @@ def __main__():
     args = parser.parse_args()
 
     if args.cmd == 'compile':
-        if args.query == 'new' :
-            compile_query(args.user, args.name, args.query, args.queryNew, args.log)
-        else :
-            compile_query(args.user, args.name, args.query, args.queryLocal, args.log)
+        compile_query(args.user, args.name, args.query, args.log)
     if args.cmd == 'execute':
-        if args.query == 'new' :
-            run_query(args.user, args.name, args.query, args.queryNew, args.log, args.format, args.schema, args.add_output)
-        else :
-            run_query(args.user, args.name, args.query, args.queryLocal, args.log, args.format, args.schema, args.add_output)
+        run_query(args.user, args.name, args.query, args.log, args.format, args.schema, args.add_output)
     if args.cmd == 'jobs':
         show_jobs(args.user, args.log)
     if args.cmd == 'stop' :

@@ -1,10 +1,7 @@
 <tool id="gmql_select" name="GMQL: SELECT statement" version="0.1.0">
     <macros>
-        <import>macros.xml</import>
         <import>select_macros.xml</import>
     </macros>
-    <expand macro="requirements"/>
-    <expand macro="stdio" />
     <command><![CDATA[
         python $__tool_directory__/gmql_select.py $source $params $query
     ]]></command>
@@ -84,5 +81,4 @@
     <help><![CDATA[
         TODO: Fill in help.
     ]]></help>
-    <expand macro="citations"/>
 </tool>

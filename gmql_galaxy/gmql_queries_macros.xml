@@ -1,0 +1,31 @@
+<macros>
+    <xml name="input_ds" token_label="ds_label">
+        <param name="input_ds" type="select" label="@LABEL@">
+            <options from_dataset="gmql_datasets">
+                <column name="value" index="0"/>
+            </options>
+        </param>
+    </xml>
+    <xml name="output_var">
+        <param name="output_var" type="text" label="Output Variable Name" >
+            <expand macro="text_val" />
+        </param>
+    </xml>
+    <xml name="input_var" token_name="@NAME@" token_label="@LABEL@" token_optional="@OPTIONAL@">
+        <param name="@NAME@" label="@LABEL@" optional="@OPTIONAL@" type="text" help="Must be a dataset variable already defined as output of a previous operation.">
+            <expand macro="text_val" />
+        </param>
+    </xml>
+    <xml name="materialize_stm">
+        <param name="materialize_stm" type="boolean" label="Materialize the result?" help="This may be helpful to check intermediate datasets" />
+    </xml>
+    <xml name="logCon">
+        <param name="logCon" type="select" label="Logical Operator">
+            <option value="AND">AND</option>
+            <option value="OR">OR</option>
+        </param>
+    </xml>
+    <xml name="text_val">
+        <validator type="regex" message="Only alphanumeric characters and underscore allowed.">[\w]+$</validator>
+    </xml>
+</macros>

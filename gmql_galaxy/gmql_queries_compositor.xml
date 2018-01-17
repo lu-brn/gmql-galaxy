@@ -1,0 +1,95 @@
+<tool id="gmql_queries_compositor" name="GMLQ Query Compositor" version="0.1.1">
+    <macros>
+        <import>gmql_queries_macros.xml</import>
+        <import>gmql_select_macros.xml</import>
+    </macros>
+    <description>Compose, Compile and Run GMQL queries step by step.</description>
+    <command><![CDATA[
+    #if $materialize.materialize_result == 'true' :
+     #if $materialize.choose_op.op == 'run' :
+      mkdir -p results && cd results &&
+      python $__tool_directory__/gmql_queries_compositor.py
+      -user=$authToken
+      -query_params=$query_params
+      -query_output=$query
+      -query_log=$log
+	  -updated_ds_list=$updated_list
+	 #else :
+	  python $__tool_directory__/gmql_queries_compositor.py
+      -user=$authToken
+      -query_params=$query_params
+      -query_output=$query
+      -query_log=$log
+      #end if
+    #else:
+    python $__tool_directory__/gmql_queries_compositor.py
+     -user=$authToken
+     -query_params=$query_params
+     -query_output=$query
+    #end if
+    ]]></command>
+    <configfiles>
+        <inputs name="query_params" filename="params.json"/>
+    </configfiles>
+    <inputs>
+        <param format="gmql_user" name="authToken" type="data" label="Select user">
+            <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
+        </param>
+        <param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
+        <param name="query_name" type="text" label="Query Name" >
+		    <expand macro="text_val" />
+	    </param>
+        <repeat name="operations" title="GMQL Operations" help="Add a new operation to the execution flow."
+                min="1" default="0">
+            <conditional name="operation">
+                <param name="operator" type="select" label="Operation" >
+                    <option value="SELECT">SELECT</option>
+                    <option value="MAP">MAP</option>
+                    <option value="ORDER">ORDER</option>
+                    <!-- Other Operators -->
+                </param>
+                <when value="SELECT">
+                    <expand macro="select" />
+                </when>
+            </conditional>
+        </repeat>
+        <conditional name="materialize">
+                <param name="materialize_result" type="boolean" label="Materialize final result?"
+                   help="Compile and Run are available only for materialized queries. Otherwise it will only save this query" />
+                <when value="true">
+                    <conditional name="choose_op">
+                        <param name="op" type="select" label="Run the query or Compile only" >
+                            <option value="run">Run</option>
+                            <option value="compile">Compile Only</option>
+                        </param>
+                        <when value="run">
+                            <param name="out_format" type="select" label="Output format">
+                                <option value="gdm">TAB Delimited (GDM)</option>
+                                <option value="gtf">GTF</option>
+                            </param>
+                        </when>
+                    </conditional>
+                </when>
+        </conditional>
+    </inputs>
+    <outputs>
+        <data name="query" format="gmql_query" label="${query_name} GMQL query"/>
+        <data format="txt" name="log" label="${query_name} Log" >
+            <filter>materialize['materialize_result'] is True</filter>
+        </data>
+        <collection name="query_results" type="list:list" label="${query_name}">
+            <discover_datasets pattern="(?P&lt;identifier_0&gt;[^_]+)_(?P&lt;identifier_1&gt;.+)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
+            <filter>materialize['materialize_result'] is True and materialize['choose_op']['op'] == 'run'</filter>
+        </collection>
+        <!-- TODO handling of intermediate materialize statements -->
+        <data format="gmql_repository" name="updated_list" label="${authToken.name.split()[0].rstrip('')} GMQL Datasets">
+            <filter>materialize['materialize_result'] is True and materialize['choose_op']['op'] == 'run'</filter>
+            <actions>
+                <action name="column_names" type="metadata" default="dataset,owner" />
+            </actions>
+       </data>
+    </outputs>
+    <help>
+        <!-- -->
+    </help>
+</tool>

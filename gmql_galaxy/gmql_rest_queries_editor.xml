@@ -1,18 +1,13 @@
 <tool id="gmql_rest_queries_editor" name="GMLQ Query Editor" version="0.1.1">
-  <description>Compile and run GMQL queries.</description>
+  <description>Compile and run GMQL queries (Advanced Mode)</description>
     <command><![CDATA[
       #if $mode.exec_mode == "execute" :
        mkdir -p results && cd results &&
        python $__tool_directory__/gmql_rest_queries.py
        -user=$authToken
        -cmd=execute
-       -name=$file_name
-       -query=$query.query_type
-       #if $query.query_type == 'new':
-        -queryNew="${query.query_n}"
-       #else :
-        -queryLocal=$query.query_l
-       #end if
+       -name=$query_name
+       -query=$query_text
        -log=$log
        -format=$mode.out_format
        -schema=$schema_out
@@ -21,51 +16,35 @@
        python $__tool_directory__/gmql_rest_queries.py
        -user=$authToken
        -cmd=$mode.exec_mode
-       -name=$file_name
-       -query=$query.query_type
-       #if $query.query_type == 'new':
-        -queryNew="${query.query_n}"
-       #else :
-        -queryLocal=$query.query_l
-       #end if
+       -name=$query_name
+       -query=$query_text
        -log=$log
       #end if
 	  ]]></command>
   <configfiles>
       <configfile name="schema_out" >
-
       </configfile>
+      <configfile name="query_text" >#echo '%s'%($query)</configfile>
   </configfiles>
-  <inputs>
+   <inputs>
 	<param format="gmql_user" name="authToken" type="data" label="Select user">
             <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
     </param>
-	<param name="file_name" type="text" label="Query Name" >
+	<param name="query_name" type="text" label="Query Name" >
 		<validator type="regex" message="Only alphanumeric characters and underscore are allowed">[\w]+$</validator> 
 	</param>
-    <conditional name="query">
-        <param name="query_type" type="select" label="Write a new query or sent to execution a local one" display="radio" multiple="false">
-            <option value="new">New Query</option>
-            <option value="local">Local Query</option>
-        </param>
-        <when value="new">
-            <param name="query_n" type="text" area="True" size="10x150" label="Query" >
-                <sanitizer>
-                <valid initial="default">
-                    <add value=";"/>
-                </valid>
-                <mapping initial="default">
-                    <add source="X" target="__cn__" />
-                </mapping>
-            </sanitizer>
-            </param>
-        </when>
-        <when value="local">
-            <param name="query_l" type="data" format="gmql_query" />
-        </when>
-    </conditional>
-    <conditional name="mode">
-      <param name="exec_mode" type="select" label="Save only, compile or run query">
+    <param name="query" type="text" area="true" label="Query" >
+        <sanitizer>
+            <valid initial="default">
+                <add value=";"/>
+            </valid>
+            <mapping initial="default">
+                <add source="X" target="__cn__" />
+            </mapping>
+        </sanitizer>
+    </param>
+     <conditional name="mode">
+      <param name="exec_mode" type="select" label="Compile or run query">
 		<option value="compile">Compile query</option>
         <option value="execute">Execute query</option>
       </param>
@@ -78,8 +57,8 @@
     </conditional>
     </inputs>
 	<outputs>
-        <data format="txt" name="log" label="${file_name} query log" />
-        <collection name="query_results" type="list:list" label="${file_name}">
+        <data format="txt" name="log" label="${query_name} query log" />
+        <collection name="query_results" type="list:list" label="${query_name}">
             <discover_datasets pattern="(?P&lt;identifier_0&gt;[^_]+)_(?P&lt;identifier_1&gt;.+)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
             <filter>mode['exec_mode'] == 'execute'</filter>
         </collection>

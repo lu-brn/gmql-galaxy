@@ -1,0 +1,100 @@
+<macros>
+    <import>gmql_queries_macros.xml</import>
+    <xml name="select">
+        <expand macro="input_ds" label="Select Dataset over which SELECT samples" />
+        <expand macro="output_var" />
+        <section name="metadata_predicates" title="Conditions on metadata" expanded="false"
+                 help="Selection based on the existence and values of certain metadata attributes in each sample.">
+            <expand macro="metadata_predicate" optional="true"/>
+            <repeat name="pm_additional" title="Additional Condition"
+                    min="0" default="0">
+                <expand macro="metadata_predicate">
+                    <expand macro="logCon" />
+                </expand>
+            </repeat>
+        </section>
+        <section name="region_predicates" title="Conditions on region fields" expanded="false"
+                 help="Selection based on the characteristics of the genomic regions of each sample.">
+            <expand macro="region_predicate" optional="true"/>
+            <repeat name="pr_additional" title="Additional Condition"
+                    min="0" default="0">
+                <expand macro="region_predicate">
+                    <expand macro="logCon" />
+                </expand>
+            </repeat>
+        </section>
+        <section name="semijoin_predicate" title="Conditions in relation of an external datasets" expanded="false"
+                 help="Selection based on the existence of certain metadata attributes
+                                   and the matching of their values with those associated with at least one sample in an
+                                   external dataset D_EXT">
+            <expand macro="semijoin" />
+        </section>
+        <expand macro="materialize_stm" />
+    </xml>
+    <xml name="metadata_predicate" token_optional="optional" >
+        <yield />
+        <param name="negate" type="boolean" label="Negative Condition" optional="@OPTIONAL@"/>
+        <param name="attribute" type="text" label="Metadata Attribute Name" optional="@OPTIONAL@" >
+            <expand macro="text_val" />
+        </param>
+        <expand macro="condition" optional="@OPTIONAL@" />
+        <param name="value" type="text" label="Value whom to confront the metadata attribute with" optional="@OPTIONAL@" >
+            <expand macro="meta_value" />
+        </param>
+    </xml>
+    <xml name="region_predicate" token_optional="optional">
+        <yield />
+        <param name="negate" type="boolean" label="Negative Condition" optional="@OPTIONAL@" />
+        <param name="region_attribute" type="text" label="Region Attribute Name" optional="@OPTIONAL@" >
+            <expand macro="text_val" />
+        </param>
+        <expand macro="condition" optional="@OPTIONAL@" />
+        <param name="value" type="text" label="Value whom to confront the region attribute with" optional="@OPTIONAL@" >
+            <expand macro="comp_value"/>
+        </param>
+        <param name="is_meta_value" type="boolean" label="Is it the confront value a metadata field?" optional="@OPTIONAL@"
+               help="The use of metadata attributes in predicates on region attributes is enabled." />
+    </xml>
+    <xml name="semijoin">
+        <repeat name="sj_attributes" title="Metadata Attributes to match in DS_EXT" min="0" default="0">
+            <param name="sj_att" label="Attribute" type="text" >
+               <expand macro="metajoin_att" />
+            </param>
+        </repeat>
+        <param name="condition" type="select" label="Condition">
+            <option value="IN">IN</option>
+            <option value="N_IN">NOT IN</option>
+        </param>
+        <expand macro="input_var" name="ds_ext" label="DS_EXT" optional="true" />
+    </xml>
+    <xml name="meta_value">
+        <validator type="regex" message="Invalid attribute name.">[\w]+|[\*]$</validator>
+        <option value="*">any value</option>
+        <option value="string">string</option>
+    </xml>
+    <xml name="metajoin_att">
+        <validator type="regex" message="Invalid attribute name.">[\w]+(.[\w]+)?$</validator>
+        <option value="attribute_name">attribute_name</option>
+        <option value="DS.attribute_name">DS.attribute_name</option>
+        <!-- TODO implement FULL and EXACT -->
+    </xml>
+    <xml name="comp_value">
+        <validator type="regex" message="Valid characters are letters, digits, '.', +, -, and the wildcard symbol '*'">
+            [\w]+$|[\d]+(\.[\d]+)?$|[+\-\*]$
+        </validator>
+        <option value="*">any value</option>
+        <option value="string">string</option>
+        <option value="0.0">0.0</option>
+        <option value="+">+</option>
+        <option value="-">-</option>
+    </xml>
+    <xml name="condition" token_optional="optional">
+        <param name="condition" type="select" label="Condition" optional="@OPTIONAL@">
+            <option value="eq"><![CDATA[ == ]]></option>
+            <option value="gt"><![CDATA[ > ]]></option>
+            <option value="lt"><![CDATA[ < ]]></option>
+            <option value="ge"><![CDATA[ >= ]]></option>
+            <option value="le"><![CDATA[ <= ]]></option>
+        </param>
+    </xml>
+</macros>
