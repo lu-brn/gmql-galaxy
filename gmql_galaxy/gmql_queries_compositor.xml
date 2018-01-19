@@ -57,6 +57,7 @@
                 <param name="materialize_result" type="boolean" label="Materialize final result?"
                    help="Compile and Run are available only for materialized queries. Otherwise it will only save this query" />
                 <when value="true">
+                    <expand macro="output-filename" />
                     <conditional name="choose_op">
                         <param name="op" type="select" label="Run the query or Compile only" >
                             <option value="run">Run</option>

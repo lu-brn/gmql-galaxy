@@ -9,9 +9,7 @@ import yaml
 
 class Statement(object):
 
-    def __init__(self, syntax):
-
-        self.syntax = yaml.load(syntax)
+    def __init__(self):
 
         self.operator = str()
         self.variables = dict ()
@@ -20,31 +18,35 @@ class Statement(object):
     def save(self, output):
         pass
 
-    def write_query(self):
-        pass
+    def write_query(self, syntax):
+        self.syntax = yaml.load(syntax)
 
     def set_variable(self, var, var_name):
-        self.variables.update(var_name=var)
+        self.variables[var_name] = var
 
     def set_param(self, param, param_type):
-        self.params.update(param_type=param)
+        self.params[param_type] = param
 
 class Materialize(Statement):
 
-    def __init__(self, syntax):
-        super(Materialize, self).__init__(syntax=syntax)
+    def __init__(self, filename, input_ds):
+        super(Materialize, self).__init__()
+        self.operator = 'MATERIALIZE'
+        self.set_variable(filename, 'output')
+        self.set_variable(input_ds, 'input1')
+
 
 class Select(Statement):
 
-    def __init__(self, syntax):
-        super(Select, self).__init__(syntax=syntax)
+    def __init__(self):
+        super(Select, self).__init__()
         self.operator = 'SELECT'
 
-    def set_output_ds(self, var):
+    def set_output_var(self, var):
         self.set_variable(var, 'output')
 
     def set_input_ds(self, var):
-        self.set_variable(var, 'input')
+        self.set_variable(var, 'input1')
 
     def set_metadata_predicates(self, logicalPredicate):
         self.set_param(logicalPredicate, 'metadata')
@@ -58,8 +60,8 @@ class Select(Statement):
 
 class WellFormedFormula(object) :
 
-    def __init__(self,p):
-        self.wff = p
+    def __init__(self, predicate):
+        self.wff = predicate
 
     def save(self, output):
         pass
@@ -71,22 +73,22 @@ class WellFormedFormula(object) :
         self.wff = (self.wff, 'NOT')
         return self
 
-    def _and(self, p):
-        self.wff = (self.wff, p.wff, 'AND')
+    def and_(self, predicate):
+        self.wff = (self.wff, predicate.wff, 'AND')
         return self
 
-    def _or(self, p):
-        self.wff = (self.wff, p.wff, 'OR')
+    def or_(self, predicate):
+        self.wff = (self.wff, predicate.wff, 'OR')
         return self
 
 
 class Predicate(object):
 
-    def __init__(self, field1, field2):
+    def __init__(self, field1, field2, condition):
 
-        self.field1 = field1
-        self.field2 = field2
-        self.condition = None
+        self.p_attribute = field1
+        self.p_value = field2
+        self.condition = condition
 
     def save(self, output):
         pass
@@ -95,46 +97,46 @@ class Predicate(object):
         pass
 
 
-    def eq(self):
-        self.condition = '=='
-        return self
-
-    def lt(self):
-        self.condition = '<'
-        return self
-
-    def gt(self):
-        self.condition = '>'
-        return self
-
-    def let(self):
-        self.condition = '<='
-        return self
-
-    def get(self):
-        self.condition = '>='
-        return self
-
-
 class MetaPredicate(Predicate):
 
-    def __init__(self, attribute, value):
-        super(MetaPredicate, self).__init__(attribute, value)
+    def __init__(self, attribute, value, condition):
+        super(MetaPredicate, self).__init__(attribute, value, condition)
 
 class RegionPredicate(Predicate):
 
-    def __init__(self, attribute, value):
-        super(RegionPredicate, self).__init__(attribute, value)
+    def __init__(self, attribute, value, condition):
+        super(RegionPredicate, self).__init__(attribute, value, condition)
 
-class SemiJoinPredicate(Predicate):
+    def set_value_type(self, type=None):
+        """Possible values type are: coordinate, float, string, meta_attribute"""
 
-    def __init__(self, attributes, dataset):
-        super(SemiJoinPredicate, self).__init__(attributes, dataset)
+        if type is None :
+            if self.p_attribute in ['chr', 'left', 'right', 'strand'] :
+                #The region attribute given is a region coordinate attribute
+                self.value_type = 'coordinate'
+            else :
+                try:
+                    self.p_value = float(self.p_value)
+                    self.value_type = 'float'
+                except ValueError :
+                    self.value_type = 'string'
+        else:
+            #The type is given.
+            self.value_type = type
 
-    def is_in(self):
-        self.condition = 'IN'
-        return self
+class MetadataComparison(object):
 
-    def is_not_int(self):
-        self.condition = 'NOT IN'
-        return self
+    def __init__(self, attributes):
+        self.attributes = list ()
+
+    def set_attributes(self, attributes):
+        self.attributes = list()
+        self.attributes.append(attributes)
+
+class SemiJoinPredicate(MetadataComparison):
+
+    def __init__(self, attributes, dataset, condition):
+        super(MetadataComparison, self).__init__()
+        self.set_attributes(attributes)
+        self.ds_ext = dataset
+        self.condition = condition

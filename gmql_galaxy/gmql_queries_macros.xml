@@ -16,8 +16,19 @@
             <expand macro="text_val" />
         </param>
     </xml>
-    <xml name="materialize_stm">
-        <param name="materialize_stm" type="boolean" label="Materialize the result?" help="This may be helpful to check intermediate datasets" />
+    <xml name="materialize_stm" >
+        <conditional name="m_stm">
+            <param name="materialize_stm" type="boolean" label="Materialize the result?" help="This may be helpful to check intermediate datasets" />
+            <when value="true">
+                    <expand macro="output-filename" />
+            </when>
+        </conditional>
+    </xml>
+    <xml name="output-filename">
+        <param name="file_name" type="text" label="Name of the file into which the dataset DS will be saved"
+               help="The actual GMQL implementation materializes DS into a file with a name in the form [queryname]_[timestamp]_filename">
+            <expand macro="text_val"/>
+        </param>
     </xml>
     <xml name="logCon">
         <param name="logCon" type="select" label="Logical Operator">

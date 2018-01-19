@@ -45,12 +45,12 @@
     <xml name="region_predicate" token_optional="optional">
         <yield />
         <param name="negate" type="boolean" label="Negative Condition" optional="@OPTIONAL@" />
-        <param name="region_attribute" type="text" label="Region Attribute Name" optional="@OPTIONAL@" >
-            <expand macro="text_val" />
+        <param name="attribute" type="text" label="Region Attribute Name" optional="@OPTIONAL@" >
+            <expand macro="region_attribute" />
         </param>
         <expand macro="condition" optional="@OPTIONAL@" />
         <param name="value" type="text" label="Value whom to confront the region attribute with" optional="@OPTIONAL@" >
-            <expand macro="comp_value"/>
+            <expand macro="region_value"/>
         </param>
         <param name="is_meta_value" type="boolean" label="Is it the confront value a metadata field?" optional="@OPTIONAL@"
                help="The use of metadata attributes in predicates on region attributes is enabled." />
@@ -63,7 +63,7 @@
         </repeat>
         <param name="condition" type="select" label="Condition">
             <option value="IN">IN</option>
-            <option value="N_IN">NOT IN</option>
+            <option value="NOT_IN">NOT IN</option>
         </param>
         <expand macro="input_var" name="ds_ext" label="DS_EXT" optional="true" />
     </xml>
@@ -78,7 +78,15 @@
         <option value="DS.attribute_name">DS.attribute_name</option>
         <!-- TODO implement FULL and EXACT -->
     </xml>
-    <xml name="comp_value">
+    <xml name="region_attribute">
+        <expand macro="text_val" />
+        <option value="chr">chr</option>
+        <option value="left">left</option>
+        <option value="right">right</option>
+        <option value="strand">strand</option>
+        <option value="region_field">region_field</option>
+    </xml>
+    <xml name="region_value">
         <validator type="regex" message="Valid characters are letters, digits, '.', +, -, and the wildcard symbol '*'">
             [\w]+$|[\d]+(\.[\d]+)?$|[+\-\*]$
         </validator>
