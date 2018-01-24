@@ -1,10 +1,33 @@
 ---
+GMQL-VERSION: 'V2.1'
 STATEMENT:
-    '{o_variable} = {operator}({parameters}) {i_variables} ;'
+    '{out_var} = {operator} ({parameters}) {in_vars};'
 MATERIALIZE:
     'MATERIALIZE {variable} INTO {file_name};'
-PARAMETERS:
-    select:
-        metadata: '{p}'
-        region: 'region: {p}'
-        semijoin: 'semijoin: {p}'
+PARAMS:
+    separator: '; '
+    meta_separator: ', '
+    wff:
+        NOT: 'NOT ({p})'
+        AND: '{p1} AND {p2}'
+        OR: '{p1} OR  {p2}'
+        BLOCK: '({p})'
+    predicate:
+        eq: '{att} == {val}'
+        lt: '{att} < {val}'
+        gt: '{att} > {val}'
+        let: '{att} <= {val}'
+        get: '{att} >= {val}'
+        values:
+            string: "'{p}'"
+            float: "{p}"
+            int: "{p}"
+            coordinate: "{p}"
+            meta: "META({p})"
+    SELECT:
+        metadata: '{predicate}'
+        region: 'region: {predicate}'
+        semijoin: 'semijoin: {predicate}'
+        semijoin_predicate:
+            IN: '{attributes} IN {ds_ext}'
+            NOT_IN: '{attributes} NOT IN {ds_ext}'

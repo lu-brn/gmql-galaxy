@@ -10,6 +10,7 @@
       mkdir -p results && cd results &&
       python $__tool_directory__/gmql_queries_compositor.py
       -user=$authToken
+      -cmd='run'
       -query_params=$query_params
       -query_output=$query
       -query_log=$log
@@ -17,6 +18,7 @@
 	 #else :
 	  python $__tool_directory__/gmql_queries_compositor.py
       -user=$authToken
+      -cmd='compile'
       -query_params=$query_params
       -query_output=$query
       -query_log=$log
@@ -24,6 +26,7 @@
     #else:
     python $__tool_directory__/gmql_queries_compositor.py
      -user=$authToken
+     -cmd='save'
      -query_params=$query_params
      -query_output=$query
     #end if

@@ -1,4 +1,4 @@
-<tool id="gmlq_rest_datasets_upload" name="GMLQ Upload Dataset" version="0.1.2">
+<tool id="gmlq_rest_datasets_upload" name="GMLQ Upload Dataset" version="0.1.1">
   <command><![CDATA[
       python $__tool_directory__/gmql_rest_datasets.py $output
 	  -user=$authToken

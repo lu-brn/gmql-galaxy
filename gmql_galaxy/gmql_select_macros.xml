@@ -5,21 +5,21 @@
         <expand macro="output_var" />
         <section name="metadata_predicates" title="Conditions on metadata" expanded="false"
                  help="Selection based on the existence and values of certain metadata attributes in each sample.">
-            <expand macro="metadata_predicate" optional="true"/>
-            <repeat name="pm_additional" title="Additional Condition"
-                    min="0" default="0">
-                <expand macro="metadata_predicate">
-                    <expand macro="logCon" />
+            <expand macro="meta_block" optional="true" />
+            <repeat name="add_meta_blocks" title="Additional Conditions Block" default="0" min="0"
+                    help="Compose different blocks to obtain more complex conditions">
+                <expand macro="meta_block">
+                    <expand macro="block_logCon" />
                 </expand>
             </repeat>
         </section>
         <section name="region_predicates" title="Conditions on region fields" expanded="false"
                  help="Selection based on the characteristics of the genomic regions of each sample.">
-            <expand macro="region_predicate" optional="true"/>
-            <repeat name="pr_additional" title="Additional Condition"
-                    min="0" default="0">
-                <expand macro="region_predicate">
-                    <expand macro="logCon" />
+            <expand macro="region_block" optional="true" />
+            <repeat name="add_region_blocks" title="Additional Conditions Block" default="0" min="0"
+                    help="Compose different blocks to obtain more complex conditions">
+                <expand macro="region_block">
+                    <expand macro="block_logCon" />
                 </expand>
             </repeat>
         </section>
@@ -31,6 +31,16 @@
         </section>
         <expand macro="materialize_stm" />
     </xml>
+    <xml name="meta_block" token_optional="optional">
+        <yield />
+        <expand macro="metadata_predicate" optional="@OPTIONAL@"/>
+        <repeat name="pm_additional" title="Additional Condition"
+                min="0" default="0">
+            <expand macro="metadata_predicate">
+                <expand macro="logCon"/>
+            </expand>
+        </repeat>
+    </xml>
     <xml name="metadata_predicate" token_optional="optional" >
         <yield />
         <param name="negate" type="boolean" label="Negative Condition" optional="@OPTIONAL@"/>
@@ -41,6 +51,16 @@
         <param name="value" type="text" label="Value whom to confront the metadata attribute with" optional="@OPTIONAL@" >
             <expand macro="meta_value" />
         </param>
+    </xml>
+    <xml name="region_block" token_optional="optional">
+        <yield />
+        <expand macro="region_predicate" optional="@OPTIONAL@"/>
+        <repeat name="pr_additional" title="Additional Condition"
+                min="0" default="0">
+            <expand macro="region_predicate">
+                <expand macro="logCon"/>
+            </expand>
+        </repeat>
     </xml>
     <xml name="region_predicate" token_optional="optional">
         <yield />
@@ -88,10 +108,11 @@
     </xml>
     <xml name="region_value">
         <validator type="regex" message="Valid characters are letters, digits, '.', +, -, and the wildcard symbol '*'">
-            [\w]+$|[\d]+(\.[\d]+)?$|[+\-\*]$
+            [\w]+||[\d]+(\.[\d]+)?||[+\-\*]$
         </validator>
         <option value="*">any value</option>
         <option value="string">string</option>
+        <option value="1">1</option>
         <option value="0.0">0.0</option>
         <option value="+">+</option>
         <option value="-">-</option>
@@ -101,8 +122,8 @@
             <option value="eq"><![CDATA[ == ]]></option>
             <option value="gt"><![CDATA[ > ]]></option>
             <option value="lt"><![CDATA[ < ]]></option>
-            <option value="ge"><![CDATA[ >= ]]></option>
-            <option value="le"><![CDATA[ <= ]]></option>
+            <option value="get"><![CDATA[ >= ]]></option>
+            <option value="let"><![CDATA[ <= ]]></option>
         </param>
     </xml>
 </macros>

@@ -30,6 +30,13 @@
             <expand macro="text_val"/>
         </param>
     </xml>
+    <xml name="block_logCon" >
+        <section name="block_logCon" title="Logical concatenation between blocks" expanded="true"
+                 help="The following logical connectors applies to the WHOLE following block.">
+            <expand macro="logCon" />
+            <param name="negate" type="boolean" label="Negative Condition"  />
+        </section>
+    </xml>
     <xml name="logCon">
         <param name="logCon" type="select" label="Logical Operator">
             <option value="AND">AND</option>

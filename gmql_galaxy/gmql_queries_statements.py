@@ -15,8 +15,17 @@ class Statement(object):
         self.variables = dict ()
         self.params = dict ()
 
-    def save(self, output):
-        pass
+    def save(self, syntax):
+
+        var_o = self.variables.get('output')
+        var_i = [self.variables.get('input1'),self.variables.get('input2','')]
+
+        stm = syntax['STATEMENT'].format(operator=self.operator,
+                                         out_var=var_o,
+                                         in_vars=" ".join(var_i),
+                                         parameters='{parameters}')
+
+        return stm
 
     def write_query(self, syntax):
         self.syntax = yaml.load(syntax)
@@ -35,12 +44,68 @@ class Materialize(Statement):
         self.set_variable(filename, 'output')
         self.set_variable(input_ds, 'input1')
 
+    def save(self, syntax):
+
+        stm = syntax['MATERIALIZE'].format(variable=self.variables.get('input1'),
+                                           file_name=self.variables.get('output'))
+
+        return stm
+
 
 class Select(Statement):
 
     def __init__(self):
         super(Select, self).__init__()
         self.operator = 'SELECT'
+
+    def save(self, syntax):
+        stm = super(Select, self).save(syntax)
+        params_form = syntax['PARAMS']
+        select_params = params_form['SELECT']
+        sep = params_form['separator']
+
+        params = []
+
+        # Format conditions over metadata
+        predicate = self.params.get('metadata', None)
+
+        if predicate:
+            f_predicate = predicate.save(params_form)
+            params.append(select_params['metadata'].format(predicate=f_predicate))
+
+        # Format conditions over samples fields
+        predicate = self.params.get('region', None)
+
+        if predicate:
+            f_predicate = self.save_predicates(params_form, predicate)
+            params.append(select_params['region'].format(predicate=f_predicate))
+
+        # Format semijoin conditions
+        predicate = self.params.get('semijoin', None)
+
+        if predicate:
+            f_predicate = predicate.save(params_form)
+            params.append(select_params['semijoin'].format(predicate=f_predicate))
+
+        stm = stm.format(parameters=sep.join(params))
+
+        return stm
+
+    @staticmethod
+    def save_predicates(syntax, pred):
+        w_format = syntax['wff']
+
+        if isinstance(pred, list):
+            if pred[-1] == 'AND' :
+                return w_format['AND'].format(p1=Select.save_predicates(syntax,pred[0]), p2=Select.save_predicates(syntax,pred[1]))
+            elif pred[-1] == 'OR' :
+                return w_format['OR'].format(p1=Select.save_predicates(syntax,pred[0]), p2=Select.save_predicates(syntax,pred[1]))
+            elif pred[-1] == 'NOT' :
+                return w_format['NOT'].format(p=Select.save_predicates(syntax,pred[0]))
+            elif pred[-1] == 'BLOCK' :
+                return w_format['BLOCK'].format(p=Select.save_predicates(syntax,pred[0]))
+        else :
+            return pred.save(syntax)
 
     def set_output_var(self, var):
         self.set_variable(var, 'output')
@@ -58,30 +123,6 @@ class Select(Statement):
         self.set_param(sjClauses, 'semijoin')
 
 
-class WellFormedFormula(object) :
-
-    def __init__(self, predicate):
-        self.wff = predicate
-
-    def save(self, output):
-        pass
-
-    def write_query(self, syntax):
-        pass
-
-    def negate(self):
-        self.wff = (self.wff, 'NOT')
-        return self
-
-    def and_(self, predicate):
-        self.wff = (self.wff, predicate.wff, 'AND')
-        return self
-
-    def or_(self, predicate):
-        self.wff = (self.wff, predicate.wff, 'OR')
-        return self
-
-
 class Predicate(object):
 
     def __init__(self, field1, field2, condition):
@@ -89,18 +130,22 @@ class Predicate(object):
         self.p_attribute = field1
         self.p_value = field2
         self.condition = condition
+        self.value_type = 'string'
 
-    def save(self, output):
-        pass
+    def save(self, syntax):
+        p_format = syntax['predicate']
 
-    def write_query(self, syntax):
-        pass
+        predicate = p_format[self.condition].format(att=self.p_attribute,
+                                                    val=p_format['values'][self.value_type].format(p=self.p_value))
+
+        return predicate
 
 
 class MetaPredicate(Predicate):
 
     def __init__(self, attribute, value, condition):
         super(MetaPredicate, self).__init__(attribute, value, condition)
+
 
 class RegionPredicate(Predicate):
 
@@ -116,27 +161,38 @@ class RegionPredicate(Predicate):
                 self.value_type = 'coordinate'
             else :
                 try:
-                    self.p_value = float(self.p_value)
-                    self.value_type = 'float'
+                    self.p_value = int(self.p_value)
+                    self.value_type = 'int'
                 except ValueError :
-                    self.value_type = 'string'
+                    try:
+                        self.p_value= float(self.p_value)
+                        self.value_type = 'float'
+                    except ValueError :
+                        self.value_type = 'string'
         else:
             #The type is given.
             self.value_type = type
 
+
 class MetadataComparison(object):
 
     def __init__(self, attributes):
-        self.attributes = list ()
+        self.attributes = attributes
 
-    def set_attributes(self, attributes):
-        self.attributes = list()
-        self.attributes.append(attributes)
+    def save(self, syntax):
+        sep = syntax['meta_separator']
+        attr =  sep.join(self.attributes)
+        return attr
 
 class SemiJoinPredicate(MetadataComparison):
 
     def __init__(self, attributes, dataset, condition):
-        super(MetadataComparison, self).__init__()
-        self.set_attributes(attributes)
+        super(SemiJoinPredicate, self).__init__(attributes)
         self.ds_ext = dataset
         self.condition = condition
+
+    def save(self, syntax):
+        attributes = super(SemiJoinPredicate, self).save(syntax)
+
+        return syntax['SELECT']['semijoin_predicate'][self.condition].format(attributes=attributes,
+                                                                             ds_ext=self.ds_ext)

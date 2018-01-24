@@ -1,4 +1,4 @@
-<tool id="gmlq_rest_login" name="GMLQ Access" version="0.1.2">
+<tool id="gmlq_rest_login" name="GMLQ Access" version="0.1.1">
   <description>Manage the registration, login and logout of users to the GMQL system.</description>
   <command><![CDATA[
         python $__tool_directory__/gmql_rest_auth.py

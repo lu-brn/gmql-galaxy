@@ -142,7 +142,6 @@ def upload_samples_url(user, output, dataset, schema, samples, updatedDsList):
 def upload_samples(user, output, dataset, schema, samples, updatedDsList):
     """Upload a dataset from the local instance"""
 
-    logging.basicConfig(filename='/home/luana/gmql-galaxy/upload.log', level=logging.DEBUG, filemode='w')
 
     #Compose the url for the REST call
     call = 'upload_data'
