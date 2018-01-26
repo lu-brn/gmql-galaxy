@@ -81,17 +81,16 @@
         <data format="txt" name="log" label="${query_name} Log" >
             <filter>materialize['materialize_result'] is True</filter>
         </data>
-        <collection name="query_results" type="list:list" label="${query_name}">
-            <discover_datasets pattern="(?P&lt;identifier_0&gt;[^_]+)_(?P&lt;identifier_1&gt;.+)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
-            <filter>materialize['materialize_result'] is True and materialize['choose_op']['op'] == 'run'</filter>
-        </collection>
-        <!-- TODO handling of intermediate materialize statements -->
         <data format="gmql_repository" name="updated_list" label="${authToken.name.split()[0].rstrip('')} GMQL Datasets">
             <filter>materialize['materialize_result'] is True and materialize['choose_op']['op'] == 'run'</filter>
             <actions>
                 <action name="column_names" type="metadata" default="dataset,owner" />
             </actions>
        </data>
+        <collection name="query_results" type="list:list" label="${query_name}">
+            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)#(?P&lt;identifier_1&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
+            <filter>materialize['materialize_result'] is True and materialize['choose_op']['op'] == 'run'</filter>
+        </collection>
     </outputs>
     <help>
         <!-- -->

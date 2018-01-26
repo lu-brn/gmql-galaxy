@@ -8,7 +8,7 @@ import argparse
 import tempfile
 from time import sleep
 
-from gmql_rest_datasets import list_samples, get_sample, get_sample_meta, get_schema, list_datasets
+from gmql_rest_datasets import list_datasets, import_samples
 from utilities import *
 
 module_execution = 'query_exec'
@@ -72,8 +72,10 @@ def compile_query(user, filename, query, log_file):
         stop_err("Compilation failed.\nSee log for details.")
 
 
-def run_query(user, filename, query, log_file, rs_format, rs_schema, updatedDsList):
+def run_query(user, filename, query, log_file, rs_format, updatedDsList):
     """Run the given query. It returns an execution log and the resulting dataset."""
+
+    logging.basicConfig(filename='/home/luana/gmql-galaxy/run.log', level=logging.DEBUG, filemode='w')
 
     call = 'run'
 
@@ -124,29 +126,15 @@ def run_query(user, filename, query, log_file, rs_format, rs_schema, updatedDsLi
                     "{jobs}\n".format(status=status, message=message, execTime=time, jobs=jobs))
         f.close()
 
-        ds = log['datasets'][0]['name']
+        # Retrieve the name of each resulting dataset and for each retrieve data
 
-        # Retrieve the list of the samples in the resulting dataset
-        # The list is stored in a temporary file
-        temp = tempfile.NamedTemporaryFile(delete=False)
-        list_samples(user,temp.name,ds)
 
-        # Create a list of the samples
-        with open(temp.name,"r") as t :
-            #lines = t.readlines()
-            samples = map(lambda x: x.split('\t')[1].rstrip('\n'), t)
-        t.close()
-
-        for s in samples :
-            # Get the sample
-            get_sample(user,"samples_{name}.{ext}".format(name=s.replace('_',''),ext=rs_format), ds, s)
-            # Get its metadata
-            get_sample_meta(user,"metadata_{name}.meta".format(name=s.replace('_',''),ext=rs_format), ds, s)
-
-        os.remove(temp.name)
+        for dataset in log['datasets'] :
+            ds_name = dataset.get('name')
+            import_samples(user, ds_name, isMulti=True)
 
         #retrieve the schema of the resulting dataset
-        get_schema(user,ds,rs_schema)
+        #get_schema(user,ds,rs_schema)
 
         # Return the updated list of samples
         list_datasets(user, updatedDsList)
@@ -253,7 +241,7 @@ def __main__():
     parser.add_argument("-log")
     parser.add_argument("-job")
     parser.add_argument("-format")
-    parser.add_argument("-schema")
+    #parser.add_argument("-schema")
     parser.add_argument("-result_dir")
     parser.add_argument("-add_output")
 
@@ -263,7 +251,7 @@ def __main__():
     if args.cmd == 'compile':
         compile_query(args.user, args.name, args.query, args.log)
     if args.cmd == 'execute':
-        run_query(args.user, args.name, args.query, args.log, args.format, args.schema, args.add_output)
+        run_query(args.user, args.name, args.query, args.log, args.format, args.add_output)
     if args.cmd == 'jobs':
         show_jobs(args.user, args.log)
     if args.cmd == 'stop' :

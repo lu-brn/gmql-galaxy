@@ -1,7 +1,19 @@
 <macros>
     <import>gmql_queries_macros.xml</import>
     <xml name="select">
-        <expand macro="input_ds" label="Select Dataset over which SELECT samples" />
+        <conditional name="input">
+            <param name="input_type" type="select" display="radio" label="Dataset over which SELECT samples"
+                   help="It can be a dataset in the user space or the result of a MATERIALIZE operation still to be executed.">
+                <option value="i_ds">User Dataset</option>
+                <option value="i_var">Materializing result</option>
+            </param>
+            <when value="i_ds">
+                <expand macro="input_ds" label="Select Dataset" />
+            </when>
+            <when value="i_var">
+                <expand macro="input_var" name="input_var" label="Variable name" optional="false" />
+            </when>
+        </conditional>
         <expand macro="output_var" />
         <section name="metadata_predicates" title="Conditions on metadata" expanded="false"
                  help="Selection based on the existence and values of certain metadata attributes in each sample.">

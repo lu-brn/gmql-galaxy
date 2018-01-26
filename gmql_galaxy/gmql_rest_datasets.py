@@ -7,7 +7,6 @@
 import argparse
 
 import validators
-from galaxy.datatypes import sniff
 import tempfile
 
 from utilities import *
@@ -269,9 +268,8 @@ def get_sample_meta(user, output, dataset, name):
         for chunk in data.iter_content(chunk_size=128):
             fd.write(chunk)
 
-def import_samples(user, ds) :
+def import_samples(user, ds, isMulti=False) :
 
-    logging.basicConfig(filename='/home/luana/gmql-galaxy/ds.log', level=logging.DEBUG, filemode='w')
 
     # Retrieve the list of the samples in the resulting dataset
     # The list is stored in a temporary file
@@ -280,18 +278,22 @@ def import_samples(user, ds) :
 
     # Retrieve names and extensions of the samples
     with open(temp.name, "r") as t:
-        #samples = map(lambda x: x.split('\t')[1].rstrip('\n'), t)
         samples = map(lambda x: helper_samples(x), t)
-        logging.debug(samples.__str__())
     t.close()
 
-    for s in samples:
-        # Get the sample
-        #get_sample(user,"{name}.{ext}".format(name=s['name'],ext=s['ext']),ds,s['name'])
-        get_sample(user, "samples_{name}.{ext}".format(name=s['name'], ext=s['ext']), ds, s['name'])
-        # Get its metadata
-        #get_sample_meta(user,"{name}.{ext}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
-        get_sample_meta(user,"metadata_{name}.meta".format(name=s['name'],ext=s['ext']),ds,s['name'])
+    if isMulti:
+        #Prefix the file name with the dataset name
+        for s in samples:
+            # Get the sample
+            get_sample(user, "{ds}#sample_{name}.{ext}".format(ds=ds,name=s['name'].replace('_', ''), ext=s['ext']), ds, s['name'])
+            # Get its metadata
+            get_sample_meta(user, "{ds}#metadata_{name}.meta".format(ds=ds,name=s['name'].replace('_', ''), ext=s['ext']), ds, s['name'])
+    else:
+        for s in samples:
+            # Get the sample
+            get_sample(user, "sample_{name}.{ext}".format(name=s['name'].replace('_',''), ext=s['ext']), ds, s['name'])
+            # Get its metadata
+            get_sample_meta(user,"metadata_{name}.meta".format(name=s['name'].replace('_',''),ext=s['ext']),ds,s['name'])
 
     os.remove(temp.name)
 

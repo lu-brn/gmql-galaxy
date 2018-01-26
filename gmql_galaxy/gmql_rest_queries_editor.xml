@@ -10,7 +10,6 @@
        -query=$query_text
        -log=$log
        -format=$mode.out_format
-       -schema=$schema_out
        -add_output=$updated_list
       #else :
        python $__tool_directory__/gmql_rest_queries.py
@@ -22,8 +21,8 @@
       #end if
 	  ]]></command>
   <configfiles>
-      <configfile name="schema_out" >
-      </configfile>
+      <!--<configfile name="schema_out" >
+      </configfile> -->
       <configfile name="query_text" >#echo '%s'%($query)</configfile>
   </configfiles>
    <inputs>
@@ -59,7 +58,7 @@
 	<outputs>
         <data format="txt" name="log" label="${query_name} query log" />
         <collection name="query_results" type="list:list" label="${query_name}">
-            <discover_datasets pattern="(?P&lt;identifier_0&gt;[^_]+)_(?P&lt;identifier_1&gt;.+)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
+            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)#(?P&lt;identifier_1&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
             <filter>mode['exec_mode'] == 'execute'</filter>
         </collection>
         <data format="gmql_repository" name="updated_list" label="${authToken.name.split()[0].rstrip('')} GMQL Datasets">

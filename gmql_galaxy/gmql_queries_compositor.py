@@ -8,7 +8,7 @@
 import os, sys, argparse, json, logging
 from itertools import chain
 from gmql_queries_statements import *
-from gmql_rest_queries import compile_saved_query
+from gmql_rest_queries import compile_query, run_query
 
 def read_new_query(query_data):
 
@@ -24,12 +24,16 @@ def read_new_query(query_data):
     statements = map(lambda x: read_statement(x['operation']), qd['operations'])
 
     # Check if the user asked for materialize the final result and in case add a materialize statement
-    # for the last variable defined
+    # for the last variable defined.
 
     if qd['materialize']['materialize_result'] :
         var = statements[-1][0].variables['output']
         mat_stm = Materialize(qd['materialize']['file_name'],var)
         statements.append((mat_stm,))
+
+        # Also save info about the desired output format
+        out_format = qd['materialize']['choose_op']['out_format']
+        query.update(out_format=out_format)
 
     # Add statements list to query, flattening list elements if needed (in case there's some intermediate
     # materialize)
@@ -60,18 +64,26 @@ def create_select(x) :
 
     # Set output and input variables
     stm.set_output_var(x['output_var'])
-    stm.set_input_ds(x['input_ds'])
+    #stm.set_input_ds(x['input_ds'])
+
+    if x['input']['input_type'] == 'i_ds' :
+         input_ds = x['input']['input_ds']
+    if x['input']['input_type'] == 'i_var':
+         input_ds = x['input']['input_var']
+
+    stm.set_input_ds(input_ds)
 
     #Check if there's metadata predicates and set it up
     mp_data = x['metadata_predicates']
 
-    if mp_data['attribute'] :
+    if mp_data['condition'] != 'None':
         meta_pred = _metadata_predicate(mp_data)
 
         # If there are further blocks
         for ma in mp_data['add_meta_blocks']:
-            #meta_pred.block()
-            mp = _region_predicate(ma)
+            if meta_pred.__len__() > 1 :
+                meta_pred = [meta_pred, 'BLOCK']
+            mp = _metadata_predicate(ma)
 
             if ma['block_logCon']['negate']:
                 mp = [mp, 'NOT']
@@ -86,7 +98,7 @@ def create_select(x) :
     # Similar applies with Region Predicates (if they are present)
     rp_data = x['region_predicates']
 
-    if rp_data['attribute']:
+    if rp_data['condition'] != 'None':
         reg_pred = _region_predicate(rp_data)
 
         # If there are further blocks
@@ -178,9 +190,6 @@ def _region_predicate(rp_data):
 
     return rp
 
-def read_saved_query():
-    pass
-
 def save(query, output):
 
     #Set the config files where to look for the actual syntax to use
@@ -191,24 +200,21 @@ def save(query, output):
 
 
     with open(output, 'w') as f_out:
-        # Save some preliminary info like GMQL version and query name.
-        # The initial '#' mark those lines.
-
-        info = '#GMQL VERSION: {GMQL_V}\n' \
-               '#QUERY: {query}\n'.format(GMQL_V=syntax['GMQL-VERSION'],
-                                        query=query['name'])
-
-        f_out.write(info)
 
         for s in query['statements'] :
              f_out.write('{stm}\n'.format(stm=s.save(syntax)))
 
 
-def compile():
-    pass
+def compile(user, query_name, query_file, log):
+    # Call the service in gmql_rest_queries to send the query to the GMQL server to compile.
 
-def run():
-    pass
+    compile_query(user, query_name, query_file, log)
+
+
+def run(user, query_name, query, log, out_format, updated_ds_list):
+    # Call the service in gmql_rest_queries to send the query to the GMQL server to be executed.
+
+    run_query(user, query_name, query, log, out_format, updated_ds_list)
 
 def stop_err(msg):
     sys.stderr.write("%s\n" % msg)
@@ -229,8 +235,10 @@ def __main__():
     save(query, args.query_output)
 
     if(args.cmd == 'compile'):
-        compile_saved_query(args.user, args.query_output, args.query_log)
+        compile(args.user, query['name'], args.query_output, args.query_log)
 
+    if(args.cmd == 'run'):
+        run(args.user, query['name'], args.query_output, args.query_log, query['out_format'], args.updated_ds_list)
 
 
 if __name__ == "__main__":

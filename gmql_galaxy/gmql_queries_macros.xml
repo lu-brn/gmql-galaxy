@@ -1,5 +1,5 @@
 <macros>
-    <xml name="input_ds" token_label="ds_label">
+    <xml name="input_ds" token_label="@LABEL@">
         <param name="input_ds" type="select" label="@LABEL@">
             <options from_dataset="gmql_datasets">
                 <column name="value" index="0"/>

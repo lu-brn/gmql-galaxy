@@ -70,14 +70,14 @@ class Select(Statement):
         predicate = self.params.get('metadata', None)
 
         if predicate:
-            f_predicate = predicate.save(params_form)
+            f_predicate = self.save_wff(params_form, predicate)
             params.append(select_params['metadata'].format(predicate=f_predicate))
 
         # Format conditions over samples fields
         predicate = self.params.get('region', None)
 
         if predicate:
-            f_predicate = self.save_predicates(params_form, predicate)
+            f_predicate = self.save_wff(params_form, predicate)
             params.append(select_params['region'].format(predicate=f_predicate))
 
         # Format semijoin conditions
@@ -92,18 +92,18 @@ class Select(Statement):
         return stm
 
     @staticmethod
-    def save_predicates(syntax, pred):
+    def save_wff(syntax, pred):
         w_format = syntax['wff']
 
         if isinstance(pred, list):
             if pred[-1] == 'AND' :
-                return w_format['AND'].format(p1=Select.save_predicates(syntax,pred[0]), p2=Select.save_predicates(syntax,pred[1]))
+                return w_format['AND'].format(p1=Select.save_wff(syntax, pred[0]), p2=Select.save_wff(syntax, pred[1]))
             elif pred[-1] == 'OR' :
-                return w_format['OR'].format(p1=Select.save_predicates(syntax,pred[0]), p2=Select.save_predicates(syntax,pred[1]))
+                return w_format['OR'].format(p1=Select.save_wff(syntax, pred[0]), p2=Select.save_wff(syntax, pred[1]))
             elif pred[-1] == 'NOT' :
-                return w_format['NOT'].format(p=Select.save_predicates(syntax,pred[0]))
+                return w_format['NOT'].format(p=Select.save_wff(syntax, pred[0]))
             elif pred[-1] == 'BLOCK' :
-                return w_format['BLOCK'].format(p=Select.save_predicates(syntax,pred[0]))
+                return w_format['BLOCK'].format(p=Select.save_wff(syntax, pred[0]))
         else :
             return pred.save(syntax)
 
