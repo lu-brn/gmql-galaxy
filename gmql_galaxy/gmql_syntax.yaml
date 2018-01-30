@@ -5,8 +5,8 @@ STATEMENT:
 MATERIALIZE:
     'MATERIALIZE {variable} INTO {file_name};'
 PARAMS:
-    separator: '; '
-    meta_separator: ', '
+    type_separator: '; '
+    param_separator: ', '
     wff:
         NOT: 'NOT ({p})'
         AND: '{p1} AND {p2}'
@@ -24,6 +24,12 @@ PARAMS:
             int: "{p}"
             coordinate: "{p}"
             meta: "META({p})"
+    metajoin_condition:
+        SIMPLE: '{att_name}'
+        FULL: 'FULL({att_name})'
+        EXACT: 'EXACT({att_name})'
+    new_region: '{r} AS {function}'
+    function: '{function}({arg})'
     SELECT:
         metadata: '{predicate}'
         region: 'region: {predicate}'
@@ -31,3 +37,6 @@ PARAMS:
         semijoin_predicate:
             IN: '{attributes} IN {ds_ext}'
             NOT_IN: '{attributes} NOT IN {ds_ext}'
+    MAP:
+        regions: '{newRegions}'
+        joinby: 'joinby: {joinbyClause}'

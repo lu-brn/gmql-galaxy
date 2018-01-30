@@ -2,6 +2,7 @@
     <macros>
         <import>gmql_queries_macros.xml</import>
         <import>gmql_select_macros.xml</import>
+        <import>gmql_map_macros.xml</import>
     </macros>
     <description>Compose, Compile and Run GMQL queries step by step.</description>
     <command><![CDATA[
@@ -53,6 +54,9 @@
                 </param>
                 <when value="SELECT">
                     <expand macro="select" />
+                </when>
+                <when value="MAP">
+                    <expand macro="map" />
                 </when>
             </conditional>
         </repeat>

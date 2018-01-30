@@ -89,9 +89,7 @@
     </xml>
     <xml name="semijoin">
         <repeat name="sj_attributes" title="Metadata Attributes to match in DS_EXT" min="0" default="0">
-            <param name="sj_att" label="Attribute" type="text" >
-               <expand macro="metajoin_att" />
-            </param>
+            <expand macro="metajoin_attribute" name="sj_att" />
         </repeat>
         <param name="condition" type="select" label="Condition">
             <option value="IN">IN</option>
@@ -103,12 +101,6 @@
         <validator type="regex" message="Invalid attribute name.">[\w]+|[\*]$</validator>
         <option value="*">any value</option>
         <option value="string">string</option>
-    </xml>
-    <xml name="metajoin_att">
-        <validator type="regex" message="Invalid attribute name.">[\w]+(.[\w]+)?$</validator>
-        <option value="attribute_name">attribute_name</option>
-        <option value="DS.attribute_name">DS.attribute_name</option>
-        <!-- TODO implement FULL and EXACT -->
     </xml>
     <xml name="region_attribute">
         <expand macro="text_val" />

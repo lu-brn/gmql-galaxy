@@ -6,6 +6,7 @@
 # --------------------------------------------------------------------------------
 
 import yaml
+from enum import Enum
 
 class Statement(object):
 
@@ -62,7 +63,7 @@ class Select(Statement):
         stm = super(Select, self).save(syntax)
         params_form = syntax['PARAMS']
         select_params = params_form['SELECT']
-        sep = params_form['separator']
+        sep = params_form['type_separator']
 
         params = []
 
@@ -123,6 +124,33 @@ class Select(Statement):
         self.set_param(sjClauses, 'semijoin')
 
 
+class Map(Statement):
+    def __init__(self):
+        super(Map, self).__init__()
+        self.operator = 'MAP'
+
+    def set_output_var(self, var):
+        self.set_variable(var, 'output')
+
+    def set_reference_var(self, var):
+        self.set_variable(var, 'input1')
+
+    def set_experiment_var(self, var):
+        self.set_variable(var, 'input2')
+
+    def set_count_attribute(self, name=''):
+        self.count_attribute = name
+
+    def set_new_regions(self, regionAttributes):
+        self.set_param(regionAttributes, 'newRegions')
+
+    def set_joinby_clause(self, joinbyClause):
+        sefl.set_param(joinbyClause, 'joinby')
+
+    def save(self, syntax):
+        pass
+
+
 class Predicate(object):
 
     def __init__(self, field1, field2, condition):
@@ -173,6 +201,26 @@ class RegionPredicate(Predicate):
             #The type is given.
             self.value_type = type
 
+class RegionGenerator(object):
+    def __init__(self, newRegion, function, oldRegion):
+        self.newRegion = newRegion
+        self.function = function
+        self.argument = oldRegion
+
+    def save(self, syntax):
+        pass
+
+class RegFunction(Enum):
+    COUNT = 'COUNT'
+    COUNTSAMP = 'COUNTSAMP'
+    BAG = 'BAG'
+    BAGD = 'BAGD'
+    SUM = 'SUM'
+    AVG = 'AVG'
+    MIN = 'MIN'
+    MAX = 'MAX'
+    MEDIAN = 'MEDIAN'
+    STD = 'STD'
 
 class MetadataComparison(object):
 
@@ -180,9 +228,18 @@ class MetadataComparison(object):
         self.attributes = attributes
 
     def save(self, syntax):
-        sep = syntax['meta_separator']
+        sep = syntax['param_separator']
         attr =  sep.join(self.attributes)
         return attr
+
+class JoinbyClause(MetadataComparison):
+
+    def __init__(self, attributes):
+        super(JoinbyClause, self).__init__(attributes)
+
+    def save(self, syntax):
+        # Works differently as some attributes could be actually be attribute + modifier (FULL, EXACT)
+        pass
 
 class SemiJoinPredicate(MetadataComparison):
 

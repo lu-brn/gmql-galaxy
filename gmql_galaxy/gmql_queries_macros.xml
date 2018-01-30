@@ -43,6 +43,35 @@
             <option value="OR">OR</option>
         </param>
     </xml>
+    <xml name="metajoin_attribute" token_name="@NAME@">
+        <param name="@NAME@" type="text" label="Attribute Name" >
+            <validator type="regex" message="Invalid attribute name.">[\w]+(.[\w]+)?$</validator>
+            <option value="attribute_name">attribute_name</option>
+            <option value="DS.attribute_name">DS.attribute_name</option>
+            <option value="DS.attribute_name">Prefix.DS.attribute_name</option>
+        </param>
+        <yield />
+    </xml>
+    <xml name="metajoin_options">
+        <param type="select" label="Matching Options" name="metajoin_match">
+            <option value="SIMPLE">Match all attributes that are equal to OR end with the dot-separated suffix specified name</option>
+            <option value="EXACT">Match all attributes that are equal to the specified name (without any prefixes)</option>
+            <option value="FULL">Match two attributes if they end with the specified name AND their full names are equal</option>
+        </param>
+    </xml>
+    <xml name="aggrFuncs" token_help="@HELP@" token_optional="@OPTIONAL@">
+        <yield />
+        <param name="function" type="select" label="Aggregate Function to apply" optional="@OPTIONAL@"
+                    help="@HELP@">
+                    <option value="SUM">Sum Values</option>
+                    <option value="AVG">Average Value</option>
+                    <option value="MIN">Minimum Value</option>
+                    <option value="MAX">Maximum Value</option>
+                    <option value="STD">Standard Deviation</option>
+                    <option value="BAG">Create comma separated string of attributes values</option>
+                    <option value="BAGD">Create comma separated list of distinct attributes values</option>
+                </param>
+    </xml>
     <xml name="text_val">
         <validator type="regex" message="Only alphanumeric characters and underscore allowed.">[\w]+$</validator>
     </xml>
