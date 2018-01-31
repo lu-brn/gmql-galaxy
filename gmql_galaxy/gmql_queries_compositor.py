@@ -5,10 +5,11 @@
 # Luana Brancato, luana.brancato@mail.polimi.it
 # --------------------------------------------------------------------------------
 
-import os, sys, argparse, json, logging
+import os, sys, argparse, json
 from itertools import chain
 from gmql_queries_statements import *
 from gmql_rest_queries import compile_query, run_query
+from gmql_queries_constants import * 
 
 def read_new_query(query_data):
 
@@ -31,9 +32,10 @@ def read_new_query(query_data):
         mat_stm = Materialize(qd['materialize']['file_name'],var)
         statements.append((mat_stm,))
 
-        # Also save info about the desired output format
-        out_format = qd['materialize']['choose_op']['out_format']
-        query.update(out_format=out_format)
+        # Also save info about the desired output format (if available)
+        out_format = qd['materialize']['choose_op'].get('out_format',None)
+        if out_format:
+            query.update(out_format=out_format)
 
     # Add statements list to query, flattening list elements if needed (in case there's some intermediate
     # materialize)
@@ -48,6 +50,8 @@ def read_statement(x):
 
     if x['operator'] == 'SELECT' :
         stm = create_select(x)
+    if x['operator'] == 'MAP' :
+        stm = create_map(x)
 
     # If the user asked to materialize the current statement, add a MATERIALIZE statement; otherwise return
     # only the current statement
@@ -58,13 +62,50 @@ def read_statement(x):
     else:
         return (stm,)
 
+def create_map(x):
+    stm = Map()
+
+    # Set output and input variables
+    stm.set_output_var(x['output_var'])
+    stm.set_reference_var(x['reference'])
+    stm.set_experiment_var(x['experiment'])
+
+    # Check if the user has given an alternative name to the default one for the counting result
+
+    if x['count_result']:
+        stm.set_count_attribute(x['count_result'])
+
+    # Check if there are additional region attributes definition and set them up
+
+    nr_data = x['new_regions_attributes']['new_regions']
+
+    new_regions = filter(lambda x: x['new_name'] and (x['function'] != 'None') and x['argument'], nr_data)
+    new_regions = map(lambda x: RegionGenerator(newRegion=x['new_name'],
+                                   function=RegFunction(x['function']),
+                                   argRegion=x['argument']), new_regions)
+
+    if new_regions.__len__() > 0 :
+        stm.set_new_regions(new_regions)
+
+    # Check if there are joinby conditions and set them up
+
+    join_data = x['joinby']['joinby_clause']
+    join_data = filter(lambda x: x['j_att'], join_data)
+    join_data = map(lambda x: (x['j_att'], x['metajoin_match']), join_data)
+
+    if join_data.__len__() > 0:
+        jc = JoinbyClause(join_data)
+        stm.set_joinby_clause(jc)
+
+    return stm
+
+
 def create_select(x) :
 
     stm = Select()
 
     # Set output and input variables
     stm.set_output_var(x['output_var'])
-    #stm.set_input_ds(x['input_ds'])
 
     if x['input']['input_type'] == 'i_ds' :
          input_ds = x['input']['input_ds']
@@ -73,7 +114,7 @@ def create_select(x) :
 
     stm.set_input_ds(input_ds)
 
-    #Check if there's metadata predicates and set it up
+    #Check if there's metadata predicates and set them up
     mp_data = x['metadata_predicates']
 
     if mp_data['condition'] != 'None':
@@ -82,16 +123,13 @@ def create_select(x) :
         # If there are further blocks
         for ma in mp_data['add_meta_blocks']:
             if meta_pred.__len__() > 1 :
-                meta_pred = [meta_pred, 'BLOCK']
+                meta_pred = [meta_pred, wff.BLOCK]
             mp = _metadata_predicate(ma)
 
             if ma['block_logCon']['negate']:
-                mp = [mp, 'NOT']
+                mp = [mp, wff.NOT]
 
-            if ma['block_logCon']['logCon'] == 'AND':
-                meta_pred = [meta_pred, mp, 'AND']
-            if ma['block_logCon']['logCon'] == 'OR':
-                meta_pred = [meta_pred, mp, 'OR']
+            meta_pred = [meta_pred, mp, wff(ma['block_logCon']['logCon'])]
 
         stm.set_param(meta_pred, 'metadata')
 
@@ -102,21 +140,16 @@ def create_select(x) :
         reg_pred = _region_predicate(rp_data)
 
         # If there are further blocks
-        for ra in rp_data['add_region_blocks'] :
-            if reg_pred.__len__() > 1 :
-                reg_pred = [reg_pred, 'BLOCK']
+        for ra in rp_data['add_region_blocks']:
+            if reg_pred.__len__() > 1:
+                reg_pred = [reg_pred, wff.BLOCK]
             rp = _region_predicate(ra)
 
             if ra['block_logCon']['negate']:
-                # rp.negate()
-                rp = [rp, 'NOT']
+                rp = [rp, wff.NOT]
 
-            if ra['block_logCon']['logCon'] == 'AND':
-                #reg_pred.and_(rp)
-                reg_pred = [reg_pred, rp, 'AND']
-            if ra['block_logCon']['logCon'] == 'OR':
-                #reg_pred.or_(rp)
-                reg_pred = [reg_pred, rp, 'OR']
+            reg_pred = [reg_pred, rp, wff(ra['block_logCon']['logCon'])]
+
 
         stm.set_param(reg_pred, 'region')
 

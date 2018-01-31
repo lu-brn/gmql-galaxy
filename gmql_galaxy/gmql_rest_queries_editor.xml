@@ -30,7 +30,8 @@
             <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
     </param>
 	<param name="query_name" type="text" label="Query Name" >
-		<validator type="regex" message="Only alphanumeric characters and underscore are allowed">[\w]+$</validator> 
+		<validator type="regex" message="Only alphanumeric characters and underscore allowed. It must begin with
+                                         letter or underscore.">[a-zA-Z_][\w]+$</validator>
 	</param>
     <param name="query" type="text" area="true" label="Query" >
         <sanitizer>

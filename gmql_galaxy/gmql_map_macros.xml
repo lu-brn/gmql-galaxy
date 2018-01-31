@@ -11,21 +11,21 @@
             <expand macro="text_val" />
         </param>
         <section name="new_regions_attributes" title="New Genomic Region Attributes" expand="false">
-            <repeat name="new_region" title="Add New Region Attribute to Result Dataset" min="0" default="0"
+            <repeat name="new_regions" title="Add New Region Attribute to Result Dataset" min="0" default="0"
                     help="Create new genomic region attributes by using functions on existing experiment region attributes">
-                <param name="new_name" type="text" label="New Region Attribute Name" >
+                <param name="new_name" type="text" label="New Region Attribute Name" optional="true" >
                     <expand macro="text_val" />
                 </param>
             <expand macro="aggrFuncs" help="Sum, average, maximum, minimum and standard deviation are only for numerical
             attributes" optional="true"/>
-            <param name="argument" label="Region attributes over which apply function" type="text" />
+            <param name="argument" label="Region attributes over which apply function" type="text" optional="true"/>
             </repeat>
         </section>
         <section name="joinby" title="Condition on Samples Metadata" expand="false"
         help="A list of metadata attribute names (or their suffixes) that must be present with equal values in the metadata of
               the reference and experiment samples.">
         <repeat name="joinby_clause" title="Attributes to match" min="0" default="0" >
-            <expand macro="metajoin_attribute" name="j_att" >
+            <expand macro="metajoin_attribute" name="j_att" optional="true" >
                 <expand macro="metajoin_options" />
             </expand>
         </repeat>

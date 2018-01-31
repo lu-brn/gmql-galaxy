@@ -41,7 +41,8 @@
         </param>
         <param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
         <param name="query_name" type="text" label="Query Name" >
-		    <expand macro="text_val" />
+		    <validator type="regex" message="Only alphanumeric characters and underscore allowed. It must begin with
+		                                     letter or underscore.">[a-zA-Z_][\w]+$</validator>
 	    </param>
         <repeat name="operations" title="GMQL Operations" help="Add a new operation to the execution flow."
                 min="1" default="0">

@@ -39,4 +39,5 @@ PARAMS:
             NOT_IN: '{attributes} NOT IN {ds_ext}'
     MAP:
         regions: '{newRegions}'
+        count: 'count_name: {count_name}'
         joinby: 'joinby: {joinbyClause}'

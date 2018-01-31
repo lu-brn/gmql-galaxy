@@ -6,13 +6,13 @@
 # --------------------------------------------------------------------------------
 
 import yaml
-from enum import Enum
+from gmql_queries_constants import * 
 
 class Statement(object):
 
     def __init__(self):
 
-        self.operator = str()
+        self.operator = Operator
         self.variables = dict ()
         self.params = dict ()
 
@@ -21,7 +21,7 @@ class Statement(object):
         var_o = self.variables.get('output')
         var_i = [self.variables.get('input1'),self.variables.get('input2','')]
 
-        stm = syntax['STATEMENT'].format(operator=self.operator,
+        stm = syntax['STATEMENT'].format(operator=self.operator.value,
                                          out_var=var_o,
                                          in_vars=" ".join(var_i),
                                          parameters='{parameters}')
@@ -41,7 +41,7 @@ class Materialize(Statement):
 
     def __init__(self, filename, input_ds):
         super(Materialize, self).__init__()
-        self.operator = 'MATERIALIZE'
+        self.operator = Operator.MATERIALIZE
         self.set_variable(filename, 'output')
         self.set_variable(input_ds, 'input1')
 
@@ -57,7 +57,7 @@ class Select(Statement):
 
     def __init__(self):
         super(Select, self).__init__()
-        self.operator = 'SELECT'
+        self.operator = Operator.SELECT
 
     def save(self, syntax):
         stm = super(Select, self).save(syntax)
@@ -97,14 +97,10 @@ class Select(Statement):
         w_format = syntax['wff']
 
         if isinstance(pred, list):
-            if pred[-1] == 'AND' :
-                return w_format['AND'].format(p1=Select.save_wff(syntax, pred[0]), p2=Select.save_wff(syntax, pred[1]))
-            elif pred[-1] == 'OR' :
-                return w_format['OR'].format(p1=Select.save_wff(syntax, pred[0]), p2=Select.save_wff(syntax, pred[1]))
-            elif pred[-1] == 'NOT' :
-                return w_format['NOT'].format(p=Select.save_wff(syntax, pred[0]))
-            elif pred[-1] == 'BLOCK' :
-                return w_format['BLOCK'].format(p=Select.save_wff(syntax, pred[0]))
+            if pred[-1] is wff.AND or wff.OR:
+                return w_format[pred[-1]].format(p1=Select.save_wff(syntax, pred[0]), p2=Select.save_wff(syntax, pred[1]))
+            if pred[-1] is wff.NOT or wff.BLOCK:
+                return w_format[pred[-1]].format(p=Select.save_wff(syntax, pred[0]))
         else :
             return pred.save(syntax)
 
@@ -127,7 +123,8 @@ class Select(Statement):
 class Map(Statement):
     def __init__(self):
         super(Map, self).__init__()
-        self.operator = 'MAP'
+        self.operator = Operator.MAP
+        self.count_attribute = ''
 
     def set_output_var(self, var):
         self.set_variable(var, 'output')
@@ -138,17 +135,48 @@ class Map(Statement):
     def set_experiment_var(self, var):
         self.set_variable(var, 'input2')
 
-    def set_count_attribute(self, name=''):
+    def set_count_attribute(self, name):
         self.count_attribute = name
 
     def set_new_regions(self, regionAttributes):
         self.set_param(regionAttributes, 'newRegions')
 
     def set_joinby_clause(self, joinbyClause):
-        sefl.set_param(joinbyClause, 'joinby')
+        self.set_param(joinbyClause, 'joinby')
 
     def save(self, syntax):
-        pass
+        stm = super(Map, self).save(syntax)
+
+        params_form = syntax['PARAMS']
+        map_params = params_form['MAP']
+        type_sep = params_form['type_separator']
+        param_sep = params_form['param_separator']
+
+        parameters = []
+
+        # Format new region attributes definitions
+
+        param_regs = self.params.get('newRegions', None)
+
+        if param_regs :
+            newRegions = map(lambda x: x.save(params_form),param_regs)
+            parameters.append(map_params['regions'].format(newRegions=param_sep.join(newRegions)))
+
+
+        # Format user chosen name for the count attribute, if present
+        if self.count_attribute :
+            parameters.append(map_params['count'].format(count_name=self.count_attribute))
+
+        # Format joinby clause
+        jbc = self.params.get('joinby', None)
+
+        if jbc:
+            parameters.append(map_params['joinby'].format(joinbyClause=jbsave(params_form)))
+
+
+        stm = stm.format(parameters=type_sep.join(parameters))
+
+        return stm
 
 
 class Predicate(object):
@@ -202,25 +230,19 @@ class RegionPredicate(Predicate):
             self.value_type = type
 
 class RegionGenerator(object):
-    def __init__(self, newRegion, function, oldRegion):
+    def __init__(self, newRegion, function, argRegion):
         self.newRegion = newRegion
         self.function = function
-        self.argument = oldRegion
+        self.argument = argRegion
 
     def save(self, syntax):
-        pass
 
-class RegFunction(Enum):
-    COUNT = 'COUNT'
-    COUNTSAMP = 'COUNTSAMP'
-    BAG = 'BAG'
-    BAGD = 'BAGD'
-    SUM = 'SUM'
-    AVG = 'AVG'
-    MIN = 'MIN'
-    MAX = 'MAX'
-    MEDIAN = 'MEDIAN'
-    STD = 'STD'
+        f = syntax['function'].format(function=self.function.value,
+                                      arg=self.argument)
+
+        return syntax['new_region'].format(r=self.newRegion,
+                                           function=f)
+
 
 class MetadataComparison(object):
 
@@ -238,8 +260,12 @@ class JoinbyClause(MetadataComparison):
         super(JoinbyClause, self).__init__(attributes)
 
     def save(self, syntax):
-        # Works differently as some attributes could be actually be attribute + modifier (FULL, EXACT)
-        pass
+        sep = syntax['param_separator']
+        attributes = map(lambda x: syntax['metajoin_condition'][x[1]].format(att_name=x[0]), self.attributes)
+
+        return sep.join(attributes)
+
+
 
 class SemiJoinPredicate(MetadataComparison):
 
