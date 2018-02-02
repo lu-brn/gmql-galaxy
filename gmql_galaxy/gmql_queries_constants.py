@@ -12,8 +12,9 @@ class Operator(Enum):
     MATERIALIZE = 'MATERIALIZE'
     SELECT = 'SELECT'
     MAP = 'MAP'
+    ORDER = 'ORDER'
 
-class wff(Enum):
+class Wff(Enum):
     AND = 'AND'
     OR = 'OR'
     NOT = 'NOT'

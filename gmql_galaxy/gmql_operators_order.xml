@@ -1,0 +1,57 @@
+<macro>
+    <import>gmql_queries_macros.xml</import>
+    <xml name="order">
+        <expand macro="input_var" name="ordering_ds" label="Input Dataset to Order" />
+        <expand macro="output_var" />
+        <section name="ordering_attributes" title="Ordering Attributes" expanded="true"
+                 help="Samples or samples regions will be ordered according to the values of the given attribute(s).
+                       A a new ordering metadata and/or region attribute is added with the sample or region ordering
+                       value, respectively. " >
+            <repeat name="attributes" title="Add new ordering attribute" min="1" default="1"
+                    help="At least an ordering metadata or region attribute must be specified.">
+                <param name="att_type" type="select" display="radio" label="Metadata or region attribute?" >
+                    <option value="metadata">Metadata</option>
+                    <option value="region">Region</option>
+                </param>
+                <param name="attribute_name" type="text" label="Attribute Name" >
+                    <expand macro="text_val" />
+                </param>
+                <param name="order_type" label="Ascending or Descending order?" type="select" display="radio" >
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                </param>
+            </repeat>
+        </section>
+        <section name="top_options" title="Samples/Regions to keep" expanded="true"
+                 help="It is possible to specify the number (or percentage) of samples (or regions) to be extracted
+                 from the ordered dataset (or from each sample), starting from the top (with respect to the
+                 ascending/descending ordering)." >
+            <repeat name="to" title="Constraint on number of samples (sample region)"
+                    min="0" default="0" >
+            <param name="type" type="select" label="Constraint on samples or samples regions?">
+                    <option value="metadata">Samples</option>
+                    <option value="region">Samples Regions</option>
+            </param>
+            <conditional name="opt">
+                <param name="k_type" type="select" label="How to chose samples/sample regions" display="radio" >
+                    <option value="n">Top k elements</option>
+                    <option value="perc">Top k % elements</option>
+                    <option value="group">Top k elements of each group (implicitly consider the ordering defined by
+                        first grouping identical values of the first n − 1 ordering attributes, and then sorted by the
+                        remaining attributes)</option>
+                </param>
+                <when value="n">
+                    <param name="k" type="integer" label="Value of k" value="1" min="1"/>
+                </when>
+                <when value="group">
+                    <param name="k" type="integer" label="Value of k" value="1" min="1"/>
+                </when>
+                <when value="perc">
+                    <param name="k" type="integer" label="Value of k" value="1" min="1" max="100"/>
+                </when>
+            </conditional>
+            </repeat>
+        </section>
+        <expand macro="materialize_stm" />
+    </xml>
+</macro>

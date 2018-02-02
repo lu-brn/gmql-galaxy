@@ -41,3 +41,19 @@ PARAMS:
         regions: '{newRegions}'
         count: 'count_name: {count_name}'
         joinby: 'joinby: {joinbyClause}'
+    ORDER:
+        att_list:
+            asc: '{att}'
+            desc: '{att} DESC'
+        metadata:
+            orderingAttributes: '{att_list}'
+            top:
+                n_samples: 'meta_top: {k}'
+                perc: 'meta_topp: {k}'
+                group: 'meta_topg: {k}'
+        region:
+            orderingAttributes: 'region_order: {att_list}'
+            top:
+                n_samples: 'region_top: {k}'
+                perc: 'region_topp: {k}'
+                group: 'region_topg: {k}'

@@ -85,7 +85,7 @@ class Select(Statement):
         predicate = self.params.get('semijoin', None)
 
         if predicate:
-            f_predicate = predicate.save(params_form)
+            f_predicate = predicate.save(select_params['semijoin_predicates'], sep)
             params.append(select_params['semijoin'].format(predicate=f_predicate))
 
         stm = stm.format(parameters=sep.join(params))
@@ -97,9 +97,9 @@ class Select(Statement):
         w_format = syntax['wff']
 
         if isinstance(pred, list):
-            if pred[-1] is wff.AND or wff.OR:
+            if pred[-1] is Wff.AND or Wff.OR:
                 return w_format[pred[-1]].format(p1=Select.save_wff(syntax, pred[0]), p2=Select.save_wff(syntax, pred[1]))
-            if pred[-1] is wff.NOT or wff.BLOCK:
+            if pred[-1] is Wff.NOT or Wff.BLOCK:
                 return w_format[pred[-1]].format(p=Select.save_wff(syntax, pred[0]))
         else :
             return pred.save(syntax)
@@ -148,7 +148,7 @@ class Map(Statement):
         stm = super(Map, self).save(syntax)
 
         params_form = syntax['PARAMS']
-        map_params = params_form['MAP']
+        map_format = params_form['MAP']
         type_sep = params_form['type_separator']
         param_sep = params_form['param_separator']
 
@@ -160,23 +160,84 @@ class Map(Statement):
 
         if param_regs :
             newRegions = map(lambda x: x.save(params_form),param_regs)
-            parameters.append(map_params['regions'].format(newRegions=param_sep.join(newRegions)))
+            parameters.append(map_format['regions'].format(newRegions=param_sep.join(newRegions)))
 
 
         # Format user chosen name for the count attribute, if present
         if self.count_attribute :
-            parameters.append(map_params['count'].format(count_name=self.count_attribute))
+            parameters.append(map_format['count'].format(count_name=self.count_attribute))
 
         # Format joinby clause
         jbc = self.params.get('joinby', None)
 
         if jbc:
-            parameters.append(map_params['joinby'].format(joinbyClause=jbsave(params_form)))
+            parameters.append(map_format['joinby'].format(joinbyClause=jbc.save(params_form,param_sep)))
 
 
         stm = stm.format(parameters=type_sep.join(parameters))
 
         return stm
+
+
+class Order(Statement):
+
+    def __init__(self):
+        super(Order, self).__init__()
+        self.operator = Operator.ORDER
+
+    def set_output_var(self, var):
+        self.set_variable(var, 'output')
+
+    def set_input_var(self, var):
+        self.set_variable(var, 'input1')
+
+    def set_ordering_attributes(self, ordAtt, type):
+        # Type can be 'metadata' or 'region'
+        self.set_param(ordAtt,type+'OrderingAttributes')
+
+    def set_top_options(self, topts):
+        self.set_param(topts, 'top')
+
+    def save(self, syntax):
+        stm = super(Order,self).save(syntax)
+
+        params_form = syntax['PARAMS']
+        order_form = params_form['ORDER']
+        type_sep = params_form['type_separator']
+        sep = params_form['param_separator']
+
+        params = []
+
+        # Format metadata attribute lists
+        meta_att = self.params.get('metadataOrderingAttributes', None)
+        if meta_att:
+            params.append(order_form['metadata']['orderingAttributes']
+                          .format(att_list=meta_att.save(order_form['att_list'],sep)))
+
+        # Top options
+        tops = self.params.get('top', None)
+        if tops:
+            m_tops = filter(lambda x: x[0] == 'metadata', tops)
+            m_tops = map(lambda x: order_form[x[0]]['top'][x[1]].format(k=x[2]), m_tops)
+            params.append(type_sep.join(m_tops))
+
+          # Format region attribute lists
+        region_att = self.params.get('regionOrderingAttributes', None)
+        if region_att:
+            params.append(order_form['region']['orderingAttributes']
+                          .format(att_list=region_att.save(order_form['att_list'],sep)))
+
+
+        # Top options
+        if tops:
+            r_tops = filter(lambda x: x[0] == 'region', tops)
+            r_tops = map(lambda x: order_form[x[0]]['top'][x[1]].format(k=x[2]), r_tops)
+            params.append(type_sep.join(r_tops))
+
+        stm = stm.format(parameters=type_sep.join(params))
+
+        return stm
+
 
 
 class Predicate(object):
@@ -244,38 +305,46 @@ class RegionGenerator(object):
                                            function=f)
 
 
-class MetadataComparison(object):
+class AttributesList(object):
 
     def __init__(self, attributes):
         self.attributes = attributes
 
-    def save(self, syntax):
-        sep = syntax['param_separator']
+    def save(self, syntax, sep):
         attr =  sep.join(self.attributes)
         return attr
 
-class JoinbyClause(MetadataComparison):
+class OrderingAttributes(AttributesList):
+
+    def __init__(self):
+        attributes = list()
+        super(OrderingAttributes, self).__init__(attributes)
+
+    def add_attribute(self, att, desc):
+        self.attributes.append((att,desc))
+
+    def save(self, syntax, sep):
+        self.attributes = map(lambda x: syntax[x[1]].format(att=x[0]), self.attributes)
+        return super(OrderingAttributes, self).save(syntax, sep)
+
+
+class JoinbyClause(AttributesList):
 
     def __init__(self, attributes):
         super(JoinbyClause, self).__init__(attributes)
 
-    def save(self, syntax):
-        sep = syntax['param_separator']
+    def save(self, syntax, sep):
         attributes = map(lambda x: syntax['metajoin_condition'][x[1]].format(att_name=x[0]), self.attributes)
-
         return sep.join(attributes)
 
 
-
-class SemiJoinPredicate(MetadataComparison):
+class SemiJoinPredicate(AttributesList):
 
     def __init__(self, attributes, dataset, condition):
         super(SemiJoinPredicate, self).__init__(attributes)
         self.ds_ext = dataset
         self.condition = condition
 
-    def save(self, syntax):
-        attributes = super(SemiJoinPredicate, self).save(syntax)
-
-        return syntax['SELECT']['semijoin_predicate'][self.condition].format(attributes=attributes,
-                                                                             ds_ext=self.ds_ext)
+    def save(self, syntax, sep):
+        attributes = super(SemiJoinPredicate, self).save(syntax, sep)
+        return syntax[self.condition].format(attributes=attributes, ds_ext=self.ds_ext)

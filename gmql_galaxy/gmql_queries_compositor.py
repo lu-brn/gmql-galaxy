@@ -48,10 +48,14 @@ def read_new_query(query_data):
 
 def read_statement(x):
 
-    if x['operator'] == 'SELECT' :
+    op = x['operator']
+
+    if op == 'SELECT' :
         stm = create_select(x)
-    if x['operator'] == 'MAP' :
+    if op == 'MAP' :
         stm = create_map(x)
+    if op == 'ORDER' :
+        stm = create_order(x)
 
     # If the user asked to materialize the current statement, add a MATERIALIZE statement; otherwise return
     # only the current statement
@@ -61,6 +65,46 @@ def read_statement(x):
         return (stm, mat_stm)
     else:
         return (stm,)
+
+def create_order(x):
+     stm = Order()
+
+     # Set output and input variables
+     stm.set_output_var(x['output_var'])
+     stm.set_input_var(x['ordering_ds'])
+
+     # Collects ordering attributes and set them up, according also to their type (metadata or region)
+
+     # Divide metadata attributes from region ones
+     atts = x['ordering_attributes']['attributes']
+
+     meta_att = filter(lambda att: att['att_type'] == 'metadata', atts)
+     region_att = filter(lambda att: att['att_type'] == 'region', atts)
+
+     # Collect attributes info from the two lists and add them to the ORDER parameters
+
+     if meta_att:
+         o_att_meta = OrderingAttributes()
+         map(lambda att: o_att_meta.add_attribute(att['attribute_name'],att['order_type']), meta_att)
+         stm.set_ordering_attributes(o_att_meta, 'metadata')
+
+     if region_att:
+         o_att_region = OrderingAttributes()
+         map(lambda att: o_att_region.add_attribute(att['attribute_name'], att['order_type']), region_att)
+         stm.set_ordering_attributes(o_att_region, 'region')
+
+     # Check if there are constraints over the number of samples to extract and set them up
+
+     top_opts = x['top_options']['to']
+
+     if top_opts:
+         topts = list()
+         for to in top_opts:
+             topts.append((to['type'],to['opt']['k_type'],to['opt']['k']))
+         stm.set_top_options(topts)
+
+     return stm
+
 
 def create_map(x):
     stm = Map()
@@ -123,13 +167,13 @@ def create_select(x) :
         # If there are further blocks
         for ma in mp_data['add_meta_blocks']:
             if meta_pred.__len__() > 1 :
-                meta_pred = [meta_pred, wff.BLOCK]
+                meta_pred = [meta_pred, Wff.BLOCK]
             mp = _metadata_predicate(ma)
 
             if ma['block_logCon']['negate']:
-                mp = [mp, wff.NOT]
+                mp = [mp, Wff.NOT]
 
-            meta_pred = [meta_pred, mp, wff(ma['block_logCon']['logCon'])]
+            meta_pred = [meta_pred, mp, Wff(ma['block_logCon']['logCon'])]
 
         stm.set_param(meta_pred, 'metadata')
 
@@ -142,13 +186,13 @@ def create_select(x) :
         # If there are further blocks
         for ra in rp_data['add_region_blocks']:
             if reg_pred.__len__() > 1:
-                reg_pred = [reg_pred, wff.BLOCK]
+                reg_pred = [reg_pred, Wff.BLOCK]
             rp = _region_predicate(ra)
 
             if ra['block_logCon']['negate']:
-                rp = [rp, wff.NOT]
+                rp = [rp, Wff.NOT]
 
-            reg_pred = [reg_pred, rp, wff(ra['block_logCon']['logCon'])]
+            reg_pred = [reg_pred, rp, Wff(ra['block_logCon']['logCon'])]
 
 
         stm.set_param(reg_pred, 'region')
@@ -171,19 +215,19 @@ def _metadata_predicate(mp_data):
 
     mp = MetaPredicate(mp_data['attribute'], mp_data['value'], mp_data['condition'])
     if mp_data['negate']:
-        mp = [mp, 'NOT']
+        mp = [mp, Wff.NOT]
 
     # Check if there are further predicates
     for pa in mp_data['pm_additional']:
 
         mp1 = MetaPredicate(pa['attribute'], pa['value'], pa['condition'])
         if pa['negate']:
-            mp1 = [mp1, 'AND']
+            mp1 = [mp1, Wff.NOT]
 
         if pa['logCon'] == 'AND':
-            mp = [mp, mp1, 'AND']
+            mp = [mp, mp1, Wff.AND]
         if pa['logCon'] == 'OR':
-            mp = [mp, mp1, 'OR']
+            mp = [mp, mp1, Wff.OR]
 
     return mp
 
@@ -194,11 +238,9 @@ def _region_predicate(rp_data):
         rp_s.set_value_type('meta')
     else:
         rp_s.set_value_type()
-    #rp = WellFormedFormula(rp_s)
     rp = rp_s
     if rp_data['negate']:
-        #rp.negate()
-        rp = [rp, 'NOT']
+        rp = [rp, Wff.NOT]
 
     # Check if there are further predicates
     for pa in rp_data['pr_additional']:
@@ -211,15 +253,12 @@ def _region_predicate(rp_data):
         rp1 = rp1_s
 
         if pa['negate']:
-            #rp1.negate()
-            rp1 = [rp1, 'NOT']
+            rp1 = [rp1, Wff.NOT]
 
         if pa['logCon'] == 'AND':
-            #rp.and_(rp1)
-            rp = [rp, rp1, 'AND']
+            rp = [rp, rp1, Wff.AND]
         if pa['logCon'] == 'OR':
-            #rp.or_(rp1)
-            rp = [rp, rp1, 'OR']
+            rp = [rp, rp1, Wff.OR]
 
     return rp
 

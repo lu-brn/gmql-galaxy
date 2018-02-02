@@ -10,7 +10,7 @@
                optional="true">
             <expand macro="text_val" />
         </param>
-        <section name="new_regions_attributes" title="New Genomic Region Attributes" expand="false">
+        <section name="new_regions_attributes" title="New Genomic Region Attributes" expanded="false">
             <repeat name="new_regions" title="Add New Region Attribute to Result Dataset" min="0" default="0"
                     help="Create new genomic region attributes by using functions on existing experiment region attributes">
                 <param name="new_name" type="text" label="New Region Attribute Name" optional="true" >
@@ -21,7 +21,7 @@
             <param name="argument" label="Region attributes over which apply function" type="text" optional="true"/>
             </repeat>
         </section>
-        <section name="joinby" title="Condition on Samples Metadata" expand="false"
+        <section name="joinby" title="Condition on Samples Metadata" expanded="false"
         help="A list of metadata attribute names (or their suffixes) that must be present with equal values in the metadata of
               the reference and experiment samples.">
         <repeat name="joinby_clause" title="Attributes to match" min="0" default="0" >

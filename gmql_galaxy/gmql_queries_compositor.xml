@@ -1,8 +1,9 @@
 <tool id="gmql_queries_compositor" name="GMLQ Query Compositor" version="0.1.1">
     <macros>
         <import>gmql_queries_macros.xml</import>
-        <import>gmql_select_macros.xml</import>
-        <import>gmql_map_macros.xml</import>
+        <import>gmql_operators_select.xml</import>
+        <import>gmql_operators_map.xml</import>
+        <import>gmql_operators_order.xml</import>
     </macros>
     <description>Compose, Compile and Run GMQL queries step by step.</description>
     <command><![CDATA[
@@ -42,7 +43,7 @@
         <param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
         <param name="query_name" type="text" label="Query Name" >
 		    <validator type="regex" message="Only alphanumeric characters and underscore allowed. It must begin with
-		                                     letter or underscore.">[a-zA-Z_][\w]+$</validator>
+		                                     letter or underscore.">[a-zA-Z_]([\w]+)?$</validator>
 	    </param>
         <repeat name="operations" title="GMQL Operations" help="Add a new operation to the execution flow."
                 min="1" default="0">
@@ -58,6 +59,9 @@
                 </when>
                 <when value="MAP">
                     <expand macro="map" />
+                </when>
+                <when value="ORDER">
+                    <expand macro="order" />
                 </when>
             </conditional>
         </repeat>
