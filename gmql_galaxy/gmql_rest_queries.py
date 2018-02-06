@@ -29,16 +29,6 @@ def check_input(query):
     return query
 
 
-def compile_saved_query(user, query_file, log_file):
-
-    with open(query_file, 'r') as f_in:
-        info = filter(lambda x: x.startswith('#'), f_in)
-
-    info = map(lambda x: x.rstrip('\n').lstrip('#'), info)
-    query_name = info[1].split(': ')[1]
-
-    compile_query(user, query_name, query_file, log_file)
-
 def compile_query(user, filename, query, log_file):
     """Compile the given query"""
 

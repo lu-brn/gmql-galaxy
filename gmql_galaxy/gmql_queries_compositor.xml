@@ -15,6 +15,9 @@
       -cmd='run'
       -query_params=$query_params
       -query_output=$query
+      #if $query_create.create == 'no' :
+       -query_source=$query_file
+      #end if
       -query_log=$log
 	  -updated_ds_list=$updated_list
 	 #else :
@@ -23,6 +26,9 @@
       -cmd='compile'
       -query_params=$query_params
       -query_output=$query
+      #if $query_create.create == 'no' :
+       -query_source=$query_file
+      #end if
       -query_log=$log
       #end if
     #else:
@@ -31,6 +37,9 @@
      -cmd='save'
      -query_params=$query_params
      -query_output=$query
+     #if $query_create.create == 'no' :
+      -query_source=$query_file
+     #end if
     #end if
     ]]></command>
     <configfiles>
@@ -45,6 +54,15 @@
 		    <validator type="regex" message="Only alphanumeric characters and underscore allowed. It must begin with
 		                                     letter or underscore.">[a-zA-Z_]([\w]+)?$</validator>
 	    </param>
+        <conditional name="query_create" >
+            <param name="create" label="Create new query or append to a saved one: " type="select" display="radio" >
+                <option value="yes">New query</option>
+                <option value="no">Continue</option>
+            </param>
+            <when value="no">
+                <param name="query_file" label="Select local query" type="data" format="gmql_query" />
+            </when>
+        </conditional>
         <repeat name="operations" title="GMQL Operations" help="Add a new operation to the execution flow."
                 min="1" default="0">
             <conditional name="operation">

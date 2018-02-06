@@ -16,7 +16,7 @@ import logging
 module = 'repository'
 
 
-def list_datasets(user, output):
+def list_datasets(user, output, saveResult=True):
     """Retrieve the list of available datasets"""
 
     call = 'list_datasets'
@@ -25,13 +25,16 @@ def list_datasets(user, output):
     datasets = get(url, user=user)
     list_datasets = datasets['datasets']
 
-    with open(output,'w') as f:
-        for ds in list_datasets:
-            f.write("{name}\t{owner}\n".format(name=ds['name'],owner=ds['owner']))
-    f.close()
+    if saveResult:
+        with open(output,'w') as f:
+            for ds in list_datasets:
+                f.write("{name}\t{owner}\n".format(name=ds['name'],owner=ds['owner']))
+        f.close()
+    else:
+        return list_datasets
 
 
-def list_samples(user, output, ds, owner=''):
+def list_samples(user, output, ds):
     """List the samples of a given dataset"""
 
     call = 'list_samples'
@@ -39,6 +42,13 @@ def list_samples(user, output, ds, owner=''):
 
     # Specify for which dataset.
     # If it's a public dataset, the 'public.' prefix must be added to the dataset name
+
+    # Check if the ds is public or not
+    owner = ''
+    for d in list_datasets(user, '', False):
+        if d['name'] == ds :
+            owner = d['owner']
+
     if (owner=='public'):
         url = url.format(datasetName='public.'+ ds)
     else :
@@ -166,7 +176,6 @@ def upload_samples(user, output, dataset, schema, samples, updatedDsList):
 
     with open(samples, "r") as file:
         s = map(lambda x: x.split('\t'), file)
-        logging.debug(s)
         s.pop() # I need to get rid of last element, which is empty
         map(lambda x: files.update({'file%d' % (s.index(x) + 1) : (x[0], open(x[1].rstrip('\n'), 'rb'))}), s)
 
@@ -200,7 +209,6 @@ def list_imported(result, output) :
         if am :
             samples.append(result.get('autoMetadata'))
 
-    logging.debug("samples: \n%s"%(samples))
 
     with open(output, 'w') as f_out:
         for l in samples:
@@ -309,12 +317,25 @@ def helper_samples(s):
 def get_schema(user, ds, file) :
     """Get the schema field of the input dataset and save it in file"""
 
+    logging.basicConfig(filename='/home/luana/gmql-galaxy/ds.log', level=logging.DEBUG, filemode='w')
+
     call = "schema"
 
     url = compose_url(module, call)
-    url = url.format(datasetName=ds)
+
+    # Check if the ds is public or not
+    owner = ''
+    for d in list_datasets(user, '', False):
+        if d['name'] == ds :
+            owner = d['owner']
+
+    if (owner=='public'):
+        url = url.format(datasetName='public.'+ ds)
+    else :
+        url = url.format(datasetName=ds)
 
     schema = get(url, user=user)
+
 
     with open(file,'w') as f_out:
         for f in schema['fields'] :
@@ -335,7 +356,6 @@ def __main__():
     parser.add_argument("-user")
     parser.add_argument("-cmd")
     parser.add_argument("-dataset")
-    parser.add_argument("-owner")
     parser.add_argument("-new_name")
     parser.add_argument("-schema")
     parser.add_argument("-samples")
@@ -346,11 +366,13 @@ def __main__():
     if args.cmd == 'list':
         list_datasets(args.user, args.output)
     if args.cmd == 'samples':
-        list_samples(args.user, args.output, args.dataset, args.owner)
+        list_samples(args.user, args.output, args.dataset)
     if args.cmd == 'rename' :
         rename_dataset(args.user, args.output, args.dataset, args.new_name)
     if args.cmd == 'delete':
         delete_dataset(args.user, args.output, args.dataset)
+    if args.cmd == 'schema' :
+        get_schema(args.user, args.dataset, args.output)
     if args.cmd == 'upload_url':
         upload_samples_url(args.user, args.output, args.dataset, args.schema, args.samples, args.add_output)
     if args.cmd == 'upload' :

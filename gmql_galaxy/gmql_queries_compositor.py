@@ -9,9 +9,9 @@ import os, sys, argparse, json
 from itertools import chain
 from gmql_queries_statements import *
 from gmql_rest_queries import compile_query, run_query
-from gmql_queries_constants import * 
+from gmql_queries_constants import *
 
-def read_new_query(query_data):
+def read_query(query_data):
 
     # Create new Query object and read JSON file
     query = dict ()
@@ -262,16 +262,22 @@ def _region_predicate(rp_data):
 
     return rp
 
-def save(query, output):
+def save(query, output, query_source):
 
-    #Set the config files where to look for the actual syntax to use
+    # Set the config files where to look for the actual syntax to use
     y_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'gmql_syntax.yaml')
 
     with open(y_path, 'r') as yamlf:
         syntax = yaml.load(yamlf)
 
+    # If I am continuing a local query, first copy the older statements
+    if query_source:
+        with open(output, 'w') as f_out:
+            with open(query_source, 'r') as f_in:
+                f_out.writelines(f_in.readlines())
 
-    with open(output, 'w') as f_out:
+
+    with open(output, 'a') as f_out:
 
         for s in query['statements'] :
              f_out.write('{stm}\n'.format(stm=s.save(syntax)))
@@ -298,13 +304,15 @@ def __main__():
     parser.add_argument("-cmd")
     parser.add_argument("-query_params")
     parser.add_argument("-query_output")
+    parser.add_argument("-query_source")
     parser.add_argument("-query_log")
     parser.add_argument("-updated_ds_list")
 
     args = parser.parse_args()
 
-    query = read_new_query(args.query_params)
-    save(query, args.query_output)
+    query = read_query(args.query_params)
+
+    save(query, args.query_output, args.query_source)
 
     if(args.cmd == 'compile'):
         compile(args.user, query['name'], args.query_output, args.query_log)

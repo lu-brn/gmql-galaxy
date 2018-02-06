@@ -1,6 +1,6 @@
 ---
 GMQL_URL :
-    http://genomic.elet.polimi.it/gmql-rest-test #server to use
+    http://genomic.elet.polimi.it/gmql-rest #server to use
 access:
     prefix: ''
     operations:

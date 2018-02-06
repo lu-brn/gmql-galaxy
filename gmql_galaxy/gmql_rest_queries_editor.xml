@@ -7,7 +7,11 @@
        -user=$authToken
        -cmd=execute
        -name=$query_name
-       -query=$query_text
+       #if $query_create.create == "yes" :
+        -query=$query_text
+       #else :
+        -query=$query_file
+       #end if
        -log=$log
        -format=$mode.out_format
        -add_output=$updated_list
@@ -16,45 +20,63 @@
        -user=$authToken
        -cmd=$mode.exec_mode
        -name=$query_name
-       -query=$query_text
+       #if $query_create.create == "yes" :
+        -query=$query_text
+       #else :
+        -query=$query_file
+       #end if
        -log=$log
       #end if
 	  ]]></command>
   <configfiles>
       <!--<configfile name="schema_out" >
       </configfile> -->
-      <configfile name="query_text" >#echo '%s'%($query)</configfile>
+      <configfile name="query_text" >#if $query_create.create == 'yes' :
+          #echo '%s'%($query_create.query)
+          #end if</configfile>
   </configfiles>
-   <inputs>
-	<param format="gmql_user" name="authToken" type="data" label="Select user">
+    <inputs>
+        <param format="gmql_user" name="authToken" type="data" label="Select user">
             <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
-    </param>
-	<param name="query_name" type="text" label="Query Name" >
-		<validator type="regex" message="Only alphanumeric characters and underscore allowed. It must begin with
+        </param>
+
+        <param name="query_name" type="text" label="Query Name" >
+            <validator type="regex" message="Only alphanumeric characters and underscore allowed. It must begin with
                                          letter or underscore.">[a-zA-Z_]([\w]+)?$</validator>
-	</param>
-    <param name="query" type="text" area="true" label="Query" >
-        <sanitizer>
-            <valid initial="default">
-                <add value=";"/>
-            </valid>
-            <mapping initial="default">
-                <add source="X" target="__cn__" />
-            </mapping>
-        </sanitizer>
-    </param>
-     <conditional name="mode">
-      <param name="exec_mode" type="select" label="Compile or run query">
-		<option value="compile">Compile query</option>
-        <option value="execute">Execute query</option>
-      </param>
-      <when value="execute">
-			<param name="out_format" type="select" label="Output format">
-                <option value="gdm">TAB Delimited (GDM)</option>
-                <option value="gtf">GTF</option>
+        </param>
+        <conditional name="query_create">
+            <param name="create" type="select" display="radio" label="Write a new query or execute an existing one." >
+                <option value="yes">Write new one</option>
+                <option value="no">Run/Compile existing one</option>
             </param>
-      </when>
-    </conditional>
+            <when value="yes">
+                <param name="query" type="text" area="true" label="Query" >
+                    <sanitizer>
+                        <valid initial="default">
+                            <add value=";"/>
+                        </valid>
+                        <mapping initial="default">
+                            <add source="X" target="__cn__" />
+                        </mapping>
+                    </sanitizer>
+                </param>
+            </when>
+            <when value="no">
+                <param label="Select GMQL Query" type="data" format="gmql_query" name="query_file" />
+            </when>
+        </conditional>
+        <conditional name="mode">
+            <param name="exec_mode" type="select" label="Compile or run query">
+                <option value="compile">Compile query</option>
+                <option value="execute">Execute query</option>
+            </param>
+            <when value="execute">
+                <param name="out_format" type="select" label="Output format">
+                    <option value="gdm">TAB Delimited (GDM)</option>
+                    <option value="gtf">GTF</option>
+                </param>
+            </when>
+        </conditional>
     </inputs>
 	<outputs>
         <data format="txt" name="log" label="${query_name} query log" />

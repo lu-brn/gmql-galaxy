@@ -117,6 +117,7 @@ def get(url, user=None, response_type='json') :
     else :
         headers.update({'Accept' : 'application/json'})
 
+    logging.debug(headers)
 
     #Make the request
     response = requests.get(url, headers=headers)

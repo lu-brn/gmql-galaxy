@@ -23,7 +23,7 @@
 	    -add_output=$updated_list
 	  ]]></command>
     <configfiles>
-        <configfile name="samples" >#if $upload.source == 'local'
+        <configfile name="samples" >#if $upload.source == 'local' :
             #for $i in $upload.samples
             #if $i.is_collection :
             #for $file in $i
