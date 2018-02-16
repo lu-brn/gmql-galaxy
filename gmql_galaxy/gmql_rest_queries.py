@@ -62,7 +62,7 @@ def compile_query(user, filename, query, log_file):
         stop_err("Compilation failed.\nSee log for details.")
 
 
-def run_query(user, filename, query, log_file, rs_format, updatedDsList):
+def run_query(user, filename, query, log_file, rs_format, importResult=True):
     """Run the given query. It returns an execution log and the resulting dataset."""
 
     logging.basicConfig(filename='/home/luana/gmql-galaxy/run.log', level=logging.DEBUG, filemode='w')
@@ -116,18 +116,16 @@ def run_query(user, filename, query, log_file, rs_format, updatedDsList):
                     "{jobs}\n".format(status=status, message=message, execTime=time, jobs=jobs))
         f.close()
 
-        # Retrieve the name of each resulting dataset and for each retrieve data
+        importResult = bool(importResult)
 
+        if importResult:
+            # Retrieve the name of each resulting dataset and for each retrieve data
+            os.makedirs('metadata')
+            os.makedirs('samples')
 
-        for dataset in log['datasets'] :
-            ds_name = dataset.get('name')
-            import_samples(user, ds_name, isMulti=True)
-
-        #retrieve the schema of the resulting dataset
-        #get_schema(user,ds,rs_schema)
-
-        # Return the updated list of samples
-        list_datasets(user, updatedDsList)
+            for dataset in log['datasets'] :
+                ds_name = dataset.get('name')
+                import_samples(user, ds_name, isMulti=True)
 
 
 def read_status(user, jobid):
@@ -231,8 +229,7 @@ def __main__():
     parser.add_argument("-log")
     parser.add_argument("-job")
     parser.add_argument("-format")
-    #parser.add_argument("-schema")
-    parser.add_argument("-result_dir")
+    parser.add_argument("-importFlag")
     parser.add_argument("-add_output")
 
 
@@ -241,7 +238,8 @@ def __main__():
     if args.cmd == 'compile':
         compile_query(args.user, args.name, args.query, args.log)
     if args.cmd == 'execute':
-        run_query(args.user, args.name, args.query, args.log, args.format, args.add_output)
+        run_query(args.user, args.name, args.query, args.log, args.format, args.importFlag)
+        list_datasets(args.user,args.add_output)
     if args.cmd == 'jobs':
         show_jobs(args.user, args.log)
     if args.cmd == 'stop' :

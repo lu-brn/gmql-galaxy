@@ -1,19 +1,28 @@
 <macros>
     <import>gmql_queries_macros.xml</import>
     <xml name="select">
-        <conditional name="input">
+        <param name="input_ds" type="select" label="Select Dataset" refresh_on_change="True">
+            <options from_dataset="gmql_datasets">
+                <column name="value" index="0"/>
+            </options>
+        </param>
+        <!--<conditional name="input">
             <param name="input_type" type="select" display="radio" label="Dataset over which SELECT samples"
                    help="It can be a dataset in the user space or the result of a MATERIALIZE operation still to be executed.">
                 <option value="i_ds">User Dataset</option>
                 <option value="i_var">Materializing result</option>
             </param>
             <when value="i_ds">
-                <expand macro="input_ds" label="Select Dataset" />
+                <param name="input_ds" type="select" label="Select Dataset" refresh_on_change="True">
+                    <options from_dataset="gmql_datasets">
+                        <column name="value" index="0"/>
+                    </options>
+                </param>
             </when>
             <when value="i_var">
                 <expand macro="input_var" name="input_var" label="Variable name" optional="false" />
             </when>
-        </conditional>
+        </conditional>-->
         <expand macro="output_var" />
         <section name="metadata_predicates" title="Conditions on metadata" expanded="false"
                  help="Selection based on the existence and values of certain metadata attributes in each sample.">
@@ -56,9 +65,8 @@
     <xml name="metadata_predicate" token_optional="optional" >
         <yield />
         <param name="negate" type="boolean" label="Negative Condition" optional="@OPTIONAL@"/>
-        <param name="attribute" type="text" label="Metadata Attribute Name" optional="@OPTIONAL@" >
-            <expand macro="text_val" />
-        </param>
+        <param name="attribute" type="select" label="Metadata Attribute Name" optional="@OPTIONAL@"
+               dynamic_options="get_metadata_attr(user=authToken.file_name,ds=input_ds, ds_list=gmql_datasets.file_name)" />
         <expand macro="condition" optional="@OPTIONAL@" />
         <param name="value" type="text" label="Value whom to confront the metadata attribute with" optional="@OPTIONAL@" >
             <expand macro="meta_value" />

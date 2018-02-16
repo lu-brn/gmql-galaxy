@@ -45,9 +45,10 @@
     <configfiles>
         <inputs name="query_params" filename="params.json"/>
     </configfiles>
+    <code file="compositor_dynamic_utils.py" />
     <inputs>
         <param format="gmql_user" name="authToken" type="data" label="Select user">
-            <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
+           <!-- <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator> -->
         </param>
         <param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
         <param name="query_name" type="text" label="Query Name" >
@@ -98,6 +99,8 @@
                                 <option value="gdm">TAB Delimited (GDM)</option>
                                 <option value="gtf">GTF</option>
                             </param>
+                            <param name="import" type="boolean" checked="true" label="Import result automatically into Galaxy?"
+                                   help="Otherwise it will be possible to import it later using GMQL Import tool." />
                         </when>
                     </conditional>
                 </when>
@@ -114,9 +117,19 @@
                 <action name="column_names" type="metadata" default="dataset,owner" />
             </actions>
        </data>
-        <collection name="query_results" type="list:list" label="${query_name}">
+<!--        <collection name="query_results" type="list:list" label="${query_name}">
             <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)#(?P&lt;identifier_1&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
             <filter>materialize['materialize_result'] is True and materialize['choose_op']['op'] == 'run'</filter>
+        </collection>-->
+        <collection name="query_results_m" type="list:list" label="${query_name} results metadata">
+            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)#(?P&lt;identifier_1&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
+                               directory="results/metadata"/>
+            <filter>materialize['materialize_result'] is True and materialize['choose_op']['op'] == 'run' and materialize['choose_op']['import'] is True</filter>
+        </collection>
+        <collection name="query_results_s" type="list:list" label="${query_name} results">
+            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)#(?P&lt;identifier_1&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
+                               directory="results/samples"/>
+            <filter>materialize['materialize_result'] is True and materialize['choose_op']['op'] == 'run' and materialize['choose_op']['import'] is True</filter>
         </collection>
     </outputs>
     <help>

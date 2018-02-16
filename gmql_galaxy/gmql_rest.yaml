@@ -9,6 +9,10 @@ access:
         register: [register]
         login: [login]
         logout: [logout]
+metadata:
+    prefix: 'metadata'
+    operations:
+        list: ['{datasetName}', filter]
 repository: #operation over user repository
     prefix: datasets
     operations:

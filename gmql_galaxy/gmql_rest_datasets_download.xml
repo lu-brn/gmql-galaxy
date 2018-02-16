@@ -33,8 +33,12 @@
       <data format="zip" name="ds_archive" label="${dataset} Compressed Archive" >
           <filter>operation == 'zip'</filter>
       </data>
-      <collection name="query_results" type="list" label="${dataset}">
-            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?" directory="dataset" />
+      <collection name="query_results_m" type="list" label="${dataset} metadata">
+            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?" directory="dataset/metadata" />
+            <filter>operation == 'import'</filter>
+      </collection>
+      <collection name="query_results_s" type="list" label="${dataset} samples">
+            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?" directory="dataset/samples" />
             <filter>operation == 'import'</filter>
       </collection>
   </outputs>

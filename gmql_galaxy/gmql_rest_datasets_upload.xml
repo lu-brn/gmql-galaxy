@@ -24,6 +24,7 @@
 	  ]]></command>
     <configfiles>
         <configfile name="samples" >#if $upload.source == 'local' :
+            #if $upload.samples.is_collection :
             #for $i in $upload.samples
             #if $i.is_collection :
             #for $file in $i
@@ -33,12 +34,15 @@
             #echo '%s\t%s\n'%($i.name,$i)
             #end if
             #end for
+            #else :
+            #echo '%s\t%s\n'%($upload.samples.name,$upload.samples)
+            #end if
             #end if
         </configfile>
     </configfiles>
   <inputs>
 	<param format="gmql_user" name="authToken" type="data" label="Select user">
-            <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
+           <!-- <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator> -->
     </param>
 	<param name="name" type="text" label="Name of the new dataset" >
 		<validator type="regex" message="Only alphanumeric characters and underscore are allowed">[\w]+$</validator>
@@ -99,7 +103,7 @@
 					<param name="schema" type="data" format="xml" label="Schema XML Definition" />
 				</when>
 			</conditional>
-			<param name="samples" type="data_collection" label="Data: " />
+			<param name="samples" type="data" label="Data: " />
 		</when>
 	</conditional>
   </inputs>

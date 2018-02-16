@@ -8,7 +8,7 @@ import argparse
 
 import validators
 import tempfile
-
+import imp
 from utilities import *
 
 import logging
@@ -278,7 +278,6 @@ def get_sample_meta(user, output, dataset, name):
 
 def import_samples(user, ds, isMulti=False) :
 
-
     # Retrieve the list of the samples in the resulting dataset
     # The list is stored in a temporary file
     temp = tempfile.NamedTemporaryFile(delete=False)
@@ -293,15 +292,17 @@ def import_samples(user, ds, isMulti=False) :
         #Prefix the file name with the dataset name
         for s in samples:
             # Get the sample
-            get_sample(user, "{ds}#sample_{name}.{ext}".format(ds=ds,name=s['name'].replace('_', ''), ext=s['ext']), ds, s['name'])
+            get_sample(user, "samples/{ds}#{name}.{ext}".format(ds=ds,name=s['name'].replace('_', ''), ext=s['ext']), ds, s['name'])
             # Get its metadata
-            get_sample_meta(user, "{ds}#metadata_{name}.meta".format(ds=ds,name=s['name'].replace('_', ''), ext=s['ext']), ds, s['name'])
+            get_sample_meta(user, "metadata/{ds}#{name}.meta".format(ds=ds,name=s['name'].replace('_', ''), ext=s['ext']), ds, s['name'])
     else:
+        os.makedirs('samples')
+        os.makedirs('metadata')
         for s in samples:
             # Get the sample
-            get_sample(user, "sample_{name}.{ext}".format(name=s['name'].replace('_',''), ext=s['ext']), ds, s['name'])
+            get_sample(user, "samples/{name}.{ext}".format(name=s['name'].replace('_',''), ext=s['ext']), ds, s['name'])
             # Get its metadata
-            get_sample_meta(user,"metadata_{name}.meta".format(name=s['name'].replace('_',''),ext=s['ext']),ds,s['name'])
+            get_sample_meta(user,"metadata/{name}.meta".format(name=s['name'].replace('_',''),ext=s['ext']),ds,s['name'])
 
     os.remove(temp.name)
 

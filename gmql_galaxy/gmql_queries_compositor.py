@@ -9,6 +9,7 @@ import os, sys, argparse, json
 from itertools import chain
 from gmql_queries_statements import *
 from gmql_rest_queries import compile_query, run_query
+from gmql_rest_datasets import list_datasets
 from gmql_queries_constants import *
 
 def read_query(query_data):
@@ -36,6 +37,11 @@ def read_query(query_data):
         out_format = qd['materialize']['choose_op'].get('out_format',None)
         if out_format:
             query.update(out_format=out_format)
+
+        #Check if the user wants to import results into Galaxy already
+        importFlag = qd['materialize']['choose_op'].get('import', None)
+        if importFlag is not None:
+            query.update(importFlag=importFlag)
 
     # Add statements list to query, flattening list elements if needed (in case there's some intermediate
     # materialize)
@@ -151,12 +157,13 @@ def create_select(x) :
     # Set output and input variables
     stm.set_output_var(x['output_var'])
 
-    if x['input']['input_type'] == 'i_ds' :
-         input_ds = x['input']['input_ds']
-    if x['input']['input_type'] == 'i_var':
-         input_ds = x['input']['input_var']
+    # if x['input']['input_type'] == 'i_ds' :
+    #      input_ds = x['input']['input_ds']
+    # if x['input']['input_type'] == 'i_var':
+    #      input_ds = x['input']['input_var']
 
-    stm.set_input_ds(input_ds)
+
+    stm.set_input_ds(x['input_ds'])
 
     #Check if there's metadata predicates and set them up
     mp_data = x['metadata_predicates']
@@ -289,10 +296,14 @@ def compile(user, query_name, query_file, log):
     compile_query(user, query_name, query_file, log)
 
 
-def run(user, query_name, query, log, out_format, updated_ds_list):
+def run(user, query_name, query, log, out_format, importFlag, updated_ds_list):
     # Call the service in gmql_rest_queries to send the query to the GMQL server to be executed.
 
-    run_query(user, query_name, query, log, out_format, updated_ds_list)
+    run_query(user, query_name, query, log, out_format, importFlag)
+
+    #Save updated list of datasets
+    list_datasets(user, updated_ds_list)
+
 
 def stop_err(msg):
     sys.stderr.write("%s\n" % msg)
@@ -311,14 +322,13 @@ def __main__():
     args = parser.parse_args()
 
     query = read_query(args.query_params)
-
     save(query, args.query_output, args.query_source)
 
     if(args.cmd == 'compile'):
         compile(args.user, query['name'], args.query_output, args.query_log)
 
     if(args.cmd == 'run'):
-        run(args.user, query['name'], args.query_output, args.query_log, query['out_format'], args.updated_ds_list)
+        run(args.user, query['name'], args.query_output, args.query_log, query['out_format'], query['importFlag'], args.updated_ds_list)
 
 
 if __name__ == "__main__":
