@@ -1,46 +1,57 @@
 <macros>
     <import>gmql_queries_macros.xml</import>
     <xml name="select">
-        <param name="input_ds" type="select" label="Select Dataset" refresh_on_change="True">
-            <options from_dataset="gmql_datasets">
-                <column name="value" index="0"/>
-            </options>
-        </param>
-        <!--<conditional name="input">
+        <conditional name="input">
             <param name="input_type" type="select" display="radio" label="Dataset over which SELECT samples"
                    help="It can be a dataset in the user space or the result of a MATERIALIZE operation still to be executed.">
                 <option value="i_ds">User Dataset</option>
                 <option value="i_var">Materializing result</option>
             </param>
             <when value="i_ds">
+                <param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
                 <param name="input_ds" type="select" label="Select Dataset" refresh_on_change="True">
                     <options from_dataset="gmql_datasets">
                         <column name="value" index="0"/>
                     </options>
                 </param>
+                <expand macro="predicates">
+                    <expand macro="meta_block" optional="true" vartype="select"/>
+                    <repeat name="add_meta_blocks" title="Additional Conditions Block" default="0" min="0"
+                            help="Compose different blocks to obtain more complex conditions">
+                        <expand macro="meta_block" vartype="select">
+                            <expand macro="block_logCon"/>
+                        </expand>
+                    </repeat>
+                </expand>
             </when>
             <when value="i_var">
-                <expand macro="input_var" name="input_var" label="Variable name" optional="false" />
+                <expand macro="input_var" name="input_var" label="Variable name" optional="false"/>
+                <expand macro="predicates">
+                    <expand macro="meta_block" optional="true" vartype="text"/>
+                    <repeat name="add_meta_blocks" title="Additional Conditions Block" default="0" min="0"
+                            help="Compose different blocks to obtain more complex conditions">
+                        <expand macro="meta_block" vartype="text">
+                            <expand macro="block_logCon"/>
+                        </expand>
+                    </repeat>
+                </expand>
             </when>
-        </conditional>-->
+        </conditional>
         <expand macro="output_var" />
+        <expand macro="materialize_stm" />
+    </xml>
+    <xml name="predicates">
         <section name="metadata_predicates" title="Conditions on metadata" expanded="false"
                  help="Selection based on the existence and values of certain metadata attributes in each sample.">
-            <expand macro="meta_block" optional="true" />
-            <repeat name="add_meta_blocks" title="Additional Conditions Block" default="0" min="0"
-                    help="Compose different blocks to obtain more complex conditions">
-                <expand macro="meta_block">
-                    <expand macro="block_logCon" />
-                </expand>
-            </repeat>
+            <yield/>
         </section>
         <section name="region_predicates" title="Conditions on region fields" expanded="false"
                  help="Selection based on the characteristics of the genomic regions of each sample.">
-            <expand macro="region_block" optional="true" />
+            <expand macro="region_block" optional="true"/>
             <repeat name="add_region_blocks" title="Additional Conditions Block" default="0" min="0"
                     help="Compose different blocks to obtain more complex conditions">
                 <expand macro="region_block">
-                    <expand macro="block_logCon" />
+                    <expand macro="block_logCon"/>
                 </expand>
             </repeat>
         </section>
@@ -48,24 +59,23 @@
                  help="Selection based on the existence of certain metadata attributes
                                    and the matching of their values with those associated with at least one sample in an
                                    external dataset D_EXT">
-            <expand macro="semijoin" />
+            <expand macro="semijoin"/>
         </section>
-        <expand macro="materialize_stm" />
     </xml>
-    <xml name="meta_block" token_optional="optional">
+    <xml name="meta_block" token_optional="optional" token_vartype="vartype">
         <yield />
-        <expand macro="metadata_predicate" optional="@OPTIONAL@"/>
+        <expand macro="metadata_predicate" optional="@OPTIONAL@" vartype="@VARTYPE@"/>
         <repeat name="pm_additional" title="Additional Condition"
                 min="0" default="0">
-            <expand macro="metadata_predicate">
+            <expand macro="metadata_predicate" vartype="@VARTYPE@">
                 <expand macro="logCon"/>
             </expand>
         </repeat>
     </xml>
-    <xml name="metadata_predicate" token_optional="optional" >
+    <xml name="metadata_predicate" token_optional="optional" token_vartype="vartype">
         <yield />
         <param name="negate" type="boolean" label="Negative Condition" optional="@OPTIONAL@"/>
-        <param name="attribute" type="select" label="Metadata Attribute Name" optional="@OPTIONAL@"
+        <param name="attribute" type="@VARTYPE@" label="Metadata Attribute Name" optional="@OPTIONAL@"
                dynamic_options="get_metadata_attr(user=authToken.file_name,ds=input_ds, ds_list=gmql_datasets.file_name)" />
         <expand macro="condition" optional="@OPTIONAL@" />
         <param name="value" type="text" label="Value whom to confront the metadata attribute with" optional="@OPTIONAL@" >

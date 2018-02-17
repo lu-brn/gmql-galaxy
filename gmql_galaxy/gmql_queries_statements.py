@@ -107,7 +107,7 @@ class Select(Statement):
     def set_output_var(self, var):
         self.set_variable(var, 'output')
 
-    def set_input_ds(self, var):
+    def set_input_var(self, var):
         self.set_variable(var, 'input1')
 
     def set_metadata_predicates(self, logicalPredicate):

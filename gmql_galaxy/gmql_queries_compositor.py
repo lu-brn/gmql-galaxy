@@ -157,16 +157,17 @@ def create_select(x) :
     # Set output and input variables
     stm.set_output_var(x['output_var'])
 
-    # if x['input']['input_type'] == 'i_ds' :
-    #      input_ds = x['input']['input_ds']
-    # if x['input']['input_type'] == 'i_var':
-    #      input_ds = x['input']['input_var']
+    input_data = x['input']
 
-
-    stm.set_input_ds(x['input_ds'])
+    if x['input']['input_type'] == 'i_ds' :
+         input_var = input_data['input_ds']
+         stm.set_input_var(input_var)
+    if x['input']['input_type'] == 'i_var':
+         input_var = input_data['input_var']
+         stm.set_input_var(input_var)
 
     #Check if there's metadata predicates and set them up
-    mp_data = x['metadata_predicates']
+    mp_data = input_data['metadata_predicates']
 
     if mp_data['condition'] != 'None':
         meta_pred = _metadata_predicate(mp_data)
@@ -185,7 +186,7 @@ def create_select(x) :
         stm.set_param(meta_pred, 'metadata')
 
     # Similar applies with Region Predicates (if they are present)
-    rp_data = x['region_predicates']
+    rp_data = input_data['region_predicates']
 
     if rp_data['condition'] != 'None':
         reg_pred = _region_predicate(rp_data)
@@ -206,7 +207,7 @@ def create_select(x) :
 
     # Check if there is a semijoin predicate. If it does, collect the attributes and the external ds to confront with.
 
-    sj_data = x['semijoin_predicate']
+    sj_data = input_data['semijoin_predicate']
 
     if sj_data['sj_attributes'] :
         sj_attr = map(lambda x: x['sj_att'], sj_data['sj_attributes'])
