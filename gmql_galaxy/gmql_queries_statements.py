@@ -102,7 +102,10 @@ class Select(Statement):
             if pred[-1] is Wff.NOT or Wff.BLOCK:
                 return w_format[pred[-1]].format(p=Select.save_wff(syntax, pred[0]))
         else :
-            return pred.save(syntax)
+            if isinstance(pred, Predicate):
+                return pred.save(syntax)
+            else:
+                return pred
 
     def set_output_var(self, var):
         self.set_variable(var, 'output')

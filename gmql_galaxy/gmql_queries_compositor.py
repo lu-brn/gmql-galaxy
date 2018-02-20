@@ -8,7 +8,7 @@
 import os, sys, argparse, json
 from itertools import chain
 from gmql_queries_statements import *
-from gmql_rest_queries import compile_query, run_query
+from gmql_rest_queries import compile_query, run_query, check_input
 from gmql_rest_datasets import list_datasets
 from gmql_queries_constants import *
 
@@ -77,7 +77,7 @@ def create_order(x):
 
      # Set output and input variables
      stm.set_output_var(x['output_var'])
-     stm.set_input_var(x['ordering_ds'])
+     stm.set_input_var(x['input_var_ordering_ds'])
 
      # Collects ordering attributes and set them up, according also to their type (metadata or region)
 
@@ -117,8 +117,8 @@ def create_map(x):
 
     # Set output and input variables
     stm.set_output_var(x['output_var'])
-    stm.set_reference_var(x['reference'])
-    stm.set_experiment_var(x['experiment'])
+    stm.set_reference_var(x['input_var_reference'])
+    stm.set_experiment_var(x['input_var_experiment'])
 
     # Check if the user has given an alternative name to the default one for the counting result
 
@@ -166,44 +166,57 @@ def create_select(x) :
          input_var = input_data['input_var']
          stm.set_input_var(input_var)
 
-    #Check if there's metadata predicates and set them up
-    mp_data = input_data['metadata_predicates']
+    # Check if there's metadata predicates and set them up
+    # They can be given as built step by step or directly as a text line.
+    # Check the type and parse the appropriate data
 
-    if mp_data['condition'] != 'None':
-        meta_pred = _metadata_predicate(mp_data)
+    mp_data = input_data['metadata_predicates']['conditions']
+    if mp_data['ad_flag'] == 'steps' :
 
-        # If there are further blocks
-        for ma in mp_data['add_meta_blocks']:
-            if meta_pred.__len__() > 1 :
-                meta_pred = [meta_pred, Wff.BLOCK]
-            mp = _metadata_predicate(ma)
+        if mp_data['condition'] != 'None':
+            meta_pred = _metadata_predicate(mp_data)
 
-            if ma['block_logCon']['negate']:
-                mp = [mp, Wff.NOT]
+            # If there are further blocks
+            for ma in mp_data['add_meta_blocks']:
+                if meta_pred.__len__() > 1 :
+                    meta_pred = [meta_pred, Wff.BLOCK]
+                mp = _metadata_predicate(ma)
 
-            meta_pred = [meta_pred, mp, Wff(ma['block_logCon']['logCon'])]
+                if ma['block_logCon']['negate']:
+                    mp = [mp, Wff.NOT]
 
+                meta_pred = [meta_pred, mp, Wff(ma['block_logCon']['logCon'])]
+
+            stm.set_param(meta_pred, 'metadata')
+    else :
+        meta_pred = check_input(mp_data['conditions_string'])
         stm.set_param(meta_pred, 'metadata')
 
     # Similar applies with Region Predicates (if they are present)
-    rp_data = input_data['region_predicates']
+    rp_data = input_data['region_predicates']['conditions']
+    if rp_data['ad_flag'] == 'steps' :
 
-    if rp_data['condition'] != 'None':
-        reg_pred = _region_predicate(rp_data)
+        if rp_data['condition'] != 'None':
+            reg_pred = _region_predicate(rp_data)
 
-        # If there are further blocks
-        for ra in rp_data['add_region_blocks']:
-            if reg_pred.__len__() > 1:
-                reg_pred = [reg_pred, Wff.BLOCK]
-            rp = _region_predicate(ra)
+            # If there are further blocks
+            for ra in rp_data['add_region_blocks']:
+                if reg_pred.__len__() > 1:
+                    reg_pred = [reg_pred, Wff.BLOCK]
+                rp = _region_predicate(ra)
 
-            if ra['block_logCon']['negate']:
-                rp = [rp, Wff.NOT]
+                if ra['block_logCon']['negate']:
+                    rp = [rp, Wff.NOT]
 
-            reg_pred = [reg_pred, rp, Wff(ra['block_logCon']['logCon'])]
+                reg_pred = [reg_pred, rp, Wff(ra['block_logCon']['logCon'])]
 
 
+            stm.set_param(reg_pred, 'region')
+    else:
+        reg_pred = check_input(rp_data['conditions_string'])
         stm.set_param(reg_pred, 'region')
+
+
 
     # Check if there is a semijoin predicate. If it does, collect the attributes and the external ds to confront with.
 

@@ -15,25 +15,29 @@
                     </options>
                 </param>
                 <expand macro="predicates">
-                    <expand macro="meta_block" optional="true" vartype="select"/>
-                    <repeat name="add_meta_blocks" title="Additional Conditions Block" default="0" min="0"
-                            help="Compose different blocks to obtain more complex conditions">
-                        <expand macro="meta_block" vartype="select">
-                            <expand macro="block_logCon"/>
-                        </expand>
-                    </repeat>
+                    <expand macro="advanced_mode">
+                        <expand macro="meta_block" optional="true" vartype="select"/>
+                        <repeat name="add_meta_blocks" title="Additional Conditions Block" default="0" min="0"
+                                help="Compose different blocks to obtain more complex conditions">
+                            <expand macro="meta_block" vartype="select">
+                                <expand macro="block_logCon"/>
+                            </expand>
+                        </repeat>
+                    </expand>
                 </expand>
             </when>
             <when value="i_var">
                 <expand macro="input_var" name="input_var" label="Variable name" optional="false"/>
                 <expand macro="predicates">
-                    <expand macro="meta_block" optional="true" vartype="text"/>
-                    <repeat name="add_meta_blocks" title="Additional Conditions Block" default="0" min="0"
-                            help="Compose different blocks to obtain more complex conditions">
-                        <expand macro="meta_block" vartype="text">
-                            <expand macro="block_logCon"/>
-                        </expand>
-                    </repeat>
+                    <expand macro="advanced_mode">
+                        <expand macro="meta_block" optional="true" vartype="text"/>
+                        <repeat name="add_meta_blocks" title="Additional Conditions Block" default="0" min="0"
+                                help="Compose different blocks to obtain more complex conditions">
+                            <expand macro="meta_block" vartype="text">
+                                <expand macro="block_logCon"/>
+                            </expand>
+                        </repeat>
+                    </expand>
                 </expand>
             </when>
         </conditional>
@@ -47,6 +51,7 @@
         </section>
         <section name="region_predicates" title="Conditions on region fields" expanded="false"
                  help="Selection based on the characteristics of the genomic regions of each sample.">
+            <expand macro="advanced_mode">
             <expand macro="region_block" optional="true"/>
             <repeat name="add_region_blocks" title="Additional Conditions Block" default="0" min="0"
                     help="Compose different blocks to obtain more complex conditions">
@@ -54,13 +59,31 @@
                     <expand macro="block_logCon"/>
                 </expand>
             </repeat>
-        </section>
+            </expand>
+            </section>
         <section name="semijoin_predicate" title="Conditions in relation of an external datasets" expanded="false"
                  help="Selection based on the existence of certain metadata attributes
                                    and the matching of their values with those associated with at least one sample in an
                                    external dataset D_EXT">
             <expand macro="semijoin"/>
         </section>
+    </xml>
+    <xml name="advanced_mode">
+        <conditional name="conditions">
+            <param name="ad_flag" type="select" display="radio"
+                   label="Build up conditions step by step or use advance mode to directly type
+                                      the logical formula.">
+                <option value="steps">Step by step</option>
+                <option value="string">Advanced mode</option>
+            </param>
+            <when value="string">
+                <param name="conditions_string" type="text" label="Conditions" area="true"
+                       help="For details on the format check the GMQL Manual" />
+            </when>
+            <when value="steps">
+                <yield />
+            </when>
+        </conditional>
     </xml>
     <xml name="meta_block" token_optional="optional" token_vartype="vartype">
         <yield />

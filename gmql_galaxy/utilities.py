@@ -154,8 +154,6 @@ def post(url, payload, user=None, params=None, content_type='json', response_typ
     :param response_type: Default is json
     """
 
-    logging.basicConfig(filename='/home/luana/gmql-galaxy/post.log', level=logging.DEBUG, filemode='w')
-
     # Set request headers
     headers = dict()
 
@@ -173,15 +171,10 @@ def post(url, payload, user=None, params=None, content_type='json', response_typ
         headers.update({'Content-Type': 'application/json'})
         response = requests.post(url, params=params, headers=headers, json=payload)
 
-    #logging.debug(response.request.url)
-    #logging.debug(response.request.headers)
-    #logging.debug(response.request.body)
-
     # Check returned server status
     status_code = response.status_code
 
     if status_code == requests.codes.ok :
-        logging.debug(response.json())
         return response.json()
     elif status_code == requests.codes.unauthorized :
         expire_user(user)

@@ -1,8 +1,8 @@
 <macros>
     <import>gmql_queries_macros.xml</import>
     <xml name="map">
-        <expand macro="input_var" name="reference" label="Reference Dataset" optional="false" />
-        <expand macro="input_var" name="experiment" label="Experiment Dataset" optional="false" />
+        <expand macro="input_var" name="input_var_reference" label="Reference Dataset" optional="false" />
+        <expand macro="input_var" name="input_var_experiment" label="Experiment Dataset" optional="false" />
         <expand macro="output_var" />
         <param name="count_result" type="text" label="Rename default counting attribute name"
                help="The MAP operation always counts the number of each experiment sample region intersecting a certain reference region;

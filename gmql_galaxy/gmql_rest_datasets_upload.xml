@@ -42,7 +42,7 @@
     </configfiles>
   <inputs>
 	<param format="gmql_user" name="authToken" type="data" label="Select user">
-           <!-- <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator> -->
+           <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
     </param>
 	<param name="name" type="text" label="Name of the new dataset" >
 		<validator type="regex" message="Only alphanumeric characters and underscore are allowed">[\w]+$</validator>

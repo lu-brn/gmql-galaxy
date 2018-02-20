@@ -45,10 +45,12 @@
     <configfiles>
         <inputs name="query_params" filename="params.json"/>
     </configfiles>
-    <code file="dynamic_utils.py" />
+    <code file="dynamic_utils.py" >
+         <hook validate_input="validate_input" />
+    </code>
     <inputs>
         <param format="gmql_user" name="authToken" type="data" label="Select user">
-           <!-- <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator> -->
+           <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
         </param>
         <param name="query_name" type="text" label="Query Name" >
 		    <validator type="regex" message="Only alphanumeric characters and underscore allowed. It must begin with

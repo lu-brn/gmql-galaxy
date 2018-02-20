@@ -1,7 +1,7 @@
 <macro>
     <import>gmql_queries_macros.xml</import>
     <xml name="order">
-        <expand macro="input_var" name="ordering_ds" label="Input Dataset to Order" />
+        <expand macro="input_var" name="input_var_ordering_ds" label="Input Dataset to Order" />
         <expand macro="output_var" />
         <section name="ordering_attributes" title="Ordering Attributes" expanded="true"
                  help="Samples or samples regions will be ordered according to the values of the given attribute(s).
