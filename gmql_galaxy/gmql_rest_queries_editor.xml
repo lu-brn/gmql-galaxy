@@ -2,7 +2,7 @@
   <description>Compile and run GMQL queries (Advanced Mode)</description>
     <command><![CDATA[
       #if $mode.exec_mode == "execute" :
-       mkdir -p results && cd results &&
+       mkdir -p dataset && cd dataset &&
        python $__tool_directory__/gmql_rest_queries.py
        -user=$authToken
        -cmd=execute
@@ -30,8 +30,6 @@
       #end if
 	  ]]></command>
   <configfiles>
-      <!--<configfile name="schema_out" >
-      </configfile> -->
       <configfile name="query_text" >#if $query_create.create == 'yes' :
           #echo '%s'%($query_create.query)
           #end if</configfile>
@@ -82,18 +80,14 @@
     </inputs>
 	<outputs>
         <data format="txt" name="log" label="${query_name} query log" />
-<!--        <collection name="query_results" type="list:list" label="${query_name} results">
-            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)#(?P&lt;identifier_1&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
-            <filter>mode['exec_mode'] == 'execute' and mode['import'] is True</filter>
-        </collection>-->
-        <collection name="query_results_m" type="list:list" label="${query_name} results metadata">
-            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)#(?P&lt;identifier_1&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
-                               directory="results/metadata"/>
+        <collection name="query_results_m" type="list" label="${query_name} results metadata">
+            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
+                               directory="dataset/metadata"/>
             <filter>mode['exec_mode'] == 'execute' and mode['import'] is True</filter>
         </collection>
-        <collection name="query_results_s" type="list:list" label="${query_name} results">
-            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)#(?P&lt;identifier_1&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
-                               directory="results/samples"/>
+        <collection name="query_results_s" type="list" label="${query_name} results">
+            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
+                               directory="dataset/samples"/>
             <filter>mode['exec_mode'] == 'execute' and mode['import'] is True</filter>
         </collection>
         <data format="gmql_repository" name="updated_list" label="${authToken.name.split()[0].rstrip('')} GMQL Datasets">

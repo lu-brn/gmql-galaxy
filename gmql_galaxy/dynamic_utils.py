@@ -5,35 +5,37 @@
 # Luana Brancato, luana.brancato@mail.polimi.it
 # --------------------------------------------------------------------------------
 
-import logging
 import os, imp
 
 
-def validate_input(request_context, error_map, params, inputs):
+def validate_variables(request_context, error_map, params, inputs):
+    """Validate function. It checks that all queries input variables have been previously defined.
+    (Query compositor tool)."""
 
-    output_vars = set([op.get('operation').get('output_var') for op in params.get('operations')])
 
-    with open('/home/luana/gmql-galaxy/debug/val.log', 'w') as file:
-        file.write('output_vars: %s\n'%output_vars)
-        for op in params.get('operations') :
-            op_curr = op.get('operation')
-            if op_curr.get('input', '') :
-                input_var = op_curr.get('input').get('input_var', '')
-                if input_var:
-                    if input_var not in output_vars:
-                        error_msg = '%s has not been defined yet\n' % (input_var)
-                        name = '|'.join(['operations_%d' % (op.get('__index__')), 'operation', 'input', 'input_var'])
-                        error_map[name] = error_msg
-            else:
-                for key in op_curr.keys():
-                        if key.startswith('input_var'):
-                            input_var = op_curr.get(key)
-                            if input_var:
-                                if input_var not in output_vars:
-                                    error_msg = '%s has not been defined yet\n' % (input_var)
-                                    name = '|'.join(['operations_%d' % (op.get('__index__')), 'operation', key])
-                                    file.write('name: %s'%(name))
-                                    error_map[name] = error_msg
+    output_vars = set([])
+
+    for op in params.get('operations'):
+        op_curr = op.get('operation')
+        if op_curr.get('input', ''):
+            input_var = op_curr.get('input').get('input_var', '')
+            if input_var:
+                if input_var not in output_vars:
+                    error_msg = '%s has not been defined yet\n' % (input_var)
+                    name = '|'.join(['operations_%d' % (op.get('__index__')), 'operation', 'input', 'input_var'])
+                    error_map[name] = error_msg
+        else:
+            for key in op_curr.keys():
+                if key.startswith('input_var'):
+                    input_var = op_curr.get(key)
+                    if input_var:
+                        if input_var not in output_vars:
+                            error_msg = '%s has not been defined yet\n' % (input_var)
+                            name = '|'.join(['operations_%d' % (op.get('__index__')), 'operation', key])
+                            error_map[name] = error_msg
+
+        # Update output_vars with the result of current operation
+        output_vars.add(op_curr.get('output_var'))
 
 
 def get_metadata_attr(user, ds, ds_list) :
@@ -64,6 +66,37 @@ def get_metadata_attr(user, ds, ds_list) :
     except :
         return options
 
+def get_metadata_values(user, ds, ds_list, att) :
+
+    options = []
+
+    try :
+        validate_user(user)
+        if ds_list:
+
+            owner = ''
+
+            with open(ds_list, 'r') as f:
+                for d in f.readlines():
+                    if d.split('\t')[0] == ds:
+                        owner = d.split('\t')[1].rstrip('\n')
+            f.close()
+
+            attr_list = get_metadata(user, ds, str(owner), att)
+
+            # By default first option is '*' i.e. any value
+            options.append(('any value', '*', 0))
+
+            for i, att in enumerate(attr_list['values']):
+                options.append(('%s (%d)'%(att.get('text', ' '),att.get('count',0)), att.get('text', ' '), i == 0))
+
+            return options
+
+        else:
+            return options
+    except :
+        return options
+
 def validate_user(user):
     """Check if the user is a valid one"""
 
@@ -73,7 +106,8 @@ def validate_user(user):
             if valid == 'False' :
                 raise Exception, "User has expired"
 
-def get_metadata(user, ds, owner=''):
+
+def get_metadata(user, ds, owner='', att_name=''):
     """Return the metadata attributes names for the given dataset"""
 
     utilities = imp.load_source('gmql', os.getcwd()+'/tools/gmql/utilities.py')
@@ -87,6 +121,9 @@ def get_metadata(user, ds, owner=''):
         url = url.format(datasetName='public.' + ds)
     else:
         url = url.format(datasetName=ds)
+
+    if att_name:
+        url = '{url}/{att}'.format(url=url,att=att_name)
 
     content = dict()
     content.update(attributes=[])

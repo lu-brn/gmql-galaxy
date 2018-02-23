@@ -5,14 +5,8 @@
 
 import sys
 import os
-import urllib2
-import json
 import yaml
-import mimetypes
-import itertools
 import requests
-
-import logging
 
 
 def load_parts(module, call) :
@@ -117,7 +111,6 @@ def get(url, user=None, response_type='json') :
     else :
         headers.update({'Accept' : 'application/json'})
 
-    logging.debug(headers)
 
     #Make the request
     response = requests.get(url, headers=headers)

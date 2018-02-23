@@ -8,7 +8,7 @@ import argparse
 
 import validators
 import tempfile
-import imp
+import json
 from utilities import *
 
 import logging
@@ -276,7 +276,8 @@ def get_sample_meta(user, output, dataset, name):
         for chunk in data.iter_content(chunk_size=128):
             fd.write(chunk)
 
-def import_samples(user, ds, isMulti=False) :
+def import_samples(user, ds) :
+
 
     # Retrieve the list of the samples in the resulting dataset
     # The list is stored in a temporary file
@@ -288,23 +289,22 @@ def import_samples(user, ds, isMulti=False) :
         samples = map(lambda x: helper_samples(x), t)
     t.close()
 
-    if isMulti:
-        #Prefix the file name with the dataset name
-        for s in samples:
-            # Get the sample
-            get_sample(user, "samples/{ds}#{name}.{ext}".format(ds=ds,name=s['name'].replace('_', ''), ext=s['ext']), ds, s['name'])
-            # Get its metadata
-            get_sample_meta(user, "metadata/{ds}#{name}.meta".format(ds=ds,name=s['name'].replace('_', ''), ext=s['ext']), ds, s['name'])
-    else:
-        os.makedirs('samples')
-        os.makedirs('metadata')
-        for s in samples:
-            # Get the sample
-            get_sample(user, "samples/{name}.{ext}".format(name=s['name'].replace('_',''), ext=s['ext']), ds, s['name'])
-            # Get its metadata
-            get_sample_meta(user,"metadata/{name}.meta".format(name=s['name'].replace('_',''),ext=s['ext']),ds,s['name'])
+    os.makedirs('samples')
+    os.makedirs('metadata')
+
+    # Create a new dict containing names and actual path to files
+
+    for s in samples:
+
+        # Get the sample
+        get_sample(user, "samples/{name}.{ext}".format(name=s['name'].replace('_',''), ext=s['ext']), ds, s['name'])
+
+        # Get its metadata
+        get_sample_meta(user,"metadata/{name}.meta".format(name=s['name'].replace('_','')),ds,s['name'])
+
 
     os.remove(temp.name)
+
 
 def helper_samples(s):
     """From a list of samples retrieve name and extension"""
@@ -315,10 +315,9 @@ def helper_samples(s):
 
     return sample
 
+
 def get_schema(user, ds, file) :
     """Get the schema field of the input dataset and save it in file"""
-
-    logging.basicConfig(filename='/home/luana/gmql-galaxy/ds.log', level=logging.DEBUG, filemode='w')
 
     call = "schema"
 
@@ -341,6 +340,32 @@ def get_schema(user, ds, file) :
     with open(file,'w') as f_out:
         for f in schema['fields'] :
             f_out.write('{field}\t{type}\n'.format(field=f['name'],type=f['type']))
+
+
+def set_columns_names(samples_list, schema_file):
+    # Read current content of galaxy.json file
+
+
+    cwd = os.getcwd().rsplit('/',1)[0]
+    file = '/'.join([cwd, 'galaxy.json'])
+
+    with open(schema_file, 'r') as f_in:
+        columns = [x.split('\t') for x in f_in]
+        column_names = [x[0] for x in columns]
+        column_types = [x[1].rstrip('\n') for x in columns]
+
+    metadata = dict()
+    metadata.update(column_names=column_names,
+                    column_types=column_types)
+
+
+    with open(file, 'w') as f_out:
+        for s in samples_list:
+            config = dict()
+            config.update(type='new_primary_dataset',
+                          filename='/home/luana/galaxy/database/files/002/dataset_2821.dat',
+                          metadata=metadata)
+            f_out.write(json.dumps(config) + '\n')
 
 
 

@@ -9,7 +9,7 @@
     <command><![CDATA[
     #if $materialize.materialize_result == 'true' :
      #if $materialize.choose_op.op == 'run' :
-      mkdir -p results && cd results &&
+      mkdir -p dataset && cd dataset &&
       python $__tool_directory__/gmql_queries_compositor.py
       -user=$authToken
       -cmd='run'
@@ -46,7 +46,7 @@
         <inputs name="query_params" filename="params.json"/>
     </configfiles>
     <code file="dynamic_utils.py" >
-         <hook validate_input="validate_input" />
+         <hook validate_input="validate_variables" exec_after_process="exec_after_query_exec" />
     </code>
     <inputs>
         <param format="gmql_user" name="authToken" type="data" label="Select user">
@@ -118,18 +118,14 @@
                 <action name="column_names" type="metadata" default="dataset,owner" />
             </actions>
        </data>
-<!--        <collection name="query_results" type="list:list" label="${query_name}">
-            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)#(?P&lt;identifier_1&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?" directory="results" />
-            <filter>materialize['materialize_result'] is True and materialize['choose_op']['op'] == 'run'</filter>
-        </collection>-->
-        <collection name="query_results_m" type="list:list" label="${query_name} results metadata">
-            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)#(?P&lt;identifier_1&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
-                               directory="results/metadata"/>
+        <collection name="query_results_m" type="list" label="${query_name} results metadata">
+            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
+                               directory="dataset/metadata"/>
             <filter>materialize['materialize_result'] is True and materialize['choose_op']['op'] == 'run' and materialize['choose_op']['import'] is True</filter>
         </collection>
-        <collection name="query_results_s" type="list:list" label="${query_name} results">
-            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)#(?P&lt;identifier_1&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
-                               directory="results/samples"/>
+        <collection name="query_results_s" type="list" label="${query_name} results">
+            <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
+                               directory="dataset/samples"/>
             <filter>materialize['materialize_result'] is True and materialize['choose_op']['op'] == 'run' and materialize['choose_op']['import'] is True</filter>
         </collection>
     </outputs>

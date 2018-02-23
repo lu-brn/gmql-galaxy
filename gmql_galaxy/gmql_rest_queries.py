@@ -65,7 +65,6 @@ def compile_query(user, filename, query, log_file):
 def run_query(user, filename, query, log_file, rs_format, importResult=True):
     """Run the given query. It returns an execution log and the resulting dataset."""
 
-    logging.basicConfig(filename='/home/luana/gmql-galaxy/run.log', level=logging.DEBUG, filemode='w')
 
     call = 'run'
 
@@ -119,13 +118,12 @@ def run_query(user, filename, query, log_file, rs_format, importResult=True):
         importResult = bool(importResult)
 
         if importResult:
-            # Retrieve the name of each resulting dataset and for each retrieve data
-            os.makedirs('metadata')
-            os.makedirs('samples')
+            # For now, it gets only the final result (it's easier to deal later with simple collections
+            # than a nested ones)
 
-            for dataset in log['datasets'] :
-                ds_name = dataset.get('name')
-                import_samples(user, ds_name, isMulti=True)
+            ds = log['datasets'][-1]
+            ds_name = ds.get('name')
+            import_samples(user, ds_name)
 
 
 def read_status(user, jobid):

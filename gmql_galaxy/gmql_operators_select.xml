@@ -99,11 +99,11 @@
         <yield />
         <param name="negate" type="boolean" label="Negative Condition" optional="@OPTIONAL@"/>
         <param name="attribute" type="@VARTYPE@" label="Metadata Attribute Name" optional="@OPTIONAL@"
+               refresh_on_change="True"
                dynamic_options="get_metadata_attr(user=authToken.file_name,ds=input_ds, ds_list=gmql_datasets.file_name)" />
         <expand macro="condition" optional="@OPTIONAL@" />
-        <param name="value" type="text" label="Value whom to confront the metadata attribute with" optional="@OPTIONAL@" >
-            <expand macro="meta_value" />
-        </param>
+        <param name="value" type="select" label="Value whom to confront the metadata attribute with" optional="@OPTIONAL@"
+               dynamic_options="get_metadata_values(user=authToken.file_name, ds=input_ds, ds_list=gmql_datasets.file_name, att=attribute)" />
     </xml>
     <xml name="region_block" token_optional="optional">
         <yield />
@@ -137,11 +137,6 @@
             <option value="NOT_IN">NOT IN</option>
         </param>
         <expand macro="input_var" name="ds_ext" label="DS_EXT" optional="true" />
-    </xml>
-    <xml name="meta_value">
-        <validator type="regex" message="Invalid attribute name.">[\w]+|[\*]$</validator>
-        <option value="*">any value</option>
-        <option value="string">string</option>
     </xml>
     <xml name="region_attribute">
         <expand macro="text_val" />

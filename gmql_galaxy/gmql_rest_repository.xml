@@ -15,9 +15,6 @@
          $updated_list
          -dataset=$rep.dataset_ren
          -new_name=$rep.new_name
-        #elif $cmd == 'schema' :
-         $out_schema
-         -dataset=$rep.dataset_schema
         #end if
         -user=$authToken
         -cmd=$cmd
@@ -30,7 +27,6 @@
             <param name="operation" type="select" display="radio" multiple="false" label="Select the desired action" >
             <option value="list">View datasets</option>
             <option value="samples">View a dataset's samples</option>
-            <option value="schema">View a dataset's samples schema</option>
             <option value="rename">Rename a dataset</option>
             <option value="delete">Delete a dataset</option>
         </param>
@@ -45,14 +41,6 @@
                     </options>
                 </param>
 
-            </when>
-            <when value="schema">
-                <param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
-	            <param name="dataset_schema" type="select" label="Select Dataset">
-		            <options from_dataset="gmql_datasets">
-                            <column name="value" index="0" />
-                    </options>
-                </param>
             </when>
             <when value="rename">
                 <param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets" />
@@ -88,13 +76,6 @@
             <filter>rep['operation'] == 'samples'</filter>
             <actions>
                 <action name="column_names" type="metadata" default="id,sample,ext" />
-            </actions>
-        </data>
-        <data format="tabular" name="out_schema"
-              label="${rep.dataset_schema} schema">
-            <filter>rep['operation'] == 'schema'</filter>
-            <actions>
-                <action name="column_names" type="metadata" default="field,type"/>
             </actions>
         </data>
        <data format="gmql_repository" name="updated_list" label="${authToken.name.split()[0].rstrip('')} GMQL Datasets">
