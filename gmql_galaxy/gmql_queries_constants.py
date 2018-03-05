@@ -13,6 +13,7 @@ class Operator(Enum):
     SELECT = 'SELECT'
     MAP = 'MAP'
     ORDER = 'ORDER'
+    JOIN = 'JOIN'
 
 class Wff(Enum):
     AND = 'AND'
@@ -31,3 +32,23 @@ class RegFunction(Enum):
     MAX = 'MAX'
     MEDIAN = 'MEDIAN'
     STD = 'STD'
+
+class DistalConditions(Enum) :
+    DL = 'DL'
+    DLE = 'DLE'
+    MD = 'MD'
+    DGE = 'DGE'
+
+class DistalStream(Enum):
+    UPSTREAM = 'UP'
+    DOWNSTREAM = 'DOWN'
+
+class CoordParam(Enum):
+    LEFT = 'LEFT'
+    LEFT_DISTINCT = 'LEFT_DISTINCT'
+    RIGHT = 'RIGHT'
+    RIGHT_DISTINCT = 'RIGHT_DISTINCT'
+    INT = 'INT'
+    CAT = 'CAT'
+    BOTH = 'BOTH'
+

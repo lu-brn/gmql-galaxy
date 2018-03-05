@@ -12,10 +12,11 @@
        -job=$control.job
       #end if
       ]]></command>
+  <code file="dynamic_utils.py">
+      <hook validate_input="validate" />
+  </code>
   <inputs>
-	<param format="gmql_user" name="authToken" type="data" label="Select user">
-            <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
-    </param>
+	<param format="gmql_user" name="authToken" type="data" label="Select user" />
     <conditional name="control">
             <param name="operation" type="select" display="radio" multiple="false" label="Select the desired action" >
                 <option value="list">View Active Queries</option>

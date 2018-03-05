@@ -8,10 +8,24 @@
 import os, imp
 
 
-def validate_variables(request_context, error_map, params, inputs):
-    """Validate function. It checks that all queries input variables have been previously defined.
-    (Query compositor tool)."""
+def validate (request_context, error_map, params, inputs):
+    """Generic validate function, it checks if the user is valid."""
 
+    user = params.get('authToken', '')
+
+    if user:
+        try:
+            validate_user(user.file_name)
+        except:
+            error_msg = 'User has expired'
+            error_map['authToken'] = error_msg
+
+
+def validate_variables(request_context, error_map, params, inputs):
+    """Validate function for gmql_compositor. It checks that all queries input variables
+    have been previously defined. """
+
+    validate(request_context, error_map, params, inputs)
 
     output_vars = set([])
 
@@ -36,6 +50,15 @@ def validate_variables(request_context, error_map, params, inputs):
 
         # Update output_vars with the result of current operation
         output_vars.add(op_curr.get('output_var'))
+
+def validate_user(user):
+    """Check if the user is a valid one"""
+
+    if user:
+        with open(user, 'r') as f :
+            valid = f.readline().rstrip('\n').split('\t')[2]
+            if valid == 'False' :
+                raise Exception, "User has expired"
 
 
 def get_metadata_attr(user, ds, ds_list) :
@@ -96,15 +119,6 @@ def get_metadata_values(user, ds, ds_list, att) :
             return options
     except :
         return options
-
-def validate_user(user):
-    """Check if the user is a valid one"""
-
-    if user:
-        with open(user, 'r') as f :
-            valid = f.readline().rstrip('\n').split('\t')[2]
-            if valid == 'False' :
-                raise Exception, "User has expired"
 
 
 def get_metadata(user, ds, owner='', att_name=''):

@@ -2,7 +2,6 @@
   <description>Compile and run GMQL queries (Advanced Mode)</description>
     <command><![CDATA[
       #if $mode.exec_mode == "execute" :
-       mkdir -p dataset && cd dataset &&
        python $__tool_directory__/gmql_rest_queries.py
        -user=$authToken
        -cmd=execute
@@ -34,10 +33,11 @@
           #echo '%s'%($query_create.query)
           #end if</configfile>
   </configfiles>
-    <inputs>
-        <param format="gmql_user" name="authToken" type="data" label="Select user">
-            <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
-        </param>
+  <code file="dynamic_utils.py">
+      <hook validate_input="validate" />
+  </code>
+  <inputs>
+        <param format="gmql_user" name="authToken" type="data" label="Select user" />
         <param name="query_name" type="text" label="Query Name" >
             <validator type="regex" message="Only alphanumeric characters and underscore allowed. It must begin with
                                          letter or underscore.">[a-zA-Z_]([\w]+)?$</validator>
@@ -77,17 +77,17 @@
                                    help="Otherwise it will be possible to import it later using GMQL Import Dataset tool." />
             </when>
         </conditional>
-    </inputs>
-	<outputs>
+  </inputs>
+  <outputs>
         <data format="txt" name="log" label="${query_name} query log" />
-        <collection name="query_results_m" type="list" label="${query_name} results metadata">
+        <collection name="query_results_m" type="list" label="${query_name}_results metadata">
             <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
-                               directory="dataset/metadata"/>
+                               directory="metadata"/>
             <filter>mode['exec_mode'] == 'execute' and mode['import'] is True</filter>
         </collection>
-        <collection name="query_results_s" type="list" label="${query_name} results">
+        <collection name="query_results_s" type="list" label="${query_name}_results">
             <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
-                               directory="dataset/samples"/>
+                               directory="samples"/>
             <filter>mode['exec_mode'] == 'execute' and mode['import'] is True</filter>
         </collection>
         <data format="gmql_repository" name="updated_list" label="${authToken.name.split()[0].rstrip('')} GMQL Datasets">
@@ -96,10 +96,5 @@
                 <action name="column_names" type="metadata" default="dataset,owner" />
            </actions>
        </data>
-	</outputs>
-
-    <help>
-        <!-- TODO -->
-    </help>
-
+  </outputs>
 </tool>

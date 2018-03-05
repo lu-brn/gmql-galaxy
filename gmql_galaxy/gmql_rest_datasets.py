@@ -302,10 +302,6 @@ def import_samples(user, ds) :
         # Get its metadata
         get_sample_meta(user,"metadata/{name}.meta".format(name=s['name'].replace('_','')),ds,s['name'])
 
-
-    os.remove(temp.name)
-
-
 def helper_samples(s):
     """From a list of samples retrieve name and extension"""
     split = s.split('\t')
@@ -342,9 +338,10 @@ def get_schema(user, ds, file) :
             f_out.write('{field}\t{type}\n'.format(field=f['name'],type=f['type']))
 
 
-def set_columns_names(samples_list, schema_file):
-    # Read current content of galaxy.json file
 
+def set_columns_names(user, ds_name, samples_file, schema_file):
+
+    get_schema(user,ds_name, schema_file)
 
     cwd = os.getcwd().rsplit('/',1)[0]
     file = '/'.join([cwd, 'galaxy.json'])
@@ -360,12 +357,15 @@ def set_columns_names(samples_list, schema_file):
 
 
     with open(file, 'w') as f_out:
-        for s in samples_list:
-            config = dict()
-            config.update(type='new_primary_dataset',
-                          filename='/home/luana/galaxy/database/files/002/dataset_2821.dat',
-                          metadata=metadata)
-            f_out.write(json.dumps(config) + '\n')
+        with open(samples_file, 'r') as f_in:
+            samples_list = map(lambda x: x, f_in)
+            samples_list.pop()
+            for s in samples_list:
+                config = dict()
+                config.update(type='new_primary_dataset',
+                                  filename=s,
+                                  metadata=metadata)
+                f_out.write(json.dumps(config) + '\n')
 
 
 
@@ -381,10 +381,10 @@ def __main__():
     parser.add_argument("-opt_out1")
     parser.add_argument("-user")
     parser.add_argument("-cmd")
+    parser.add_argument("-samples")
     parser.add_argument("-dataset")
     parser.add_argument("-new_name")
     parser.add_argument("-schema")
-    parser.add_argument("-samples")
     parser.add_argument("-add_output")
 
     args = parser.parse_args()
@@ -397,8 +397,6 @@ def __main__():
         rename_dataset(args.user, args.output, args.dataset, args.new_name)
     if args.cmd == 'delete':
         delete_dataset(args.user, args.output, args.dataset)
-    if args.cmd == 'schema' :
-        get_schema(args.user, args.dataset, args.output)
     if args.cmd == 'upload_url':
         upload_samples_url(args.user, args.output, args.dataset, args.schema, args.samples, args.add_output)
     if args.cmd == 'upload' :
@@ -407,6 +405,8 @@ def __main__():
         import_samples(args.user, args.dataset)
     if args.cmd == 'download' :
         download_samples(args.user,args.output,args.dataset)
+    if args.cmd == 'schema' :
+        set_columns_names(args.user, args.dataset, args.samples, args.output)
 
 
 if __name__ == "__main__":

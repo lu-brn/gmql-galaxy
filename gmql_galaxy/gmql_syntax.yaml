@@ -48,12 +48,21 @@ PARAMS:
         metadata:
             orderingAttributes: '{att_list}'
             top:
-                n_samples: 'meta_top: {k}'
+                n: 'meta_top: {k}'
                 perc: 'meta_topp: {k}'
                 group: 'meta_topg: {k}'
         region:
             orderingAttributes: 'region_order: {att_list}'
             top:
-                n_samples: 'region_top: {k}'
+                n: 'region_top: {k}'
                 perc: 'region_topp: {k}'
                 group: 'region_topg: {k}'
+
+    JOIN:
+        genomic_predicate: '{genomic_predicate}'
+        equi_clause: 'on_attributes: {att_list}'
+        output_opt: 'output: {coord_param}'
+        joinby: 'joinby: {joinbyClause}'
+        distal_condition: '{dc}({n})'
+        distal_stream: '{ds}'
+

@@ -40,11 +40,13 @@
             #end if
         </configfile>
     </configfiles>
+  <code file="dynamic_utils.py">
+      <hook validate_input="validate" />
+  </code>
   <inputs>
-	<param format="gmql_user" name="authToken" type="data" label="Select user">
-           <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
-    </param>
+	<param format="gmql_user" name="authToken" type="data" label="Select user" />
 	<param name="name" type="text" label="Name of the new dataset" >
+        <!-- TODO A user can't use a name already existing -->
 		<validator type="regex" message="Only alphanumeric characters and underscore are allowed">[\w]+$</validator>
 	</param>
 	<conditional name="upload">

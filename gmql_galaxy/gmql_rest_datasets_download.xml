@@ -1,16 +1,16 @@
 <tool id="gmlq_rest_datasets_download" name="GMLQ Import Dataset" version="0.1.1">
     <command><![CDATA[
         #if $operation == 'import' :
-         mkdir -p dataset && cd dataset &&
          python $__tool_directory__/gmql_rest_datasets.py '' -user=$authToken -cmd=import -dataset=${dataset}
         #else :
          python $__tool_directory__/gmql_rest_datasets.py $ds_archive -user=$authToken -cmd=download -dataset=${dataset}
         #end if
 	  ]]></command>
+    <code file="dynamic_utils.py">
+        <hook validate_input="validate" />
+    </code>
     <inputs>
-        <param format="gmql_user" name="authToken" type="data" label="Select user">
-            <validator type="expression" message="User has expired">open(value.file_name,'r').readline().rstrip('\n').split('\t')[2] == 'True'</validator>
-        </param>
+        <param format="gmql_user" name="authToken" type="data" label="Select user" />
         <param name="gmql_datasets" type="data" format="gmql_repository" label="Working Datasets"/>
         <param name="dataset" type="select" label="Select Dataset">
             <options from_dataset="gmql_datasets">
@@ -29,12 +29,12 @@
         </data>
         <collection name="query_results_m" type="list" label="${dataset} metadata">
             <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
-                               directory="dataset/metadata"/>
+                               directory="metadata"/>
             <filter>operation == 'import'</filter>
         </collection>
-        <collection name="query_results_s" type="list" label="${dataset} samples">
+        <collection name="query_results_s" type="list" label="${dataset}">
             <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
-                               directory="dataset/samples"/>
+                               directory="samples"/>
             <filter>operation == 'import'</filter>
         </collection>
     </outputs>

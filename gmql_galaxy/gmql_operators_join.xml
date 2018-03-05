@@ -1,0 +1,117 @@
+<macros>
+    <import>gmql_queries_macros.xml</import>
+    <xml name="join">
+        <expand macro="input_var" name="input_var_anchor" label="Anchor Dataset" optional="false" />
+        <expand macro="input_var" name="input_var_experiment" label="Experiment Dataset" optional="false" />
+        <expand macro="output_var" />
+        <section name="conditions_section" title="Join Conditions" expanded="true">
+            <conditional name="conditions">
+                <param name="c_type" type="select" label="Type of conditions" display="radio">
+                    <option value="distance">Only on genomic distances</option>
+                    <option value="attributes">Only on region attributes</option>
+                    <option value="both">Both types</option>
+                </param>
+                <when value="distance">
+                   <expand macro="genomic_predicate" />
+                    <expand macro="output_opt"
+                            help="Declare which region is given in output for each input pair of anchor and experiment
+                           regions satisfying the equi predicate and the genomic predicate. The default output option is CAT.">
+                        <option value="CAT" selected="true">CAT: Outputs the concatenation between regions that satisfy predicates</option>
+                        <option value="INT">INT: Outputs overlapping part (intersection) that satisfy predicates</option>
+                    </expand>
+                </when>
+                <when value="attributes">
+                   <expand macro="equi_predicate" />
+                    <expand macro="output_opt"
+                           help="Declare which region is given in output for each input pair of anchor and experiment
+                           regions satisfying the equi predicate and the genomic predicate. Some options are not allowed
+                           with conditions only on the attributes (INT and CAT)."/>
+                </when>
+                <when value="both">
+                    <expand macro="genomic_predicate"/>
+                    <expand macro="equi_predicate"/>
+                    <expand macro="output_opt"
+                            help="Declare which region is given in output for each input pair of anchor and experiment
+                           regions satisfying the equi predicate and the genomic predicate. The default output option is CAT.">
+                        <option value="CAT" selected="true">CAT: Outputs the concatenation between regions that satisfy predicates </option>
+                        <option value="INT">INT: Outputs overlapping part (intersection) that satisfy predicates</option>
+                    </expand>
+                </when>
+            </conditional>
+        </section>
+        <section name="joinby" title="Condition on Samples Metadata" expanded="false"
+                 help="This is used to select sample pairs satisfying certain conditions on their metadata
+                 (e.g., regarding the same cell line or antibody target); it is expressed as a list of metadata
+                 attributes whose names and values must match between samples in the Anchor dataset and the
+                 Experiment Dataset in order for such samples to verify the condition and be considered for the join.">
+            <repeat name="joinby_clause" title="Attributes to match" min="0" default="0">
+                <expand macro="metajoin_attribute" name="j_att" optional="true">
+                    <expand macro="metajoin_options"/>
+                </expand>
+            </repeat>
+        </section>
+        <expand macro="materialize_stm" />
+    </xml>
+    <xml name="equi_predicate">
+        <repeat name="region_attributes" title="Add Region Attribute"
+                min="1" default="1"
+                help="Region attributes which must exist in anchor dataset region for the experiment region
+                to be considered" >
+            <param name="attribute" type="text" label="Region Attribute">
+                <expand macro="text_val" />
+            </param>
+        </repeat>
+    </xml>
+    <xml name="genomic_predicate">
+        <repeat name="distance_conditions" title="Conditions over genomic distances between samples regions"
+                min="1" max="4" default="1"
+                help="Genometric predicates are fundamental for JOIN commands: they allow the expression of a variety
+                of distal conditions all based on the concept of genomic distance. The genomic distance is defined as
+                the number of base pairs (i.e., nucleotides) between the closest opposite ends of two regions on to the
+                same DNA strand, or when at least one of the two regions has unknown strand, and belonging to the same
+                chromosome (it is not defined for regions on different chromosomes or different DNA strands).
+                Further details in the GMQL online guide or in the above help section.">
+            <conditional name="type_dc">
+                <param label="Type" name="type_dc_value" type="select" display="radio">
+                    <option value="dist">Distance</option>
+                    <option value="stream">Direction</option>
+                </param>
+                <when value="dist">
+                    <param name="dc" label="Condition" type="select"
+                           help="The overall condition must contain at least one and at most four distal conditions.
+                           There must be at least one less-equal distance or one less distance,
+                           or a minimum distance clause (which can then be combined with other clauses) in order to
+                           be well-formed and compile.">
+                        <option value="MD">Minimum distance</option>
+                        <option value="DL">Less distance</option>
+                        <option value="DLE">Less or equal distance</option>
+                        <option value="DG">Greater distance</option>
+                        <option value="DGE">Greater or equal distance</option>
+                    </param>
+                    <param name="n" label="Value" type="integer" value="0"
+                           help="In the GMQL framework, overlapping regions have negative distance while adjacent
+                           regions have distance equal to 0"/>
+                </when>
+                <when value="stream">
+                    <param name="ds" label="Direction" display="radio" type="select"
+                           help="This requires that the rest of the predicate holds only on the upstream (downstream)
+                           genome with respect to the anchor region." >
+                        <option value="UP">Upstream</option>
+                        <option value="DOWN">Downstream</option>
+                    </param>
+                </when>
+            </conditional>
+        </repeat>
+    </xml>
+    <xml name="output_opt" token_help="@HELP@">
+        <param name="output_opt" type="select" label="Output options"
+               help="@HELP@" >
+            <option value="LEFT">LEFT: Outputs only anchor samples regions</option>
+            <option value="LEFT_DISTINCT">LEFT_DISTINCT: Outputs only anchor regions and eliminate duplicates</option>
+            <option value="RIGHT">RIGHT: Outpus only experiment samples regions</option>
+            <option value="RIGHT_DISTINCT">RIGHT_DISTINCT: Outputs only experiment samples regions and eliminate duplicates</option>
+            <option value="BOTH">BOTH: Outputs anchor samples regions, but it adds attributes of the relative experiments samples regions</option>
+            <yield />
+        </param>
+    </xml>
+</macros>

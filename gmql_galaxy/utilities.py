@@ -7,6 +7,7 @@ import sys
 import os
 import yaml
 import requests
+import logging
 
 
 def load_parts(module, call) :
@@ -147,6 +148,7 @@ def post(url, payload, user=None, params=None, content_type='json', response_typ
     :param response_type: Default is json
     """
 
+
     # Set request headers
     headers = dict()
 
@@ -167,11 +169,12 @@ def post(url, payload, user=None, params=None, content_type='json', response_typ
     # Check returned server status
     status_code = response.status_code
 
+
     if status_code == requests.codes.ok :
-        return response.json()
+       return response.json()
     elif status_code == requests.codes.unauthorized :
-        expire_user(user)
-        stop_err("You are not authorized to do this. \nPlease login first.")
+       expire_user(user)
+       stop_err("You are not authorized to do this. \nPlease login first.")
     else :
         stop_err("Error {code}: {reason}\n{message}".format(code=status_code,
                                                  reason=response.reason,

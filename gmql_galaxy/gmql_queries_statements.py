@@ -62,7 +62,7 @@ class Select(Statement):
     def save(self, syntax):
         stm = super(Select, self).save(syntax)
         params_form = syntax['PARAMS']
-        select_params = params_form['SELECT']
+        select_params = params_form[self.operator.value]
         sep = params_form['type_separator']
 
         params = []
@@ -151,7 +151,7 @@ class Map(Statement):
         stm = super(Map, self).save(syntax)
 
         params_form = syntax['PARAMS']
-        map_format = params_form['MAP']
+        map_format = params_form[self.operator.value]
         type_sep = params_form['type_separator']
         param_sep = params_form['param_separator']
 
@@ -205,7 +205,7 @@ class Order(Statement):
         stm = super(Order,self).save(syntax)
 
         params_form = syntax['PARAMS']
-        order_form = params_form['ORDER']
+        order_form = params_form[self.operator.value]
         type_sep = params_form['type_separator']
         sep = params_form['param_separator']
 
@@ -221,8 +221,9 @@ class Order(Statement):
         tops = self.params.get('top', None)
         if tops:
             m_tops = filter(lambda x: x[0] == 'metadata', tops)
-            m_tops = map(lambda x: order_form[x[0]]['top'][x[1]].format(k=x[2]), m_tops)
-            params.append(type_sep.join(m_tops))
+            if m_tops:
+                m_tops = map(lambda x: order_form[x[0]]['top'][x[1]].format(k=x[2]), m_tops)
+                params.append(type_sep.join(m_tops))
 
           # Format region attribute lists
         region_att = self.params.get('regionOrderingAttributes', None)
@@ -234,8 +235,73 @@ class Order(Statement):
         # Top options
         if tops:
             r_tops = filter(lambda x: x[0] == 'region', tops)
-            r_tops = map(lambda x: order_form[x[0]]['top'][x[1]].format(k=x[2]), r_tops)
-            params.append(type_sep.join(r_tops))
+            if r_tops:
+                r_tops = map(lambda x: order_form[x[0]]['top'][x[1]].format(k=x[2]), r_tops)
+                params.append(type_sep.join(r_tops))
+
+        stm = stm.format(parameters=type_sep.join(params))
+
+        return stm
+
+class Join(Statement):
+
+    def __init__(self):
+        super(Join, self).__init__()
+        self.operator = Operator.JOIN
+
+    def set_output_var(self, var):
+        self.set_variable(var, 'output')
+
+    def set_anchor_var(self, var):
+        self.set_variable(var, 'input1')
+
+    def set_experiment_var(self, var):
+        self.set_variable(var, 'input2')
+
+    def set_output_opt(self, coord_param):
+        self.set_param(coord_param, 'output_opt')
+
+    def set_joinby_clause(self, joinbyClause):
+        self.set_param(joinbyClause, 'joinby')
+
+    def set_equi_conditions(self, attributesList):
+        self.set_param(attributesList, 'equi_clause')
+
+    def set_genomic_predicate(self, genomicPredicate):
+        self.set_param(genomicPredicate, 'genomic_predicate')
+
+    def save(self, syntax):
+
+        stm = super(Join, self).save(syntax)
+
+        params_form = syntax['PARAMS']
+        join_form = params_form[self.operator.value]
+        type_sep = params_form['type_separator']
+        sep = params_form['param_separator']
+
+        params = []
+
+        # Format Genomic Predicate
+        gpred = self.params.get('genomic_predicate', None)
+        if gpred:
+            params.append(join_form['genomic_predicate'].format(genomic_predicate=gpred.save(join_form)))
+
+
+        #  Format predicate over attributes
+        equi_predicate = self.params.get('equi_clause', None)
+        if equi_predicate:
+            params.append(join_form['equi_clause'].format(att_list=equi_predicate.save(params_form, sep)))
+
+
+        # Format option over output
+        output_cond = self.params.get('output_opt')
+        if output_cond:
+            params.append(join_form['output_opt'].format(output_opt=DistalConditions(output_cond)))
+
+        # Format Joinby clause
+        jbc = self.params.get('joinby', None)
+        if jbc:
+            params.append(join_form['joinby'].format(joinbyClause=jbc.save(params_form, sep)))
 
         stm = stm.format(parameters=type_sep.join(params))
 
@@ -351,3 +417,23 @@ class SemiJoinPredicate(AttributesList):
     def save(self, syntax, sep):
         attributes = super(SemiJoinPredicate, self).save(syntax, sep)
         return syntax[self.condition].format(attributes=attributes, ds_ext=self.ds_ext)
+
+
+class GenomicPredicate(object):
+
+    def __init__(self):
+        self.distal_conditions = []
+        self.distal_stream = ''
+
+    def add_distal_condition(self, condition, n):
+        self.distal_conditions.append((DistalConditions(condition), n))
+
+    def add_distal_stream(self, direction):
+        self.distal_stream = DistalStream(direction)
+
+    def save(self, syntax, sep):
+        dc = map(lambda x: syntax['distal_condition'].format(dc=x[0], n=x[1]), self.distal_conditions)
+        if self.distal_stream:
+            dc.append(syntax['distal_stream'].format(ds=self.distal_stream))
+
+        return sep.join(dc)
