@@ -21,6 +21,29 @@ def validate (request_context, error_map, params, inputs):
             error_map['authToken'] = error_msg
 
 
+def validate_upload (request_context, error_map, params, inputs):
+    """Validate function for uploading tool. It also checks the chosen ds name does not exists already."""
+
+    validate(request_context, error_map, params, inputs)
+
+    name = params.get('name')
+
+    user = params.get('authToken')
+
+    utilities = imp.load_source('gmql', os.getcwd() + '/tools/gmql/utilities.py')
+
+    module = 'repository'
+    call = 'list_datasets'
+    url = utilities.compose_url(module, call)
+
+    datasets = utilities.get(url, user=user.file_name)
+    list_datasets = [x['name'] for x in datasets['datasets']]
+
+    if name in list_datasets:
+        error_msg = 'Dataset already exists. Choose another name.'
+        error_map['name'] = error_msg
+
+
 def validate_variables(request_context, error_map, params, inputs):
     """Validate function for gmql_compositor. It checks that all queries input variables
     have been previously defined. """
@@ -28,6 +51,8 @@ def validate_variables(request_context, error_map, params, inputs):
     validate(request_context, error_map, params, inputs)
 
     output_vars = set([])
+
+    # TODO: Include in the check output variables eventually defined previously in another query
 
     for op in params.get('operations'):
         op_curr = op.get('operation')

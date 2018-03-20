@@ -1,0 +1,128 @@
+<macro>
+    <import>gmql_queries_macros.xml</import>
+    <xml name="project">
+        <expand macro="input_var" name="input_var" label="Input Dataset to Order" />
+        <expand macro="output_var" />
+        <expand macro="sec_attributes" sec="region_att" title="Region attributes to keep" attname="Region Attribute"/>
+        <expand macro="sec_attributes" sec="meta_att" title="Metadata attributes to keep" attname="Metadata Attribute"/>
+        <section name="project_new_regions" title="New Genomic Region Attributes" expanded="false"
+                 help="Generate new genomic region attributes functions on existing region or metadata attributes or
+                 constants. It is also possible to rename an existing field." >
+            <repeat name="new_region_att" title="Define Region Attribute" min="0">
+                <param name="new_name" type="text" label="New attribute name">
+                    <expand macro="text_val"/>
+                </param>
+                <conditional name="gen_type">
+                    <expand macro="gen_type_functions" label="Function to apply to generate new region attribute">
+                        <option value="null">Define a new numeric region attribute with "null" value</option>
+                        <option value="meta">Value of a metadata attribute</option>
+                    </expand>
+                    <expand macro="gen_arguments">
+                        <when value="null">
+                            <param name="att_type" type="select" label="Type of new attribute">
+                                <option value="INTEGER">INTEGER</option>
+                                <option value="INTEGER">DOUBLE</option>
+                            </param>
+                        </when>
+                        <when value="meta">
+                            <expand macro="f_argument" label="Name of the metadata attribute to use as source"/>
+                            <param name="att_type" type="select" label="Type of new attribute">
+                                <option value="INTEGER">INTEGER</option>
+                                <option value="INTEGER">DOUBLE</option>
+                                <option value="STRING">STRING (for any case when the attribute has not numerical values)</option>
+                            </param>
+                        </when>
+                    </expand>
+                </conditional>
+            </repeat>
+        </section>
+        <section name="project_new_meta" title="New Metadata Attributes" expanded="false"
+                 help="Generate new metadata attributes functions on existing metadata attributes or constants.
+                 It is also possible to rename an existing field." >
+                <repeat name="new_meta_att" title="Define Metadata Attribute" min="0">
+                    <param name="new_name" type="text" label="New attribute name" >
+                        <expand macro="text_val" />
+                    </param>
+                    <conditional name="gen_type">
+                        <expand macro="gen_type_functions" label="Function to apply to generate new metadata attribute">
+                        </expand>
+                        <expand macro="gen_arguments" >
+                        </expand>
+                    </conditional>
+                </repeat>
+        </section>
+    </xml>
+    <xml name="gen_type_functions" token_label="@LABEL@">
+        <param name="gen_function" type="select" label="@LABEL@">
+            <option value="aggregate">Aggregate function</option>
+            <option value="arithmetic">Arithmetic expression</option>
+            <option value="SQRT">Square root</option>
+            <option value="rename">Rename a field</option>
+            <option value="fixed">Create and set all instances to a value</option>
+            <yield />
+        </param>
+    </xml>
+    <xml name="gen_arguments">
+        <when value="aggregate">
+            <expand macro="aggrFuncs" optional="true"
+                    help="Sum, average, maximum, minimum and standard deviation are only for numerical attributes"
+                    label="Function to apply to generate new region attribute"/>
+            <expand macro="f_argument" label="Region attribute over which apply function"/>
+        </when>
+        <when value="arithmetic">
+            <param name="expression" label="Expression" type="text"
+                   help="All basic mathematical operations (+, -, *, /), including usage of parenthesis">
+                <validator type="regex" message="It includes not valid characters">[\d\.\(\)\-\+\*\/]+
+                </validator>
+            </param>
+        </when>
+        <when value="SQRT">
+            <expand macro="f_argument" label="Region attribute over which apply function"/>
+        </when>
+        <when value="rename">
+            <expand macro="f_argument" label="New name"/>
+        </when>
+        <when value="fixed">
+            <expand macro="f_argument" label="Defined value"/>
+        </when>
+        <yield/>
+    </xml>
+    <xml name="f_argument" token_label="@LABEL@">
+        <param name="arg" type="text" label="@LABEL@">
+            <expand macro="text_val"/>
+        </param>
+    </xml>
+    <xml name="sec_attributes" token_sec="@SEC@" token_title="@TITLE@" token_attname="@ATTNAME@">
+        <section name="@SEC@" title="@TITLE@"
+                 help="The PROJECT operator creates, from an existing dataset, a new dataset with all the samples
+        (with their regions and region values) in the input one, but keeping for each sample in the input dataset
+        only those metadata and/or region attributes expressed in the following sections. Note that if no
+        options are given, the default behavior is to remove all the region attributes which are not coordinates
+        (i.e., only chr, start, stop, and strand are kept)">
+            <conditional name="allbut">
+                <param name="allbut_flag" type="select" label="How to list attributes">
+                    <option value="keep">Keep all attributes and list what to exclude</option>
+                    <option value="exclude">List only the ones to keep</option>
+                </param>
+                <when value="keep">
+                    <expand macro="attribute_field" name="list_exclude" min="1" attname="@ATTNAME@" />
+                </when>
+                <when value="exclude">
+                    <expand macro="attribute_field" name="list_keep" min="0" attname="@ATTNAME@" />
+                </when>
+            </conditional>
+        </section>
+    </xml>
+    <xml name="attribute_field" token_name="@NAME@" token_min="@MIN@" token_attname="@ATTNAME@">
+       <repeat name="@NAME@" min="@MIN@" title="@ATTNAME@"
+                            help="The wildcard '?' can be used in place of the syntax (at most one per attribute)">
+           <param name="attribute" type="text" label="Attribute Name">
+                <validator type="regex" message="Format not valid">(\?\.)?[\w]+|[\w]+(\.\?)|(\?\.)[\w]+(\.\?)$</validator>
+                <option value="attribute">attribute</option>
+                <option value="?.attribute">?.attribute</option>
+                <option value="dataset.?">dataset.?</option>
+                <option value="dataset.?.attribute">dataset.?.attribute</option>
+            </param>
+       </repeat>
+    </xml>
+</macro>

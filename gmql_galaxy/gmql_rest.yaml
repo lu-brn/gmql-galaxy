@@ -13,7 +13,7 @@ metadata:
     prefix: 'metadata'
     operations:
         list: ['{datasetName}', filter]
-repository: #operation over user repository
+repository: 
     prefix: datasets
     operations:
         list_datasets : []
@@ -29,12 +29,12 @@ repository: #operation over user repository
     params:
         upload_url: schemaName
         upload_data: schemaName
-query_exec: # compile and run gmql queries
+query_exec: 
     prefix: queries
     operations:
         compile: [compile]
         run: [run,'{name}','{output}']
-query_monitor : # monitor gmql queries status
+query_monitor : 
     prefix: jobs
     operations:
         jobs: []

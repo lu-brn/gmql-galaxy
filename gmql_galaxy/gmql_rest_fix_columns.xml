@@ -1,0 +1,24 @@
+<tool id="gmql_rest_fix_columns" name="GMLQ Utility: Fix Schema" version="0.1.0">
+    <description>Fix Schema of Resulting Datasets.</description>
+    <command><![CDATA[
+         python $__tool_directory__/gmql_rest_datasets.py $schema_data -user=$authToken -cmd=schema -samples=$samples -dataset=$samples_collection.name
+	  ]]></command>
+    <configfiles>
+        <configfile name="samples" >#for $i in $samples_collection
+             #echo '%s\n'%($i)
+             #end for
+        </configfile>
+        <configfile name="schema_data">{}</configfile>
+    </configfiles>
+    <code file="dynamic_utils.py">
+        <hook validate_input="validate" />
+    </code>
+    <inputs>
+        <param format="gmql_user" name="authToken" type="data" label="Select user" />
+        <param name="samples_collection" type="data_collection" label="GMQL Collection to fix: " />
+    </inputs>
+    <outputs>
+        <collection name="samples_with_schema" label="$samples_collection.name"
+                    type_source="samples_collection" structured_like="samples_collection"  inherit_format="true"/>
+    </outputs>
+</tool>

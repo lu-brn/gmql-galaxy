@@ -123,6 +123,74 @@ class Select(Statement):
         self.set_param(sjClauses, 'semijoin')
 
 
+class Project(Statement):
+    def __init__(self):
+        super(Project, self).__init__()
+        self.operator = Operator.PROJECT
+
+    def set_output_var(self, var):
+        self.set_variable(var, 'output')
+
+    def set_input_var(self, var):
+        self.set_variable(var, 'input1')
+
+    def set_regions(self, regionsAttributes, type='keep'):
+        self.set_param((regionsAttributes, type), 'regions')
+
+    def set_metadata(self, metadataAttributes, type='keep'):
+        self.set_param((metadataAttributes, type),'metadata')
+
+    def set_new_regions(self, regionAttDefi):
+        self.set_variable(regionAttDef, 'newRegions')
+
+    def set_new_metadata(self, metadataAttDef):
+        self.set_variable(metadataAttDef, 'newMetadata')
+
+    def save(self, syntax):
+        stm = super(Project, self).save(syntax)
+
+        params_form = syntax['PARAMS']
+        project_format = params_form[self.operator.value]
+        param_sep = params_form['params_separator']
+        type_sep = params_form['type_separator']
+
+        params = []
+
+        # Format regions attributes to keep
+        params_regs = self.params.get('regions', None)
+
+        if params_regs:
+            att_list = project_format['att_list'][params_regs[1]].format(att_list=params_regs[0].save(type_sep))
+            regionsAtt = project_format['regions'].format(att_list=att_list)
+            params.append(regionsAtt)
+
+        # Format metadata attributes to keep
+        params_mets = self.params.get('metadata', None)
+
+        if params_mets:
+            att_list = project_format['att_list'][params_mets[1]].format(att_list=params_regs[0].save(type_sep))
+            metadataAtt = project_format['metadata'].format(att_list=att_list)
+            params.append(metadataAtt)
+
+        # Format new regions attributes definitions
+        params_newReg = self.params.get('newRegions', None)
+
+        if params_newReg :
+            newRegions = map(lambda x: x.save(params_form),params_newReg)
+            params.append(project_format['newRegions'].format(newAttributes=param_sep.join(newRegions)))
+
+        # Format new metadata attributes definitions
+        params_newMeta = self.params.get('newMetadata', None)
+
+        if params_newMeta :
+            newMetadata = map(lambda x: x.save(params_form),params_newMeta)
+            params.append(project_format['newMetadata'].format(newAttributes=param_sep.join(newMetadata)))
+
+        stm = stm.format(parameters=type_sep.join(params))
+
+        return stm
+
+
 class Map(Statement):
     def __init__(self):
         super(Map, self).__init__()
@@ -259,7 +327,7 @@ class Join(Statement):
         self.set_variable(var, 'input2')
 
     def set_output_opt(self, coord_param):
-        self.set_param(coord_param, 'output_opt')
+        self.set_param(CoordParam(coord_param), 'output_opt')
 
     def set_joinby_clause(self, joinbyClause):
         self.set_param(joinbyClause, 'joinby')
@@ -284,7 +352,7 @@ class Join(Statement):
         # Format Genomic Predicate
         gpred = self.params.get('genomic_predicate', None)
         if gpred:
-            params.append(join_form['genomic_predicate'].format(genomic_predicate=gpred.save(join_form)))
+            params.append(join_form['genomic_predicate'].format(genomic_predicate=gpred.save(join_form,sep)))
 
 
         #  Format predicate over attributes
@@ -294,9 +362,9 @@ class Join(Statement):
 
 
         # Format option over output
-        output_cond = self.params.get('output_opt')
+        output_cond = self.params.get('output_opt').value
         if output_cond:
-            params.append(join_form['output_opt'].format(output_opt=DistalConditions(output_cond)))
+            params.append(join_form['output_opt'].format(coord_param=output_cond))
 
         # Format Joinby clause
         jbc = self.params.get('joinby', None)
@@ -373,6 +441,24 @@ class RegionGenerator(object):
         return syntax['new_region'].format(r=self.newRegion,
                                            function=f)
 
+class ProjectGenerator(RegionGenerator):
+    def __init__(self, newRegion, function, arg):
+        super(ProjectGenerator, self).__init__(newRegion, function, arg)
+
+    def save(self, syntax):
+        if self.function == 'MATH' :
+            f = self.argument
+            return syntax['new_region'].format(r=self.newRegion, function=f)
+        if self.function == 'META' :
+            f = syntax['function'].format(function=self.function.value,
+                                          arg=syntax['param_separator'].join(self.argument))
+            return  syntax['new_region'].format(r=self.newRegion,
+                                                function=f)
+        else:
+            super(ProjectGenerator, self).save(syntax)
+
+
+
 
 class AttributesList(object):
 
@@ -432,8 +518,8 @@ class GenomicPredicate(object):
         self.distal_stream = DistalStream(direction)
 
     def save(self, syntax, sep):
-        dc = map(lambda x: syntax['distal_condition'].format(dc=x[0], n=x[1]), self.distal_conditions)
+        dc = map(lambda x: syntax['distal_condition'].format(dc=x[0].value, n=x[1]), self.distal_conditions)
         if self.distal_stream:
-            dc.append(syntax['distal_stream'].format(ds=self.distal_stream))
+            dc.append(syntax['distal_stream'].format(ds=self.distal_stream.value))
 
         return sep.join(dc)

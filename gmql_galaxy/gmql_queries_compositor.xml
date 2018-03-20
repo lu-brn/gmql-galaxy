@@ -3,9 +3,10 @@
     <macros>
         <import>gmql_queries_macros.xml</import>
         <import>gmql_operators_select.xml</import>
-        <import>gmql_operators_map.xml</import>
         <import>gmql_operators_order.xml</import>
         <import>gmql_operators_join.xml</import>
+        <import>gmql_operators_map.xml</import>
+        <import>gmql_operators_project.xml</import>
     </macros>
     <command><![CDATA[
     #if $materialize.materialize_result == 'true' :
@@ -69,16 +70,13 @@
             <conditional name="operation">
                 <param name="operator" type="select" label="Operation" >
                     <option value="SELECT">SELECT</option>
+                    <option value="PROJECT">PROJECT</option>
+                    <option value="JOIN">JOIN</option>
                     <option value="MAP">MAP</option>
                     <option value="ORDER">ORDER</option>
-                    <option value="JOIN">JOIN</option>
-                    <!-- Other Operators -->
                 </param>
                 <when value="SELECT">
                     <expand macro="select" />
-                </when>
-                <when value="MAP">
-                    <expand macro="map" />
                 </when>
                 <when value="ORDER">
                     <expand macro="order" />
@@ -86,13 +84,22 @@
                 <when value="JOIN">
                     <expand macro="join" />
                 </when>
+                <when value="MAP">
+                    <expand macro="map" />
+                </when>
+                <when value="PROJECT">
+                    <expand macro="project" />
+                </when>
             </conditional>
         </repeat>
         <conditional name="materialize">
                 <param name="materialize_result" type="boolean" label="Materialize final result?"
                    help="Compile and Run are available only for materialized queries. Otherwise it will only save this query" />
                 <when value="true">
-                    <expand macro="output-filename" />
+                    <param name="file_name" type="text" label="Name of the file into which the dataset DS will be saved"
+                           help="The actual GMQL implementation materializes DS into a file with a name in the form [queryname]_[timestamp]_filename">
+                         <validator type="regex" message="Only alphanumeric characters and underscore allowed.">[\w]+$</validator>
+                    </param>
                     <conditional name="choose_op">
                         <param name="op" type="select" label="Run the query or Compile only" >
                             <option value="run">Run</option>

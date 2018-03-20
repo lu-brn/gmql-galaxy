@@ -147,9 +147,7 @@
         <option value="region_field">region_field</option>
     </xml>
     <xml name="region_value">
-        <validator type="regex" message="Valid characters are letters, digits, '.', +, -, and the wildcard symbol '*'">
-            [\w]+||[\d]+(\.[\d]+)?||[+\-\*]$
-        </validator>
+        <validator type="regex" message="Valid characters are letters, digits, '.', +, -, and the wildcard symbol '*'">[+\-\*]|([\d]+\.)?[\d]+|[\w]+$</validator>
         <option value="*">any value</option>
         <option value="string">string</option>
         <option value="1">1</option>

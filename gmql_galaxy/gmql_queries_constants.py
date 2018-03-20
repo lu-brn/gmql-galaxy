@@ -11,6 +11,7 @@ from enum import Enum
 class Operator(Enum):
     MATERIALIZE = 'MATERIALIZE'
     SELECT = 'SELECT'
+    PROJECT = 'PROJECT'
     MAP = 'MAP'
     ORDER = 'ORDER'
     JOIN = 'JOIN'
@@ -32,6 +33,9 @@ class RegFunction(Enum):
     MAX = 'MAX'
     MEDIAN = 'MEDIAN'
     STD = 'STD'
+    NULL = 'NULL'
+    META = 'META'
+    MATH = ''
 
 class DistalConditions(Enum) :
     DL = 'DL'

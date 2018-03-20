@@ -21,15 +21,12 @@
         <conditional name="m_stm">
             <param name="materialize_stm" type="boolean" label="Materialize the result?" help="This may be helpful to check intermediate datasets" />
             <when value="true">
-                    <expand macro="output-filename" />
+                    <param name="file_name" type="text" label="Name of the file into which the dataset DS will be saved"
+                           help="The actual GMQL implementation materializes DS into a file with a name in the form [queryname]_[timestamp]_filename">
+                        <validator type="regex" message="Only alphanumeric characters and underscore allowed.">[\w]+$</validator>
+                    </param>
             </when>
         </conditional>
-    </xml>
-    <xml name="output-filename">
-        <param name="file_name" type="text" label="Name of the file into which the dataset DS will be saved"
-               help="The actual GMQL implementation materializes DS into a file with a name in the form [queryname]_[timestamp]_filename">
-            <expand macro="text_val"/>
-        </param>
     </xml>
     <xml name="block_logCon" >
         <section name="block_logCon" title="Logical concatenation between blocks" expanded="true"
@@ -60,18 +57,17 @@
             <option value="FULL">Match two attributes if they end with the specified name AND their full names are equal</option>
         </param>
     </xml>
-    <xml name="aggrFuncs" token_help="@HELP@" token_optional="@OPTIONAL@">
-        <yield />
-        <param name="function" type="select" label="Aggregate Function to apply" optional="@OPTIONAL@"
-                    help="@HELP@">
-                    <option value="SUM">Sum Values</option>
-                    <option value="AVG">Average Value</option>
-                    <option value="MIN">Minimum Value</option>
-                    <option value="MAX">Maximum Value</option>
-                    <option value="STD">Standard Deviation</option>
-                    <option value="BAG">Create comma separated string of attributes values</option>
-                    <option value="BAGD">Create comma separated list of distinct attributes values</option>
-                </param>
+    <xml name="aggrFuncs" token_help="@HELP@" token_optional="@OPTIONAL@" token_label="@LABEL@">
+        <param name="function" type="select" label="@LABEL@" optional="@OPTIONAL@"
+               help="@HELP@">
+            <option value="SUM">Sum Values</option>
+            <option value="AVG">Average Value</option>
+            <option value="MIN">Minimum Value</option>
+            <option value="MAX">Maximum Value</option>
+            <option value="STD">Standard Deviation</option>
+            <option value="BAG">Create comma separated string of attributes values</option>
+            <option value="BAGD">Create comma separated list of distinct attributes values</option>
+        </param>
     </xml>
     <xml name="text_val">
         <validator type="regex" message="Only alphanumeric characters and underscore allowed.">[\w]+$</validator>

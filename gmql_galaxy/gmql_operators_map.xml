@@ -13,12 +13,14 @@
         <section name="new_regions_attributes" title="New Genomic Region Attributes" expanded="false">
             <repeat name="new_regions" title="Add New Region Attribute to Result Dataset" min="0" default="0"
                     help="Create new genomic region attributes by using functions on existing experiment region attributes">
-                <param name="new_name" type="text" label="New Region Attribute Name" optional="true" >
-                    <expand macro="text_val" />
+                <param name="new_name" type="text" label="New Region Attribute Name" optional="true">
+                    <expand macro="text_val"/>
                 </param>
-            <expand macro="aggrFuncs" help="Sum, average, maximum, minimum and standard deviation are only for numerical
-            attributes" optional="true"/>
-            <param name="argument" label="Region attributes over which apply function" type="text" optional="true"/>
+                <expand macro="aggrFuncs" help="Sum, average, maximum, minimum and standard deviation are only for numerical
+                attributes" optional="true" label="Aggregate Function to apply"/>
+                <param name="argument" label="Region attributes over which apply function" type="text" optional="true">
+                    <expand macro="text_val"/>
+                </param>
             </repeat>
         </section>
         <section name="joinby" title="Condition on Samples Metadata" expanded="false"

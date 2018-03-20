@@ -62,6 +62,8 @@ def read_statement(x):
         stm = create_map(x)
     if op == 'ORDER' :
         stm = create_order(x)
+    if op == 'JOIN' :
+        stm = create_join(x)
 
     # If the user asked to materialize the current statement, add a MATERIALIZE statement; otherwise return
     # only the current statement
@@ -71,6 +73,72 @@ def read_statement(x):
         return (stm, mat_stm)
     else:
         return (stm,)
+
+
+def create_join(x) :
+    stm = Join()
+
+    # Set output and input variables
+    stm.set_output_var(x['output_var'])
+    stm.set_anchor_var(x['input_var_anchor'])
+    stm.set_experiment_var(x['input_var_experiment'])
+
+    # Look for conditions over regions distances and attributes values.
+
+    conds = x['conditions_section']['conditions']
+
+    if conds['c_type'] == 'distance' :
+        pred = _genomic_predicate(conds.get('distance_conditions'))
+        stm.set_genomic_predicate(pred)
+    if conds['c_type'] == 'attributes' :
+        pred = _equi_conditions(conds.get('region_attributes'))
+        stm.set_equi_conditions(pred)
+    else:
+        pred1 = _genomic_predicate(conds.get('distance_conditions'))
+        pred2 = _equi_conditions(conds.get('region_attributes'))
+        stm.set_genomic_predicate(pred1)
+        stm.set_equi_conditions(pred2)
+
+    # Set the output preference
+    stm.set_output_opt(conds.get('output_opt'))
+
+
+    # Check if there are joinby conditions and set them up
+
+    join_data = x['joinby']['joinby_clause']
+    join_data = filter(lambda x: x['j_att'], join_data)
+    join_data = map(lambda x: (x['j_att'], x['metajoin_match']), join_data)
+
+    if join_data.__len__() > 0:
+        jc = JoinbyClause(join_data)
+        stm.set_joinby_clause(jc)
+
+
+    return stm
+
+
+def _genomic_predicate(pred):
+
+    gp = GenomicPredicate()
+
+    # Loop over the distal predicates and distinguish between distal conditions and stream directions.
+    for x in pred:
+        x = x.get('type_dc')
+        if x.get('type_dc_value') == 'dist' :
+            gp.add_distal_condition(x.get('dc'), x.get('n'))
+        else:
+            gp.add_distal_stream(x.get('ds'))
+
+    return gp
+
+
+def _equi_conditions(pred):
+
+    atts = map(lambda x: x.get('attribute'), pred)
+    ec = AttributesList(atts)
+
+    return ec
+
 
 def create_order(x):
      stm = Order()
