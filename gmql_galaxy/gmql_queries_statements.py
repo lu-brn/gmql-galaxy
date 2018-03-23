@@ -140,18 +140,18 @@ class Project(Statement):
     def set_metadata(self, metadataAttributes, type='keep'):
         self.set_param((metadataAttributes, type),'metadata')
 
-    def set_new_regions(self, regionAttDefi):
-        self.set_variable(regionAttDef, 'newRegions')
+    def set_new_regions(self, regionAttDef):
+        self.set_param(regionAttDef, 'newRegions')
 
     def set_new_metadata(self, metadataAttDef):
-        self.set_variable(metadataAttDef, 'newMetadata')
+        self.set_param(metadataAttDef, 'newMetadata')
 
     def save(self, syntax):
         stm = super(Project, self).save(syntax)
 
         params_form = syntax['PARAMS']
         project_format = params_form[self.operator.value]
-        param_sep = params_form['params_separator']
+        param_sep = params_form['param_separator']
         type_sep = params_form['type_separator']
 
         params = []
@@ -160,7 +160,7 @@ class Project(Statement):
         params_regs = self.params.get('regions', None)
 
         if params_regs:
-            att_list = project_format['att_list'][params_regs[1]].format(att_list=params_regs[0].save(type_sep))
+            att_list = project_format['att_list'][params_regs[1]].format(att_list=params_regs[0].save('',type_sep))
             regionsAtt = project_format['regions'].format(att_list=att_list)
             params.append(regionsAtt)
 
@@ -168,7 +168,7 @@ class Project(Statement):
         params_mets = self.params.get('metadata', None)
 
         if params_mets:
-            att_list = project_format['att_list'][params_mets[1]].format(att_list=params_regs[0].save(type_sep))
+            att_list = project_format['att_list'][params_mets[1]].format(att_list=params_mets[0].save('',type_sep))
             metadataAtt = project_format['metadata'].format(att_list=att_list)
             params.append(metadataAtt)
 
@@ -185,6 +185,61 @@ class Project(Statement):
         if params_newMeta :
             newMetadata = map(lambda x: x.save(params_form),params_newMeta)
             params.append(project_format['newMetadata'].format(newAttributes=param_sep.join(newMetadata)))
+
+        stm = stm.format(parameters=type_sep.join(params))
+
+        return stm
+
+
+class Cover(Statement):
+    def __init__(self, cover_variant):
+        super(Cover, self).__init__()
+        self.operator = Operator(cover_variant)
+
+    def set_minAcc(self, minAcc):
+        self.minAcc = minAcc
+
+    def set_maxAcc(self, maxAcc):
+        self.maxAcc = maxAcc
+
+    def set_output_var(self, var):
+        self.set_variable(var, 'output')
+
+    def set_input_var(self, var):
+        self.set_variable(var, 'input1')
+
+    def set_new_regions(self, regionAttributes):
+        self.set_param(regionAttributes, 'newRegions')
+
+    def set_joinby_clause(self, joinbyClause):
+        self.set_param(joinbyClause, 'joinby')
+
+    def save(self, syntax):
+        stm = super(Cover, self).save(syntax)
+
+        params_form = syntax['PARAMS']
+        cover_format = params_form[Operator.COVER.value]
+        type_sep = params_form['type_separator']
+        param_sep = params_form['param_separator']
+        
+        params = []
+        
+        # minAcc and maxAcc are joined and then added to the list as they are
+        params.append(param_sep.join([self.minAcc,self.maxAcc]))
+
+        # Format joinby clause
+        jbc = self.params.get('joinby', None)
+
+        if jbc:
+            params.append(cover_format['joinby'].format(joinbyClause=jbc.save(params_form,param_sep)))
+
+        # Format new region attributes definitions
+
+        param_regs = self.params.get('newRegions', None)
+
+        if param_regs:
+            newRegions = map(lambda x: x.save(params_form), param_regs)
+            params.append(cover_format['regions'].format(newRegions=param_sep.join(newRegions)))
 
         stm = stm.format(parameters=type_sep.join(params))
 
@@ -223,7 +278,7 @@ class Map(Statement):
         type_sep = params_form['type_separator']
         param_sep = params_form['param_separator']
 
-        parameters = []
+        params = []
 
         # Format new region attributes definitions
 
@@ -231,21 +286,21 @@ class Map(Statement):
 
         if param_regs :
             newRegions = map(lambda x: x.save(params_form),param_regs)
-            parameters.append(map_format['regions'].format(newRegions=param_sep.join(newRegions)))
+            params.append(map_format['regions'].format(newRegions=param_sep.join(newRegions)))
 
 
         # Format user chosen name for the count attribute, if present
         if self.count_attribute :
-            parameters.append(map_format['count'].format(count_name=self.count_attribute))
+            params.append(map_format['count'].format(count_name=self.count_attribute))
 
         # Format joinby clause
         jbc = self.params.get('joinby', None)
 
         if jbc:
-            parameters.append(map_format['joinby'].format(joinbyClause=jbc.save(params_form,param_sep)))
+            params.append(map_format['joinby'].format(joinbyClause=jbc.save(params_form,param_sep)))
 
 
-        stm = stm.format(parameters=type_sep.join(parameters))
+        stm = stm.format(parameters=type_sep.join(params))
 
         return stm
 
@@ -446,17 +501,21 @@ class ProjectGenerator(RegionGenerator):
         super(ProjectGenerator, self).__init__(newRegion, function, arg)
 
     def save(self, syntax):
-        if self.function == 'MATH' :
+        if self.function == RegFunction.MATH:
             f = self.argument
             return syntax['new_region'].format(r=self.newRegion, function=f)
-        if self.function == 'META' :
+        if self.function in ['rename','fixed'] :
+            f = self.argument
+            if self.function == 'fixed':
+                f = "{f}".format(f=f)
+            return syntax['new_region'].format(r=self.newRegion, function=f)
+        if self.function is RegFunction.META :
             f = syntax['function'].format(function=self.function.value,
                                           arg=syntax['param_separator'].join(self.argument))
             return  syntax['new_region'].format(r=self.newRegion,
                                                 function=f)
         else:
-            super(ProjectGenerator, self).save(syntax)
-
+            return super(ProjectGenerator, self).save(syntax)
 
 
 
@@ -480,7 +539,7 @@ class OrderingAttributes(AttributesList):
 
     def save(self, syntax, sep):
         self.attributes = map(lambda x: syntax[x[1]].format(att=x[0]), self.attributes)
-        return super(OrderingAttributes, self).save(syntax, sep)
+        return super(OrderingAttributes, self).save(sep)
 
 
 class JoinbyClause(AttributesList):

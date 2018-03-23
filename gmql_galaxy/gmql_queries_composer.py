@@ -5,7 +5,7 @@
 # Luana Brancato, luana.brancato@mail.polimi.it
 # --------------------------------------------------------------------------------
 
-import os, sys, argparse, json
+import os, sys, argparse, json, re
 from itertools import chain
 from gmql_queries_statements import *
 from gmql_rest_queries import compile_query, run_query, check_input
@@ -64,6 +64,11 @@ def read_statement(x):
         stm = create_order(x)
     if op == 'JOIN' :
         stm = create_join(x)
+    if op == 'PROJECT':
+        stm = create_project(x)
+    if op == 'COVER' :
+        stm = create_cover(x)
+
 
     # If the user asked to materialize the current statement, add a MATERIALIZE statement; otherwise return
     # only the current statement
@@ -73,6 +78,86 @@ def read_statement(x):
         return (stm, mat_stm)
     else:
         return (stm,)
+
+def create_project(x):
+    stm = Project()
+
+    # Set output and input variables
+    stm.set_output_var(x['output_var'])
+    stm.set_input_var(x['input_var'])
+
+    # Check if there are info about region fields to keep and set them up
+
+    reg_att = x['region_att']['allbut']
+    if reg_att['allbut_flag'] == 'keep' :
+
+        r_fields = reg_att.get('list_keep', None)
+        # If the list exists and it is not empty
+        if r_fields:
+            r_fields = map(lambda x: x.get('attribute'), r_fields)
+            stm.set_regions(AttributesList(r_fields))
+    else:
+        r_fields = reg_att.get('list_exclude', None)
+        if r_fields:
+            r_fields = map(lambda x: x.get('attribute'), r_fields)
+            stm.set_regions(AttributesList(r_fields), type='exclude')
+
+    # Similarly for metadata attributes to keep
+
+    meta_att = x['meta_att']['allbut']
+    if meta_att['allbut_flag'] == 'keep' :
+        m_atts = meta_att.get('list_keep', None)
+        if m_atts:
+            m_atts = map(lambda x: x.get('attribute'), m_atts)
+            stm.set_metadata(AttributesList(m_atts))
+    else:
+        m_atts = meta_att.get('list_exclude', None)
+        if m_atts:
+            m_atts = map(lambda x: x.get('attribute'), m_atts)
+            stm.set_metadata(AttributesList(m_atts), type='exclude')
+
+    # Look if there are new region fields definition and set them up
+
+    pnr = x.get('project_new_regions').get('new_region_att', None)
+    if pnr:
+        pnr = map(lambda x: (x.get('new_name'), x.get('gen_function')), pnr)
+        f_defs = map(lambda x: _project_get_new(x), pnr)
+
+        stm.set_new_regions(f_defs)
+
+    # Look for new metadata attrubutes definitions
+
+    pnm = x.get('project_new_meta').get('new_meta_att', None)
+    if pnm:
+        pnm = map(lambda x: (x.get('new_name'), x.get('gen_function')), pnm)
+        f_defs = map(lambda x: _project_get_new(x), pnm)
+
+        stm.set_new_metadata(f_defs)
+
+
+    return stm
+
+def _project_get_new(nr):
+
+    gen_type = nr[1].get('gen_type')
+    new_name = nr[0]
+
+    fg = ''
+
+    if gen_type in ['aggregate', 'SQRT', 'NULL']:
+        fg = ProjectGenerator(new_name, RegFunction(nr[1].get('function')), nr[1].get('arg'))
+
+    if gen_type in ['arithmetic']:
+        fg = ProjectGenerator(new_name, RegFunction.MATH, nr[1].get('expression'))
+
+    if gen_type in ['rename', 'fixed']:
+        fg = ProjectGenerator(new_name, gen_type, nr[1].get('arg'))
+
+    if gen_type in ['META']:
+        fg = ProjectGenerator(new_name, RegFunction.META, (nr[1].get('arg'), nr[1].get('att_type')))
+
+    return fg
+
 
 
 def create_join(x) :
@@ -216,6 +301,58 @@ def create_map(x):
         stm.set_joinby_clause(jc)
 
     return stm
+
+def create_cover(x):
+    stm = Cover(x['cover_variant'])
+
+    #Set output and input variables
+    stm.set_output_var(x['output_var'])
+    stm.set_input_var(x['input_var'])
+
+    # Read minAcc value
+    min_data = x['minAcc']
+    minAcc = _read_acc_values(min_data, min_data['min_type'])
+    stm.set_minAcc(minAcc)
+
+    # Read maxAcc value
+    max_data = x['maxAcc']
+    maxAcc = _read_acc_values(max_data, max_data['max_type'])
+    stm.set_maxAcc(maxAcc)
+
+    # Check if there are additional region attributes definition and set them up
+
+    nr_data = x['new_regions_attributes']['new_regions']
+
+    new_regions = filter(lambda x: x['new_name'] and (x['function'] != 'None') and x['argument'], nr_data)
+    new_regions = map(lambda x: RegionGenerator(newRegion=x['new_name'],
+                                                function=RegFunction(x['function']),
+                                                argRegion=x['argument']), new_regions)
+
+    if new_regions.__len__() > 0:
+        stm.set_new_regions(new_regions)
+
+    # Check if there are groupby conditions and set them up
+
+    group_data = x['groupby']['groupby_clause']
+    group_data = filter(lambda x: x['j_att'], group_data)
+    group_data = map(lambda x: (x['j_att'], x['metajoin_match']), group_data)
+
+    if group_data.__len__() > 0:
+        jc = JoinbyClause(group_data)
+        stm.set_joinby_clause(jc)
+
+    return stm
+
+def _read_acc_values(data, value):
+
+    if value in ['ANY', 'ALL']:
+        return value
+    if value == 'value':
+        return str(data['value'])
+    if value == 'ALL_n':
+        return 'ALL / {n}'.format(n=data['n'])
+    if value == 'ALL_n_k':
+        return '(ALL + {k}) / {n}'.format(n=data['n'],k=data['k'])
 
 
 def create_select(x) :

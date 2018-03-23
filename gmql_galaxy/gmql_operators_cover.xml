@@ -1,0 +1,80 @@
+<macros>
+    <import>gmql_queries_macros.xml</import>
+    <xml name="cover">
+        <expand macro="input_var" name="input_var" label="Input Dataset" optional="false" />
+        <expand macro="output_var" />
+        <param name="cover_variant" type="select" label="COVER type"
+               help="Variants modify the coordinates of the returned regions">
+            <option value="COVER">Base COVER</option>
+            <option value="FLAT">FLAT (returns the union of all the regions which contribute to the COVER)</option>
+            <option value="SUMMIT">SUMMIT (returns only those portions of the COVER result with the maximum number of overlapping region)</option>
+            <option value="HISTOGRAM">HISTOGRAM (returns all regions contributing to the COVER divided in different (contiguous) parts according to their accumulation index value (one part for each different accumulation value), which is assigned to the additional AccIndex region attribute</option>
+        </param>
+        <conditional name="minAcc">
+            <param name="min_type" type="select" label="minAcc"
+                   help="It is the minimum accumulation value, i.e., the minimum number of overlapping
+                   regions to be considered during COVER execution">
+                <expand macro="acc_options" />
+            </param>
+            <expand macro="acc_values" />
+        </conditional>
+        <conditional name="maxAcc">
+            <param name="max_type" type="select" label="maxAcc"
+                   help="It is the maximum accumulation value, i.e., the maximum number of overlapping
+                   regions to be considered during COVER execution">
+                <expand macro="acc_options" >
+                    <option value="ANY">ANY (Any number of overlapping regions)</option>
+                </expand>
+            </param>
+            <expand macro="acc_values" />
+        </conditional>
+        <section name="new_regions_attributes" title="New Genomic Region Attributes" expanded="false">
+            <repeat name="new_regions" title="Add New Region Attribute to Result Dataset" min="0" default="0"
+                    help="Resulting regions may have new attributes, calculated by means of aggregate expressions
+                    over the attributes of the contributing regions. By default, they are already added as region
+                    attributes 'JaccardIntersect', calculated as the ratio between the lengths of the intersection
+                    and of the union of the contributing regions; 'JaccardResult' as the ratio between the lengths
+                    of the result and of the union of the contributing regions">
+                <param name="new_name" type="text" label="New Region Attribute Name" optional="true">
+                    <expand macro="text_val"/>
+                </param>
+                <expand macro="aggrFuncs" help="Sum, average, maximum, minimum and standard deviation are only for numerical
+                attributes" optional="true" label="Aggregate Function to apply"/>
+                <param name="argument" label="Region attributes over which apply function" type="text" optional="true">
+                    <expand macro="text_val"/>
+                </param>
+            </repeat>
+        </section>
+        <section name="groupby" title="Group Samples by Metadata" expanded="false"
+        help="The input samples are partitioned in groups, each with distinct values of the grouping metadata
+        attributes, and the COVER operation is separately applied (as described above) to each group,
+        yielding to one sample in the result for each group (input samples that do not satisfy the groupby
+        condition are disregarded).">
+        <repeat name="groupby_clause" title="Attributes for grouping" min="0" default="0" >
+            <expand macro="metajoin_attribute" name="j_att" optional="true" >
+                <expand macro="metajoin_options" />
+            </expand>
+        </repeat>
+        </section>
+        <expand macro="materialize_stm" />
+    </xml>
+    <xml name="acc_options">
+        <yield/>
+        <option value="value">Integer Value</option>
+        <option value="ALL">ALL (Number of samples in the input dataset)</option>
+        <option value="ALL_n">ALL / n</option>
+        <option value="ALL_n_k">(ALL + k) / n</option>
+    </xml>
+    <xml name="acc_values">
+        <when value="value">
+            <param name="value" type="integer" label="Value" value="1" min="1"/>
+        </when>
+        <when value="ALL_n">
+            <param name="n" type="integer" label="Value of n" value="1" min="1"/>
+        </when>
+        <when value="ALL_n_k">
+            <param name="n" type="integer" label="Value of n" value="1" min="1"/>
+            <param name="k" type="integer" label="Value of k" value="1" min="1"/>
+        </when>
+    </xml>
+</macros>

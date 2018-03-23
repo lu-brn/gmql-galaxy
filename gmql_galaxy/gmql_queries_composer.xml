@@ -1,5 +1,5 @@
-<tool id="gmql_queries_compositor" name="GMLQ Query Compositor" version="0.1.1">
-    <description>Compose, Compile and Run GMQL queries step by step.</description>
+<tool id="gmql_queries_compositor" name="GMLQ Query Composer" version="0.1.1">
+    <description>Create, Compile and Run GMQL queries step by step.</description>
     <macros>
         <import>gmql_queries_macros.xml</import>
         <import>gmql_operators_select.xml</import>
@@ -7,12 +7,13 @@
         <import>gmql_operators_join.xml</import>
         <import>gmql_operators_map.xml</import>
         <import>gmql_operators_project.xml</import>
+        <import>gmql_operators_cover.xml</import>
     </macros>
     <command><![CDATA[
     #if $materialize.materialize_result == 'true' :
      #if $materialize.choose_op.op == 'run' :
       mkdir -p dataset && cd dataset &&
-      python $__tool_directory__/gmql_queries_compositor.py
+      python $__tool_directory__/gmql_queries_composer.py
       -user=$authToken
       -cmd='run'
       -query_params=$query_params
@@ -23,7 +24,7 @@
       -query_log=$log
 	  -updated_ds_list=$updated_list
 	 #else :
-	  python $__tool_directory__/gmql_queries_compositor.py
+	  python $__tool_directory__/gmql_queries_composer.py
       -user=$authToken
       -cmd='compile'
       -query_params=$query_params
@@ -34,7 +35,7 @@
       -query_log=$log
       #end if
     #else:
-    python $__tool_directory__/gmql_queries_compositor.py
+    python $__tool_directory__/gmql_queries_composer.py
      -user=$authToken
      -cmd='save'
      -query_params=$query_params
@@ -71,9 +72,10 @@
                 <param name="operator" type="select" label="Operation" >
                     <option value="SELECT">SELECT</option>
                     <option value="PROJECT">PROJECT</option>
+                    <option value="ORDER">ORDER</option>
                     <option value="JOIN">JOIN</option>
                     <option value="MAP">MAP</option>
-                    <option value="ORDER">ORDER</option>
+                    <option value="COVER">COVER</option>
                 </param>
                 <when value="SELECT">
                     <expand macro="select" />
@@ -89,6 +91,9 @@
                 </when>
                 <when value="PROJECT">
                     <expand macro="project" />
+                </when>
+                <when value="COVER">
+                    <expand macro="cover" />
                 </when>
             </conditional>
         </repeat>

@@ -1,7 +1,7 @@
 <macro>
     <import>gmql_queries_macros.xml</import>
     <xml name="project">
-        <expand macro="input_var" name="input_var" label="Input Dataset to Order" />
+        <expand macro="input_var" name="input_var" label="Input Dataset" />
         <expand macro="output_var" />
         <expand macro="sec_attributes" sec="region_att" title="Region attributes to keep" attname="Region Attribute"/>
         <expand macro="sec_attributes" sec="meta_att" title="Metadata attributes to keep" attname="Metadata Attribute"/>
@@ -12,19 +12,19 @@
                 <param name="new_name" type="text" label="New attribute name">
                     <expand macro="text_val"/>
                 </param>
-                <conditional name="gen_type">
-                    <expand macro="gen_type_functions" label="Function to apply to generate new region attribute">
-                        <option value="null">Define a new numeric region attribute with "null" value</option>
-                        <option value="meta">Value of a metadata attribute</option>
+                <conditional name="gen_function">
+                    <expand macro="gen_type_functions" label="Type of function to apply to generate new region attribute">
+                        <option value="NULL">Define a new numeric region attribute with "null" value</option>
+                        <option value="META">Value of a metadata attribute</option>
                     </expand>
                     <expand macro="gen_arguments">
-                        <when value="null">
+                        <when value="NULL">
                             <param name="att_type" type="select" label="Type of new attribute">
                                 <option value="INTEGER">INTEGER</option>
                                 <option value="INTEGER">DOUBLE</option>
                             </param>
                         </when>
-                        <when value="meta">
+                        <when value="META">
                             <expand macro="f_argument" label="Name of the metadata attribute to use as source"/>
                             <param name="att_type" type="select" label="Type of new attribute">
                                 <option value="INTEGER">INTEGER</option>
@@ -43,17 +43,18 @@
                     <param name="new_name" type="text" label="New attribute name" >
                         <expand macro="text_val" />
                     </param>
-                    <conditional name="gen_type">
-                        <expand macro="gen_type_functions" label="Function to apply to generate new metadata attribute">
+                    <conditional name="gen_function">
+                        <expand macro="gen_type_functions" label="Type of function to apply to generate new metadata attribute">
                         </expand>
                         <expand macro="gen_arguments" >
                         </expand>
                     </conditional>
                 </repeat>
         </section>
+        <expand macro="materialize_stm" />
     </xml>
     <xml name="gen_type_functions" token_label="@LABEL@">
-        <param name="gen_function" type="select" label="@LABEL@">
+        <param name="gen_type" type="select" label="@LABEL@">
             <option value="aggregate">Aggregate function</option>
             <option value="arithmetic">Arithmetic expression</option>
             <option value="SQRT">Square root</option>
@@ -72,8 +73,7 @@
         <when value="arithmetic">
             <param name="expression" label="Expression" type="text"
                    help="All basic mathematical operations (+, -, *, /), including usage of parenthesis">
-                <validator type="regex" message="It includes not valid characters">[\d\.\(\)\-\+\*\/]+
-                </validator>
+                <validator type="regex" message="It includes not valid characters">[\w\.\(\)\-\+\*\/\s]+</validator>
             </param>
         </when>
         <when value="SQRT">
@@ -101,14 +101,14 @@
         (i.e., only chr, start, stop, and strand are kept)">
             <conditional name="allbut">
                 <param name="allbut_flag" type="select" label="How to list attributes">
-                    <option value="keep">Keep all attributes and list what to exclude</option>
-                    <option value="exclude">List only the ones to keep</option>
+                    <option value="keep">List only the ones to keep</option>
+                    <option value="exclude">Keep all attributes and list what to exclude</option>
                 </param>
                 <when value="keep">
-                    <expand macro="attribute_field" name="list_exclude" min="1" attname="@ATTNAME@" />
+                    <expand macro="attribute_field" name="list_keep" min="1" attname="@ATTNAME@" />
                 </when>
                 <when value="exclude">
-                    <expand macro="attribute_field" name="list_keep" min="0" attname="@ATTNAME@" />
+                    <expand macro="attribute_field" name="list_exclude" min="0" attname="@ATTNAME@" />
                 </when>
             </conditional>
         </section>
@@ -116,7 +116,7 @@
     <xml name="attribute_field" token_name="@NAME@" token_min="@MIN@" token_attname="@ATTNAME@">
        <repeat name="@NAME@" min="@MIN@" title="@ATTNAME@"
                             help="The wildcard '?' can be used in place of the syntax (at most one per attribute)">
-           <param name="attribute" type="text" label="Attribute Name">
+           <param name="attribute" type="text" label="Attribute Name" optional="true">
                 <validator type="regex" message="Format not valid">(\?\.)?[\w]+|[\w]+(\.\?)|(\?\.)[\w]+(\.\?)$</validator>
                 <option value="attribute">attribute</option>
                 <option value="?.attribute">?.attribute</option>

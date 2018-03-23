@@ -15,6 +15,10 @@ class Operator(Enum):
     MAP = 'MAP'
     ORDER = 'ORDER'
     JOIN = 'JOIN'
+    COVER = 'COVER'
+    FLAT = 'FLAT'
+    SUMMIT = 'SUMMIT'
+    HISTOGRAM = 'HISTOGRAM'
 
 class Wff(Enum):
     AND = 'AND'
@@ -33,6 +37,7 @@ class RegFunction(Enum):
     MAX = 'MAX'
     MEDIAN = 'MEDIAN'
     STD = 'STD'
+    SQRT = 'SQRT'
     NULL = 'NULL'
     META = 'META'
     MATH = ''

@@ -49,6 +49,9 @@ PARAMS:
         regions: '{newRegions}'
         count: 'count_name: {count_name}'
         joinby: 'joinby: {joinbyClause}'
+    COVER:
+        joinby: 'groupby: {joinbyClause}'
+        regions: 'aggregate: {newRegions}'
     ORDER:
         att_list:
             asc: '{att}'
