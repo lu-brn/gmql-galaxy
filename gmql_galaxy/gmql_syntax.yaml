@@ -52,6 +52,7 @@ PARAMS:
     COVER:
         joinby: 'groupby: {joinbyClause}'
         regions: 'aggregate: {newRegions}'
+    EXTEND: ''
     ORDER:
         att_list:
             asc: '{att}'

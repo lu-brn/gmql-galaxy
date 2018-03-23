@@ -68,6 +68,8 @@ def read_statement(x):
         stm = create_project(x)
     if op == 'COVER' :
         stm = create_cover(x)
+    if op == 'EXTEND' :
+        stm = create_extend(x)
 
 
     # If the user asked to materialize the current statement, add a MATERIALIZE statement; otherwise return
@@ -125,7 +127,7 @@ def create_project(x):
 
         stm.set_new_regions(f_defs)
 
-    # Look for new metadata attrubutes definitions
+    # Look for new metadata attributes definitions
 
     pnm = x.get('project_new_meta').get('new_meta_att', None)
     if pnm:
@@ -158,6 +160,24 @@ def _project_get_new(nr):
 
     return fg
 
+def create_extend(x):
+    stm = Extend()
+
+    # Set output and input variables
+    stm.set_output_var(x['output_var'])
+    stm.set_input_var(x['input_var'])
+
+    # Look for new metadata attributes definitions
+
+    data = x['new_metadata_attributes']['new_attributes']
+
+    new_atts = map(lambda x: MetaAttributesGenerator(newAttribute=x['new_name'],
+                                                function=RegFunction(x['function']),
+                                                argRegion=x['argument']), data)
+
+    stm.set_new_attributes(new_atts)
+
+    return stm
 
 
 def create_join(x) :

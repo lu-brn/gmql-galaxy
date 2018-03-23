@@ -67,6 +67,7 @@
             <option value="STD">Standard Deviation</option>
             <option value="BAG">Create comma separated string of attributes values</option>
             <option value="BAGD">Create comma separated list of distinct attributes values</option>
+            <yield />
         </param>
     </xml>
     <xml name="text_val">

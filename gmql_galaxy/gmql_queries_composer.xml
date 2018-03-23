@@ -8,6 +8,7 @@
         <import>gmql_operators_map.xml</import>
         <import>gmql_operators_project.xml</import>
         <import>gmql_operators_cover.xml</import>
+        <import>gmql_operators_extend.xml</import>
     </macros>
     <command><![CDATA[
     #if $materialize.materialize_result == 'true' :
@@ -72,6 +73,7 @@
                 <param name="operator" type="select" label="Operation" >
                     <option value="SELECT">SELECT</option>
                     <option value="PROJECT">PROJECT</option>
+                    <option value="EXTEND">EXTEND</option>
                     <option value="ORDER">ORDER</option>
                     <option value="JOIN">JOIN</option>
                     <option value="MAP">MAP</option>
@@ -94,6 +96,9 @@
                 </when>
                 <when value="COVER">
                     <expand macro="cover" />
+                </when>
+                <when value="EXTEND">
+                    <expand macro="extend" />
                 </when>
             </conditional>
         </repeat>

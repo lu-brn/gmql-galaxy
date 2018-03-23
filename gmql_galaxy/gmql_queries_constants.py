@@ -19,6 +19,7 @@ class Operator(Enum):
     FLAT = 'FLAT'
     SUMMIT = 'SUMMIT'
     HISTOGRAM = 'HISTOGRAM'
+    EXTEND = 'EXTEND'
 
 class Wff(Enum):
     AND = 'AND'
@@ -37,6 +38,9 @@ class RegFunction(Enum):
     MAX = 'MAX'
     MEDIAN = 'MEDIAN'
     STD = 'STD'
+    q1 = 'q1'
+    q2 = 'q2'
+    q3 = 'q3'
     SQRT = 'SQRT'
     NULL = 'NULL'
     META = 'META'

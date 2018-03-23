@@ -190,6 +190,35 @@ class Project(Statement):
 
         return stm
 
+class Extend(Statement):
+    def __init__(self):
+        super(Extend, self).__init__()
+        self.operator = Operator.EXTEND
+
+    def set_output_var(self, var):
+        self.set_variable(var, 'output')
+
+    def set_input_var(self, var):
+        self.set_variable(var, 'input1')
+
+    def set_new_attributes(self, newAttributes):
+        self.set_param(newAttributes, 'newMetadata')
+
+    def save(self, syntax):
+        stm = super(Extend, self).save(syntax)
+
+        params_form = syntax['PARAMS']
+        param_sep = params_form['param_separator']
+
+        # Get new metadata attributes definition and format them
+
+        params_newMeta = self.params.get('newMetadata')
+        newMetadata = map(lambda x: x.save(params_form),params_newMeta)
+
+        stm = stm.format(parameters=param_sep.join(newMetadata))
+
+        return stm
+
 
 class Cover(Statement):
     def __init__(self, cover_variant):
@@ -495,6 +524,13 @@ class RegionGenerator(object):
 
         return syntax['new_region'].format(r=self.newRegion,
                                            function=f)
+
+class MetaAttributesGenerator(RegionGenerator):
+    def __init__(self, newAttribute, function, argRegion):
+        super(MetaAttributesGenerator, self).__init__(newAttribute, function, argRegion)
+
+    def save(self, syntax):
+        return super(MetaAttributesGenerator, self).save(syntax)
 
 class ProjectGenerator(RegionGenerator):
     def __init__(self, newRegion, function, arg):

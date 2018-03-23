@@ -1,0 +1,27 @@
+<macros>
+    <import>gmql_queries_macros.xml</import>
+    <xml name="extend">
+        <expand macro="input_var" name="input_var" label="Input Dataset" optional="false" />
+        <expand macro="output_var" />
+        <section name="new_metadata_attributes" title="New Metadata Attributes" expanded="true">
+            <repeat name="new_attributes" title="Add Metadata Attribute to Result Dataset" min="1"
+                    help="Builds new metadata attributes, assigns their values as the result of aggregate functions
+                    calculated on sample region attributes, and adds them to the existing metadata attribute-value
+                    pairs of the sample">
+                <param name="new_name" type="text" label="New Region Attribute Name" optional="true">
+                    <expand macro="text_val"/>
+                </param>
+                <expand macro="aggrFuncs" help="Sum, average, maximum, minimum and standard deviation are only for numerical
+                attributes" optional="false" label="Aggregate Function to apply">
+                    <option value="q1">First Quartile</option>
+                    <option value="q2">Second Quartile</option>
+                    <option value="q3">Third Quartile</option>
+                </expand>
+                <param name="argument" label="Region attributes over which apply function" type="text" optional="true">
+                    <expand macro="text_val"/>
+                </param>
+            </repeat>
+        </section>
+        <expand macro="materialize_stm" />
+    </xml>
+</macros>
