@@ -15,7 +15,7 @@
         <param name="@NAME@" label="@LABEL@" optional="@OPTIONAL@" type="text"
                help="Must be a dataset variable already defined as output of a previous operation.">
             <expand macro="text_val" />
-            </param>
+        </param>
     </xml>
     <xml name="materialize_stm" >
         <conditional name="m_stm">

@@ -9,6 +9,8 @@
         <import>gmql_operators_project.xml</import>
         <import>gmql_operators_cover.xml</import>
         <import>gmql_operators_extend.xml</import>
+        <import>gmql_operators_group.xml</import>
+        <import>gmql_operators_merge_union_diff.xml</import>
     </macros>
     <command><![CDATA[
     #if $materialize.materialize_result == 'true' :
@@ -75,6 +77,10 @@
                     <option value="PROJECT">PROJECT</option>
                     <option value="EXTEND">EXTEND</option>
                     <option value="ORDER">ORDER</option>
+                    <option value="GROUP">GROUP</option>
+                    <option value="MERGE">MERGE</option>
+                    <option value="UNION">UNION</option>
+                    <option value="DIFFERENCE">DIFFERENCE</option>
                     <option value="JOIN">JOIN</option>
                     <option value="MAP">MAP</option>
                     <option value="COVER">COVER</option>
@@ -99,6 +105,18 @@
                 </when>
                 <when value="EXTEND">
                     <expand macro="extend" />
+                </when>
+                <when value="GROUP">
+                    <expand macro="group" />
+                </when>
+                <when value="MERGE">
+                    <expand macro="merge" />
+                </when>
+                <when value="UNION">
+                    <expand macro="union" />
+                </when>
+                <when value="DIFFERENCE">
+                    <expand macro="difference" />
                 </when>
             </conditional>
         </repeat>

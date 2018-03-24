@@ -1,0 +1,82 @@
+<macros>
+    <import>gmql_queries_macros.xml</import>
+    <xml name="group">
+        <expand macro="input_var" name="input_var" label="Input Dataset" optional="false" />
+        <expand macro="output_var" />
+        <conditional name="add_grouping">
+            <param name="group_type" type="select" label="Additional Grouping Options"
+                   help="If the defualt option is set, it will group only on the region attributes which represent
+                   the four genomic coordinates (chr, start, stop, and strand). Inside a single sample, it collapses
+                   all regions that have equal values in these four coordinates into a single one, thus eliminating duplicate regions" >
+                <option value="default">Only default attributes (genomic coordinates)</option>
+                <option value="meta">Group also on metadata attributes</option>
+                <option value="regions">Group also on other region attributes and/or create new region fields with aggregate functions</option>
+                <option value="both">Group also on both metadata and other regions attributes</option>
+            </param>
+            <when value="default">
+                <!-- do nothing -->
+            </when>
+            <when value="meta">
+                <expand macro="metadata_options" />
+            </when>
+            <when value="regions">
+                <expand macro="region_options" />
+            </when>
+            <when value="both">
+                <expand macro="metadata_options" />
+                <expand macro="region_options" />
+            </when>
+        </conditional>
+        <expand macro="materialize_stm" />
+    </xml>
+    <xml name="region_options">
+        <section name="regions" title="Additional grouping options over region attributes" expanded="true"
+                 help="In each sample, regions found in the same group (i.e., regions with same coordinates and
+                 grouping attribute values), are combined into a single region; this allows to merge regions that are
+                 duplicated inside the same sample (based on the values of their coordinates and of other possible
+                 specified region attributes)">
+            <repeat name="group_regions_atts" min="0" title="Grouping Region Attribute">
+                <param name="attribute" type="text" label="Region Attribute">
+                    <expand macro="text_val" />
+                    <validator type="expression" message="Coordinate attributes are already used by default">value not in ['chr','left','right','strand']</validator>
+                </param>
+            </repeat>
+            <expand macro="att_generator" title="Aggregate Region Attribute" min="0"/>
+        </section>
+    </xml>
+    <xml name="metadata_options">
+        <section name="metadata" title="Grouping Options over metadata attributes" expanded="true"
+                 help="GROUP performs the grouping of samples of the input dataset based on one specified metadata
+                    attribute. If the metadata attribute is multi-value, the grouping identifies different groups of
+                    samples for each attribute value combination. All metadata in the input samples are conserved,
+                    with the addition of the _group attribute, whose value is the identifier of the group to which
+                    the specific sample is assigned. Samples having missing values for any of the grouping metadata
+                    attributes are assigned all together to one group, identified by the special value _group = 0">
+            <repeat name="group_meta_atts" min="1" title="Grouping Metadata Attribute">
+                <expand macro="metajoin_attribute" name="j_att" optional="true" >
+                <expand macro="metajoin_options" />
+            </expand>
+            </repeat>
+            <conditional name="meta_agg">
+                <param name="meta_agg_flag" type="boolean" label="Create new aggregate attributes?"
+                       help="It is possible to request the evaluation of aggregate functions on metadata attributes;
+                       these functions consider the metadata contained in all samples of each group" />
+                <when value="true">
+                    <expand macro="att_generator" title="Aggregate Metadata Attribute" min="1" />
+                </when>
+            </conditional>
+        </section>
+    </xml>
+    <xml name="att_generator" token_title="@TITLE@" token_min="@MIN@">
+        <repeat name="new_attributes" title="@TITLE@" min="@MIN@">
+            <param name="new_name" type="text" label="New Attribute Name">
+                <expand macro="text_val"/>
+            </param>
+            <expand macro="aggrFuncs" help="Sum, average, maximum, minimum and standard deviation are only for numerical
+                attributes" optional="false" label="Aggregate Function to apply" />
+            <param name="argument" label="Attributes over which apply function" type="text">
+                <expand macro="text_val"/>
+            </param>
+        </repeat>
+    </xml>
+</macros>

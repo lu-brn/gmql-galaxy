@@ -70,6 +70,14 @@ def read_statement(x):
         stm = create_cover(x)
     if op == 'EXTEND' :
         stm = create_extend(x)
+    if op == 'GROUP' :
+        stm = create_group(x)
+    if op == 'MERGE' :
+        stm = create_merge(x)
+    if op == 'UNION' :
+        stm = create_union(x)
+    if op == 'DIFFERENCE' :
+        stm = create_difference(x)
 
 
     # If the user asked to materialize the current statement, add a MATERIALIZE statement; otherwise return
@@ -159,6 +167,115 @@ def _project_get_new(nr):
         fg = ProjectGenerator(new_name, RegFunction.META, (nr[1].get('arg'), nr[1].get('att_type')))
 
     return fg
+
+def create_group(x):
+    stm = Group()
+
+    # Set output and input variables
+    stm.set_output_var(x['output_var'])
+    stm.set_input_var(x['input_var'])
+
+    # If group_type is set to default, we're sure there are no additional conditions and we can return already
+    # (GROUP will work by default conditions)
+
+    add_grouping = x['add_grouping']
+
+    if add_grouping['group_type'] == 'default' :
+        return stm
+
+    # Check if there are additional metadata grouping attributes and set them up, along eventual
+    # definition of new attributes
+
+    metadata = add_grouping.get('metadata', None)
+    if metadata:
+        #group_atts = filter(lambda x: x['j_att'], metadata['group_meta_atts'])
+        group_atts = map(lambda x: (x['j_att'], x['metajoin_match']), metadata['group_meta_atts'])
+
+        jc = GroupbyClause(group_atts)
+        stm.set_group_meta(jc)
+
+        # Check if there are new metadata definitions and set them up
+        add_flag = metadata.get('meta_agg').get('meta_agg_flag')
+        if add_flag == 'true':
+            nm_data = metadata.get('meta_agg', None)
+            if nm_data:
+                new_atts = map(lambda x: MetaAttributesGenerator(newAttribute=x['new_name'],
+                                                             function=RegFunction(x['function']),
+                                                             argRegion=x['argument']), nm_data['new_attributes'])
+
+                stm.set_new_metadata(new_atts)
+
+    # Check if there are additional region grouping attributes and set them up
+    # Note that it may happen that the list is empty
+
+    regions = add_grouping.get('regions', None)
+    if regions:
+        r_group_atts = filter(lambda x: x['attribute'], regions['group_regions_atts'])
+        r_group_atts = map(lambda x: x['attribute'], r_group_atts)
+
+        if r_group_atts.__len__() > 0:
+            attList = AttributesList(r_group_atts)
+            stm.set_group_regions(attList)
+
+        nr_data = regions.get('new_attributes', None)
+        if nr_data:
+            r_new_atts = filter(lambda x: x['new_name'] and (x['function'] != 'None') and x['argument'], nr_data)
+            r_new_atts = map(lambda x: RegionGenerator(newRegion=x['new_name'],
+                                                       function=RegFunction(x['function']),
+                                                       argRegion=x['argument']), r_new_atts)
+            if r_new_atts.__len__() > 0:
+                stm.set_new_regions(r_new_atts)
+
+    return stm
+
+def create_merge(x):
+    stm = Merge()
+
+    # Set output and input variables
+    stm.set_output_var(x['output_var'])
+    stm.set_input_var(x['input_var'])
+
+    # Check if there are additional grouping options and set them up
+
+    group_atts = x['groupby']['group_meta_atts']
+    if group_atts.__len__() > 0:
+        group_atts = map(lambda x: (x['j_att'], x['metajoin_match']), group_atts)
+        gc = GroupbyClause(group_atts)
+        stm.set_groupy_clause(gc)
+
+    return stm
+
+def create_union(x):
+    stm = Union()
+
+    # Set output and input variables
+    stm.set_output_var(x['output_var'])
+    stm.set_first_var(x['input_var_first'])
+    stm.set_second_var(x['input_var_second'])
+
+    return stm
+
+def create_difference(x):
+    stm = Difference()
+
+    # Set output and input variables
+    stm.set_output_var(x['output_var'])
+    stm.set_reference_var(x['input_var_reference'])
+    stm.set_negative_var(x['input_var_negative'])
+
+    # Check if the exact flag is set
+    if x['exact_flag'] is True :
+        stm.set_exact()
+
+    # Check if there are joinby attributes and set them up
+
+    joinby_atts = x['joinby']['group_meta_atts']
+    if joinby_atts.__len__() > 0:
+        joinby_atts = map(lambda x: (x['j_att'], x['metajoin_match']), joinby_atts)
+        jc = JoinbyClause(joinby_atts)
+        stm.set_joinby_clause(jc)
+
+    return stm
 
 def create_extend(x):
     stm = Extend()
@@ -358,8 +475,8 @@ def create_cover(x):
     group_data = map(lambda x: (x['j_att'], x['metajoin_match']), group_data)
 
     if group_data.__len__() > 0:
-        jc = JoinbyClause(group_data)
-        stm.set_joinby_clause(jc)
+        jc = GroupbyClause(group_data)
+        stm.set_groupby_clause(jc)
 
     return stm
 

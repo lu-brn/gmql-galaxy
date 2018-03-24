@@ -1,0 +1,50 @@
+<macros>
+    <import>gmql_queries_macros.xml</import>
+    <xml name="merge">
+        <expand macro="input_var" name="input_var" label="Input Dataset" optional="false" />
+        <expand macro="output_var" />
+        <section name="groupby" title="Group Samples" expanded="true"
+        help="Grouping metadata attributes can be specified: the samples are then partitioned in groups,
+        each with a distinct value of the grouping metadata attributes, and the MERGE operation is applied to each
+        group separately, yielding to one sample in the result dataset for each group. Samples without the grouping
+        metadata attributes are disregarded">
+            <repeat name="group_meta_atts" min="0" title="Metadata Attribute">
+                <expand macro="metajoin_attribute" name="j_att" optional="true" >
+                    <expand macro="metajoin_options" />
+                </expand>
+            </repeat>
+        </section>
+        <expand macro="materialize_stm" />
+    </xml>
+    <xml name="union">
+        <expand macro="input_var" name="input_var_first" label="First Dataset to be unified" optional="false" />
+        <expand macro="input_var" name="input_var_second" label="Second Dataset to be unified" optional="false" />
+        <expand macro="output_var" />
+        <expand macro="materialize_stm" />
+    </xml>
+    <xml name="difference">
+        <param name="input_var_reference" label="Reference Dataset" type="text"
+               help="It is he dataset which is copied in the output and from which regions of DS neg are “subtracted”.
+               Must be a dataset variable already defined as output of a previous operation.">
+            <expand macro="text_val" />
+        </param>
+        <param name="input_var_negative" label="Dataset to subtract from Reference" type="text"
+               help="If any reference region is found to have intersection with a region in this dataset, it is removed from
+               the output dataset. Must be a dataset variable already defined as output of a previous operation.">
+            <expand macro="text_val" />
+        </param>
+        <param name="exact_flag" label="Exact matching?" type="boolean" help="If selected, regions are not kept in
+        the result only if they exactly matches regions in the reference dataset." />
+        <section name="joinby" title="Joinby Conditions" expanded="true"
+        help="If attributes are specified, only samples that have the same value for each attributeare considered
+        when performing the DIFFERENCE.">
+            <repeat name="group_meta_atts" min="0" title="Metadata Attribute">
+                <expand macro="metajoin_attribute" name="j_att" optional="true" >
+                    <expand macro="metajoin_options" />
+                </expand>
+            </repeat>
+        </section>
+        <expand macro="output_var" />
+        <expand macro="materialize_stm" />
+    </xml>
+</macros>

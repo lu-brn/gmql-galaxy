@@ -219,6 +219,176 @@ class Extend(Statement):
 
         return stm
 
+class Merge(Statement):
+    def __init__(self):
+        super(Merge, self).__init__()
+        self.operator = Operator.MERGE
+
+    def set_output_var(self, var):
+        self.set_variable(var, 'output')
+
+    def set_input_var(self, var):
+        self.set_variable(var, 'input1')
+
+    def set_groupy_clause(self, joinbyClause):
+        self.set_param(joinbyClause, 'groupby')
+
+    def save(self, syntax):
+        stm = super(Merge, self).save(syntax)
+
+        params_form = syntax['PARAMS']
+        merge_format = params_form[Operator.MERGE.value]
+        param_sep = params_form['param_separator']
+        type_sep = params_form['type_separator']
+
+        params = []
+
+        # Format groupby clause (if present)
+        gbc = self.params.get('groupby', None)
+
+        if gbc:
+            params.append(merge_format['groupby'].format(groupbyClause=gbc.save(params_form, param_sep)))
+
+        stm = stm.format(parameters=type_sep.join(params))
+
+        return stm
+
+class Difference(Statement):
+    def __init__(self):
+        super(Difference, self).__init__()
+        self.operator = Operator.DIFFERENCE
+        self.exact_flag = False
+
+    def set_output_var(self, var):
+        self.set_variable(var, 'output')
+
+    def set_reference_var(self, var):
+        self.set_variable(var, 'input1')
+
+    def set_negative_var(self, var):
+        self.set_variable(var, 'input2')
+
+    def set_exact(self):
+        self.exact_flag = True
+
+    def set_joinby_clause(self, joinbyClause):
+        self.set_param(joinbyClause, 'joinby')
+
+    def save(self, syntax):
+        stm = super(Difference, self).save(syntax)
+
+        params_form = syntax['PARAMS']
+        difference_format = params_form[Operator.DIFFERENCE.value]
+        param_sep = params_form['param_separator']
+        type_sep = params_form['type_separator']
+
+        params = []
+
+        # Check if the the exact flag is set to true and in case write the option
+        if self.exact_flag:
+            params.append(difference_format['exact'].format(flag='true'))
+
+        # Format joinby clause (if present)
+        jbc = self.params.get('joinby', None)
+
+        if jbc:
+            params.append(difference_format['joinby'].format(joinbyClause=jbc.save(params_form, param_sep)))
+
+        stm = stm.format(parameters=type_sep.join(params))
+
+        return stm
+
+
+class Union(Statement):
+    def __init__(self):
+        super(Union, self).__init__()
+        self.operator = Operator.UNION
+
+    def set_output_var(self, var):
+        self.set_variable(var, 'output')
+
+    def set_first_var(self, var):
+        self.set_variable(var, 'input1')
+
+    def set_second_var(self, var):
+        self.set_variable(var, 'input2')
+
+    def save(self, syntax):
+        stm = super(Union, self).save(syntax)
+        return stm.format(parameters='')
+
+
+class Group(Statement):
+    def __init__(self):
+        super(Group, self).__init__()
+        self.operator = Operator.GROUP
+
+    def set_output_var(self, var):
+        self.set_variable(var, 'output')
+
+    def set_input_var(self, var):
+        self.set_variable(var, 'input1')
+
+    def set_group_meta(self, groupbyClause):
+        self.set_param(groupbyClause, 'meta')
+
+    def set_new_metadata(self, metaAttDef):
+        self.set_param(metaAttDef, 'newMetadata')
+
+    def set_group_regions(self, attList):
+        self.set_param(attList, 'regions')
+
+    def set_new_regions(self, regionsAttDef):
+        self.set_param(regionsAttDef, 'newRegions')
+
+    def save(self, syntax):
+        stm = super(Group, self).save(syntax)
+
+        params_form = syntax['PARAMS']
+        group_format = params_form[Operator.GROUP.value]
+        type_sep = params_form['type_separator']
+        param_sep = params_form['param_separator']
+
+        params = []
+
+        # Check if there are additional grouping options over metadata, and in case set them up
+        # (they are joinbyClause)
+
+        # Format joinby clause
+        jbc = self.params.get('meta', None)
+
+        if jbc:
+            params.append(group_format['meta'].format(groupMeta=jbc.save(params_form,param_sep)))
+
+
+        # Check if there are new metadata definitions and set them up
+        # (they are AttributesGenerator objects)
+
+        params_newMeta = self.params.get('newMetadata', None)
+        if params_newMeta:
+            newMetadata = map(lambda x: x.save(params_form), params_newMeta)
+            params.append(param_sep.join(newMetadata))
+
+
+        # Check if there are additional grouping options over regions attributes, and in case set them up
+        # (they are an AttributesList)
+
+        attList = self.params.get('regions', None)
+        if attList:
+            params.append(group_format['regions'].format(groupRegions=attList.save(params_form, param_sep)))
+
+        # Check if there are new metadata definitions and set them up
+        # (they are RegionGenerator objects)
+
+        params_newRegions = self.params.get('newRegions', None)
+        if params_newRegions:
+            newRegions = map(lambda x: x.save(params_form), params_newRegions)
+            params.append(param_sep.join(newRegions))
+
+        stm = stm.format(parameters=type_sep.join(params))
+
+        return stm
+
 
 class Cover(Statement):
     def __init__(self, cover_variant):
@@ -240,8 +410,8 @@ class Cover(Statement):
     def set_new_regions(self, regionAttributes):
         self.set_param(regionAttributes, 'newRegions')
 
-    def set_joinby_clause(self, joinbyClause):
-        self.set_param(joinbyClause, 'joinby')
+    def set_groupby_clause(self, groupbyClause):
+        self.set_param(groupbyClause, 'groupby')
 
     def save(self, syntax):
         stm = super(Cover, self).save(syntax)
@@ -256,11 +426,11 @@ class Cover(Statement):
         # minAcc and maxAcc are joined and then added to the list as they are
         params.append(param_sep.join([self.minAcc,self.maxAcc]))
 
-        # Format joinby clause
-        jbc = self.params.get('joinby', None)
+        # Format groupby clause
+        jbc = self.params.get('groupby', None)
 
         if jbc:
-            params.append(cover_format['joinby'].format(joinbyClause=jbc.save(params_form,param_sep)))
+            params.append(cover_format['groupby'].format(joinbyClause=jbc.save(params_form,param_sep)))
 
         # Format new region attributes definitions
 
@@ -427,7 +597,7 @@ class Join(Statement):
         stm = super(Join, self).save(syntax)
 
         params_form = syntax['PARAMS']
-        join_form = params_form[self.operator.value]
+        join_format = params_form[self.operator.value]
         type_sep = params_form['type_separator']
         sep = params_form['param_separator']
 
@@ -436,24 +606,24 @@ class Join(Statement):
         # Format Genomic Predicate
         gpred = self.params.get('genomic_predicate', None)
         if gpred:
-            params.append(join_form['genomic_predicate'].format(genomic_predicate=gpred.save(join_form,sep)))
+            params.append(join_format['genomic_predicate'].format(genomic_predicate=gpred.save(join_format,sep)))
 
 
         #  Format predicate over attributes
         equi_predicate = self.params.get('equi_clause', None)
         if equi_predicate:
-            params.append(join_form['equi_clause'].format(att_list=equi_predicate.save(params_form, sep)))
+            params.append(join_format['equi_clause'].format(att_list=equi_predicate.save(params_form, sep)))
 
 
         # Format option over output
         output_cond = self.params.get('output_opt').value
         if output_cond:
-            params.append(join_form['output_opt'].format(coord_param=output_cond))
+            params.append(join_format['output_opt'].format(coord_param=output_cond))
 
         # Format Joinby clause
         jbc = self.params.get('joinby', None)
         if jbc:
-            params.append(join_form['joinby'].format(joinbyClause=jbc.save(params_form, sep)))
+            params.append(join_format['joinby'].format(joinbyClause=jbc.save(params_form, sep)))
 
         stm = stm.format(parameters=type_sep.join(params))
 
@@ -586,6 +756,13 @@ class JoinbyClause(AttributesList):
     def save(self, syntax, sep):
         attributes = map(lambda x: syntax['metajoin_condition'][x[1]].format(att_name=x[0]), self.attributes)
         return sep.join(attributes)
+
+class GroupbyClause(JoinbyClause):
+    def __init__(self, attributes):
+        super(GroupbyClause, self).__init__(attributes)
+
+    def save(self, syntax, sep):
+        return super(GroupbyClause, self).save(syntax, sep)
 
 
 class SemiJoinPredicate(AttributesList):

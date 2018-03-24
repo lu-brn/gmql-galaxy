@@ -50,9 +50,20 @@ PARAMS:
         count: 'count_name: {count_name}'
         joinby: 'joinby: {joinbyClause}'
     COVER:
-        joinby: 'groupby: {joinbyClause}'
+        groupby: 'groupby: {groupbyClause}'
         regions: 'aggregate: {newRegions}'
     EXTEND: ''
+    GROUP:
+        meta: '{groupMeta}'
+        newMetadata: 'meta_aggregates: {newAttributes}'
+        regions: 'region_keys: {groupRegions}'
+        newRegions: 'region_aggregates: {newRegions}'
+    MERGE:
+        groupby: 'groupby: {groupbyClause}'
+    UNION: ''
+    DIFFERENCE:
+        exact: 'exact: {flag}'
+        joinby: 'joinby: {joinbyClause}'
     ORDER:
         att_list:
             asc: '{att}'
