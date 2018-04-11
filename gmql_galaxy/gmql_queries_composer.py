@@ -315,7 +315,7 @@ def create_join(x) :
     if conds['c_type'] == 'attributes' :
         pred = _equi_conditions(conds.get('region_attributes'))
         stm.set_equi_conditions(pred)
-    else:
+    if conds['c_type'] == 'both':
         pred1 = _genomic_predicate(conds.get('distance_conditions'))
         pred2 = _equi_conditions(conds.get('region_attributes'))
         stm.set_genomic_predicate(pred1)

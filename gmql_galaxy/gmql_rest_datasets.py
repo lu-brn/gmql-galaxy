@@ -175,9 +175,10 @@ def upload_samples(user, output, dataset, schema, samples, updatedDsList):
     #   FILENAME    PATH
 
     with open(samples, "r") as file:
-        s = map(lambda x: x.split('\t'), file)
-        s.pop() # I need to get rid of last element, which is empty
-        map(lambda x: files.update({'file%d' % (s.index(x) + 1) : (x[0], open(x[1].rstrip('\n'), 'rb'))}), s)
+        s = map(lambda x: x.rstrip('\n').split('\t'), file)
+        s = [x for x in s if len(x)>1]
+        #s = [x for x in s if x[0].__contains__('.dat')]
+        map(lambda x: files.update({'file%d' % (s.index(x) + 1) : (x[0], open(x[1], 'rb'))}), s)
 
     # Post call
 

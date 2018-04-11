@@ -24,9 +24,16 @@
 	  ]]></command>
     <configfiles>
         <configfile name="samples" >#if $upload.source == 'local' :
-            #if $upload.samples.is_collection :
+            #if $upload.stype.st_flag == 'one' :
+            #echo '%s\t%s\n'%($upload.stype.samples.name,$upload.stype.samples)
+            #else :
+            #for $i in $upload.stype.samples :
+            #echo '%s\t%s\n'%($i.name,$i)
+            #end for
+            #end if
+            #end if
+            <!-- #if $upload.samples.is_collection :
             #for $i in $upload.samples
-            #if $i.is_collection :
             #for $file in $i
             #echo '%s\t%s\n'%($file.element_identifier,$file)
             #end for
@@ -37,7 +44,7 @@
             #else :
             #echo '%s\t%s\n'%($upload.samples.name,$upload.samples)
             #end if
-            #end if
+            #end if -->
         </configfile>
     </configfiles>
   <code file="dynamic_utils.py">
@@ -104,7 +111,18 @@
 					<param name="schema" type="data" format="xml" label="Schema XML Definition" />
 				</when>
 			</conditional>
-			<param name="samples" type="data" label="Data: " />
+            <conditional name="stype">
+                <param name="st_flag" type="select" display="radio" label="Single Sample or Collection?">
+                    <option value="one">Single Sample</option>
+                    <option value="more">Collection</option>
+                </param>
+                <when value="one">
+                    <param name="samples" type="data" label="Data: " />
+                </when>
+                <when value="more">
+                    <param name="samples" type="data_collection" collection_type="list" label="Data: "/>
+                </when>
+            </conditional>
 		</when>
 	</conditional>
   </inputs>
