@@ -6,7 +6,6 @@
 
 import argparse
 
-import validators
 import tempfile
 import json
 from utilities import *
@@ -115,8 +114,8 @@ def upload_samples_url(user, output, dataset, schema, samples, updatedDsList):
     if schema in ['bed','bedGraph','NarrowPeak','BroadPeak','vcf'] :
         params = add_url_param(params, module, call, schema)
     else:
-        check_schema = validators.url(schema)
-        if isinstance(check_schema, validators.utils.ValidationFailure): stop_err("Schema URL not valid")
+        #check_schema = validators.url(schema)
+        #if isinstance(check_schema, validators.utils.ValidationFailure): stop_err("Schema URL not valid")
         content.update(schema_file=schema)
 
 
@@ -127,15 +126,15 @@ def upload_samples_url(user, output, dataset, schema, samples, updatedDsList):
     if not samples_list[-1]:
         samples_list.remove("")
 
-    # For each sample url, check if it is valid. If at least ones is not, upload fails
-    # and which one is saved in the outcome.
-    for s in samples_list:
-        check_url = validators.url(s)
-        if isinstance(check_url, validators.utils.ValidationFailure):
-            with open(output, 'w') as f_out:
-                f_out.write("This resource couldn't be loaded (invalid url)\n")
-                f_out.write("Line %d: %s" % (samples_list.index(s) + 1, s))
-            stop_err("Some URLs are not valid.\nCheck the output file for details.")
+    # # For each sample url, check if it is valid. If at least ones is not, upload fails
+    # # and which one is saved in the outcome.
+    # for s in samples_list:
+    #     check_url = validators.url(s)
+    #     if isinstance(check_url, validators.utils.ValidationFailure):
+    #         with open(output, 'w') as f_out:
+    #             f_out.write("This resource couldn't be loaded (invalid url)\n")
+    #             f_out.write("Line %d: %s" % (samples_list.index(s) + 1, s))
+    #         stop_err("Some URLs are not valid.\nCheck the output file for details.")
 
     content.update(data_files=samples_list)
 

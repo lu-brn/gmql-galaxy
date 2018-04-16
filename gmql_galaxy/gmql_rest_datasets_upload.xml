@@ -1,4 +1,7 @@
 <tool id="gmlq_rest_datasets_upload" name="GMLQ Upload Dataset" version="0.1.1">
+  <macros>
+    <import>gmql_rest_macros.xml</import>
+  </macros>
   <command><![CDATA[
       python $__tool_directory__/gmql_rest_datasets.py $output
 	  -user=$authToken
@@ -139,15 +142,37 @@
        </data>
   </outputs>
   <help>
-  **What it does**
-  
-  It allows to upload a new dataset on the user's private space. 
-  
-  **How it works**
+It allows uploading a new dataset on the user’s private space of the GMQL Repository.
 
-  The user must provide a name for the new dataset, the locations of the samples and their reference schema.
-  It is possible to either provide remote locations or pick samples from local.
-  
-  </help>	
-	
+----
+
+**What it does**
+
+- **Upload local data**: data to upload are in the current galaxy history
+- **Upload remote data**: data is on a remote location, URLs must be provided
+
+The user must provide a name for the new dataset, the locations of the samples and their reference schema. Schema can
+be a common type or custom. In this second case, schema xml or its location must be provided.
+
+.. class:: warningmark
+
+A gmql_user authentication token is required for every action.
+
+----
+
+.. class:: infomark
+
+**File formats**
+
+Formats accepted for data are:
+
+- bed
+- bedGraph
+- NarrowPeak
+- BroadPeak
+- vcf
+
+
+  </help>
+  <expand macro="citations" />
 </tool>

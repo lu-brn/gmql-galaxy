@@ -1,5 +1,8 @@
 <tool id="gmql_rest_repository" name="GMQL Repository Access" version="0.1.1">
     <description>View, browse, rename or delete datasets in the user's space on the GMQL system.</description>
+    <macros>
+        <import>gmql_rest_macros.xml</import>
+    </macros>
     <command><![CDATA[
         python $__tool_directory__/gmql_rest_datasets.py
         #set $cmd = $rep.operation
@@ -86,7 +89,27 @@
             </actions>
        </data>
     </outputs>
-    <help>
-        <!-- TODO -->
-    </help>
+  <help>
+This tool serves to access the GMQL public repository, and the user’s private one.
+In particular, within the public repository interesting datasets collected from established sources,
+like ENCODE or UCSC, and small example datasets are hosted.
+
+----
+
+**What it does**
+
+- **view datasets**: list all datasets, both private and public
+- **view dataset's samples**: list samples of given dataset
+- **rename dataset**: change name of dataset, return updated datasets list
+- **delete dataset**: delete dataset, return updated dataset list
+
+.. class:: warningmark
+
+Public datasets can only be seen or browsed, but not renamed or deleted.
+
+.. class:: warningmark
+
+A gmql_user authentication token is required for every action.
+  </help>
+  <expand macro="citations" />
 </tool>

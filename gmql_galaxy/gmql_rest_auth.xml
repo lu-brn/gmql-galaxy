@@ -1,5 +1,8 @@
 <tool id="gmlq_rest_login" name="GMLQ Access" version="0.1.1">
   <description>Manage the registration, login and logout of users to the GMQL system.</description>
+  <macros>
+    <import>gmql_rest_macros.xml</import>
+  </macros>
   <command><![CDATA[
         python $__tool_directory__/gmql_rest_auth.py
         #if $user_ops.operation == 'login'
@@ -103,8 +106,18 @@
     </data>
   </outputs>
   <help>
-  <!-- TODO-->
+.. class:: warningmark
+
+Every operation on a GMQL system requires to the user to be authenticated on it
+
+----
+
+**What it does**
+
+A user can authenticate as a simple guest, or as a registered user. Once the user has logged in, a user token is
+returned (as a gmql_user file). The user token is required by all the other tools to perform all their operations.
+When a user logouts, the token is invalidated and cannot be used anymore.
   </help>
-	
+  <expand macro="citations" />
 </tool>
 

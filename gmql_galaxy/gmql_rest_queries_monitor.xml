@@ -1,5 +1,8 @@
 <tool id="gmlq_rest_queries_monitor" name="GMLQ Jobs Monitor" version="0.1.1">
   <description>List the user's jobs and their status</description>
+  <macros>
+    <import>gmql_rest_macros.xml</import>
+  </macros>
   <command><![CDATA[
       python $__tool_directory__/gmql_rest_queries.py
       -user=$authToken
@@ -48,7 +51,19 @@
     </data>
   </outputs>
   <help>
-      <!-- TODO -->
-  </help>
+Once GMQL queries have been created and sent to execution, this tool helps the user to monitor the current jobs and their status.
 
+----
+
+**What it does**
+
+- **View Active Queries**: returns a list of active queries and their status
+- **Stop Active Query**: stop the execution of a pending query (provide a list of active queries)
+
+.. class:: warningmark
+
+A gmql_user authentication token is required for every action.
+
+  </help>
+  <expand macro="citations" />
 </tool>

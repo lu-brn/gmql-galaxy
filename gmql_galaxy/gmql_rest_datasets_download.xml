@@ -1,4 +1,7 @@
 <tool id="gmlq_rest_datasets_download" name="GMLQ Import Dataset" version="0.1.1">
+  <macros>
+    <import>gmql_rest_macros.xml</import>
+  </macros>
     <command><![CDATA[
         #if $operation == 'import' :
          python $__tool_directory__/gmql_rest_datasets.py '' -user=$authToken -cmd=import -dataset=${dataset}
@@ -38,4 +41,23 @@
             <filter>operation == 'import'</filter>
         </collection>
     </outputs>
+    <help>
+It allows importing in the current Galaxy history the selected dataset.
+
+----
+
+**What it does**
+
+- **Import as Collection**: returning data consist of two collections, one for samples and one for their metadata
+- **Download ZIP Archive**: returns the dataset as a zip archive
+
+
+The user provides a list of datasets (gmql_repository file) and selects from there the dataset he wants to import.
+
+.. class:: warningmark
+
+A gmql_user authentication token is required for every action.
+
+  </help>
+  <expand macro="citations" />
 </tool>

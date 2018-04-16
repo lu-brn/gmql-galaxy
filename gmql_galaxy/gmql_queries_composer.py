@@ -5,7 +5,7 @@
 # Luana Brancato, luana.brancato@mail.polimi.it
 # --------------------------------------------------------------------------------
 
-import os, sys, argparse, json, re
+import os, sys, argparse, json
 from itertools import chain
 from gmql_queries_statements import *
 from gmql_rest_queries import compile_query, run_query, check_input

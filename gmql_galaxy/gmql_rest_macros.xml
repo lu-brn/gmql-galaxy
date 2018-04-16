@@ -1,0 +1,28 @@
+<macros>
+    <xml name="citations">
+        <citations>
+            <citation type="bibtex">
+                @article{Masseroli2015,
+                author = {{Marco Masseroli, Pietro Pinoli, Francesco Venco, Abdulrahman Kaitoua, Vahid Jalili, Fernando Palluzzi, Heiko Muller, Stefano Ceri}},
+                doi = {10.1093/bioinformatics/btv048},
+                isbn = {13674811 (Electronic)},
+                issn = {14602059},
+                journal = {Bioinformatics},
+                number = {12},
+                pages = {1881-1888},
+                pmid = {25649616},
+                title = {{GenoMetric Query Language: A novel approach to large-scale genomic data management}},
+                volume = {31},
+                year = {2015}
+                }
+            </citation>
+            <citation type="bibtex">
+                @misc{BionformaticsGroup,
+                author = {{Bionformatics Group}, Politecnico di Milano},
+                title = {{GMQL Documentation}},
+                url = {http://www.bioinformatics.deib.polimi.it/genomic{\_}computing/GMQLsystem/documentation.html},
+                }
+            </citation>
+        </citations>
+    </xml>
+</macros>

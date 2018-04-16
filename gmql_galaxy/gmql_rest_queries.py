@@ -5,7 +5,6 @@
 # ----------------------------------------------------------------------------
 
 import argparse
-import tempfile
 from time import sleep
 
 from gmql_rest_datasets import list_datasets, import_samples

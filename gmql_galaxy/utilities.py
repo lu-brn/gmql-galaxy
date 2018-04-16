@@ -7,7 +7,6 @@ import sys
 import os
 import yaml
 import requests
-import logging
 
 
 def load_parts(module, call) :
