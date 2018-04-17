@@ -50,6 +50,19 @@
         <filter>control['operation'] == 'stop'</filter>
     </data>
   </outputs>
+  <tests>
+      <test>
+          <param name="authToken" value="guest.gmql_user" />
+          <conditional name="control">
+              <param name="operation" value="list" />
+          </conditional>
+          <output name="jobs_list" ftype="tabular" >
+              <assert_contents>
+                    <has_n_columns n="5" />
+                </assert_contents>
+          </output>
+      </test>
+  </tests>
   <help>
 Once GMQL queries have been created and sent to execution, this tool helps the user to monitor the current jobs and their status.
 

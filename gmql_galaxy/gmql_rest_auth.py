@@ -4,7 +4,7 @@
 # Luana Brancato, luana.brancato@mail.polimi.it
 # ----------------------------------------------------------------------------
 
-import argparse
+import argparse, json
 
 from utilities import *
 

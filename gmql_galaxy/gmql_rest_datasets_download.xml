@@ -41,6 +41,33 @@
             <filter>operation == 'import'</filter>
         </collection>
     </outputs>
+    <tests>
+        <test>
+            <param name="authToken" value="guest.gmql_user" />
+            <param name="gmql_datasets" value="rep.gmql_repository" />
+            <param name="dataset" value="Example1" />
+            <param name="operation" value="zip" />
+            <output name="ds_archive" file="Example1_Archive.zip" compare="sim_size" delta="0"/>
+        </test>
+        <test>
+            <param name="authToken" value="guest.gmql_user" />
+            <param name="gmql_datasets" value="rep.gmql_repository" />
+            <param name="dataset" value="Example1" />
+            <param name="operation" value="import" />
+            <collection name="query_results_s" type="list">
+               <metadata name="name" value="Example1" />
+               <discovered_dataset designation="sample1" file="sample1.bed"/>
+               <discovered_dataset designation="sample2" file="sample2.bed"/>
+               <discovered_dataset designation="sample3" file="sample3.bed"/>
+            </collection>
+            <collection name="query_results_m" type="list">
+               <metadata name="name" value="Example1 metadata" />
+               <discovered_dataset designation="sample1" file="sample1.bed.meta"/>
+               <discovered_dataset designation="sample2" file="sample2.bed.meta"/>
+               <discovered_dataset designation="sample3" file="sample3.bed.meta"/>
+            </collection>
+        </test>
+    </tests>
     <help>
 It allows importing in the current Galaxy history the selected dataset.
 

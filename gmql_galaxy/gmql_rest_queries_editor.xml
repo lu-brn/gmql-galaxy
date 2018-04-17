@@ -100,6 +100,54 @@
            </actions>
        </data>
   </outputs>
+  <tests>
+      <test>
+          <param name="authToken" value="guest.gmql_user" />
+          <param name="query_name" value="testgalaxy" />
+          <conditional name="query_create">
+              <param name="create" value="yes" />
+              <param name="query" value="VAR = SELECT(grant == __dq__Stam__dq__) Example_Dataset_1;__cn__MATERIALIZE VAR INTO TG;" />
+          </conditional>
+          <conditional name="mode">
+              <param name="exec_mode" value="execute" />
+              <param name="out_format" value="gdm" />
+              <param name="import" value="true" />
+          </conditional>
+          <output name="log" ftype="txt">
+              <assert_contents>
+                  <has_text text="SUCCESS" />
+              </assert_contents>
+          </output>
+          <collection name="query_results_s" type="list">
+               <metadata name="name" value="testgalaxy_results" />
+               <discovered_dataset designation="S00000" file="TG/S_00000.gdm"/>
+               <discovered_dataset designation="S00001" file="TG/S_00001.gdm"/>
+               <discovered_dataset designation="S00002" file="TG/S_00002.gdm"/>
+          </collection>
+          <collection name="query_results_m" type="list">
+               <metadata name="name" value="testgalaxy_results_metadata" />
+               <discovered_dataset designation="S00000" file="TG/S_00000.gdm.meta"/>
+               <discovered_dataset designation="S00001" file="TG/S_00001.gdm.meta"/>
+               <discovered_dataset designation="S00002" file="TG/S_00002.gdm.meta"/>
+          </collection>
+      </test>
+      <test>
+          <param name="authToken" value="guest.gmql_user" />
+          <param name="query_name" value="testgalaxy" />
+          <conditional name="query_create">
+              <param name="create" value="no" />
+              <param name="query_file" value="query.gmql_query" />
+          </conditional>
+          <conditional name="mode">
+              <param name="exec_mode" value="compile" />
+          </conditional>
+          <output name="log" ftype="txt">
+              <assert_contents>
+                  <has_text text="COMPILE_SUCCESS" />
+              </assert_contents>
+          </output>
+      </test>
+  </tests>
     <help>
 It allows writing a GMQL query directly in text form and send it to the GMQL system to be compiled and executed,
 and in this second case it imports the resulting dataset into the current history. This has been thought as a tool for

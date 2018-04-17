@@ -1,0 +1,2 @@
+VAR = SELECT(grant == "Stam") Example_Dataset_1;
+MATERIALIZE VAR INTO TG;

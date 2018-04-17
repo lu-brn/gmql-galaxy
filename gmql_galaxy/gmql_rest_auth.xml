@@ -105,6 +105,31 @@
         </actions>
     </data>
   </outputs>
+  <tests>
+      <test>
+          <conditional name="user_ops">
+              <param name="operation" value="login" />
+              <param name="log_type" value="guest" />
+          </conditional>
+          <output name="login_guest_output">
+              <assert_contents>
+                  <has_n_columns n="3" />
+                  <has_line_matching expression="Guest\t.+\tTrue" />
+              </assert_contents>
+          </output>
+      </test>
+      <test>
+          <conditional name="user_ops">
+              <param name="operation" value="logout" />
+              <param name="authToken" value="guest.gmql_user" />
+          </conditional>
+          <output name="logout_output">
+              <assert_contents>
+                  <has_text text="Logout" />
+              </assert_contents>
+          </output>
+      </test>
+  </tests>
   <help>
 .. class:: warningmark
 

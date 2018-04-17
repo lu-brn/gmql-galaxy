@@ -1,0 +1,1 @@
+OUT = SELECT (grant == 'Stam') Example_Dataset_1 ;

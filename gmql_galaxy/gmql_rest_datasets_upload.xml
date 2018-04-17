@@ -141,6 +141,94 @@
             </actions>
        </data>
   </outputs>
+  <tests>
+      <test>
+          <param name="authToken" value="guest.gmql_user" />
+          <param name="name" value="test1" />
+          <conditional name="upload">
+              <param name="source" value="remote" />
+              <conditional name="schema">
+                  <param name="schema_type" value="custom" />
+                  <param name="schema_url" value="http://www.bioinformatics.deib.polimi.it/canakoglu/guest_data/HG19_ANN.schema" />
+              </conditional>
+              <param name="samples_urls" value="http://www.bioinformatics.deib.polimi.it/canakoglu/guest_data/VistaEnhancers_hg19.bed" />
+          </conditional>
+           <output name="updated_list" ftype="gmql_repository">
+                <assert_contents>
+                    <has_n_columns n="2" />
+                    <has_line_matching expression="test1\t.+" />
+                </assert_contents>
+           </output>
+           <output name="output" ftype="gmql_repository">
+               <metadata name="name" value="test1 updated samples" />
+                <assert_contents>
+                    <has_n_columns n="3" />
+                    <has_line_matching expression=".+\tVistaEnhancers_hg19\tbed.+" />
+                </assert_contents>
+           </output>
+      </test>
+      <test>
+          <param name="authToken" value="guest.gmql_user" />
+          <param name="name" value="test2" />
+          <conditional name="upload">
+              <param name="source" value="local" />
+              <conditional name="schema_local">
+                  <param name="schema_type" value="bed" />
+              </conditional>
+              <conditional name="stype">
+                  <param name="stflag" value="one" />
+                  <param name="samples" value="sample2.bed" />
+              </conditional>
+          </conditional>
+          <output name="updated_list" ftype="gmql_repository">
+                <assert_contents>
+                    <has_n_columns n="2" />
+                    <has_line_matching expression="test2\t.+" />
+                </assert_contents>
+           </output>
+           <output name="output" ftype="gmql_repository">
+               <metadata name="name" value="test2 updated samples" />
+                <assert_contents>
+                    <has_n_columns n="3" />
+                    <has_text text="sample2" />
+                </assert_contents>
+           </output>
+      </test>
+      <test>
+          <param name="authToken" value="guest.gmql_user" />
+          <param name="name" value="test3" />
+          <conditional name="upload">
+              <param name="source" value="local" />
+              <conditional name="schema_local">
+                  <param name="schema_type" value="bed" />
+              </conditional>
+              <conditional name="stype">
+                  <param name="stflag" value="more" />
+                  <param name="samples">
+                      <collection type="list">
+                          <element name="sample1" value="sample1.bed" />
+                          <element name="sample2" value="sample2.bed" />
+                      </collection>
+                  </param>
+              </conditional>
+          </conditional>
+          <output name="updated_list" ftype="gmql_repository">
+                <assert_contents>
+                    <has_n_columns n="2" />
+                    <has_line_matching expression="test3\t.+" />
+                </assert_contents>
+           </output>
+           <output name="output" ftype="gmql_repository">
+                <metadata name="name" value="test3 updated samples" />
+                <assert_contents>
+                    <has_n_columns n="3" />
+                    <has_text text="sample1" />
+                    <has_text text="sample2" />
+                </assert_contents>
+           </output>
+
+      </test>
+  </tests>
   <help>
 It allows uploading a new dataset on the user’s private space of the GMQL Repository.
 

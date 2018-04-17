@@ -89,6 +89,41 @@
             </actions>
        </data>
     </outputs>
+    <tests>
+        <test>
+            <param name="authToken" value="guest.gmql_user" />
+            <conditional name="rep">
+                <param name="operation" value="list" />
+            </conditional>
+            <output name="out_list" ftype="gmql_repository">
+                <assert_contents>
+                    <has_n_columns n="2" />
+                    <has_line_matching expression="Example_Dataset_1\tpublic" />
+                    <has_line_matching expression="Example_Dataset_2\tpublic" />
+                </assert_contents>
+            </output>
+        </test>
+        <test>
+            <param name="authToken" value="guest.gmql_user" />
+            <conditional name="rep">
+                <param name="operation" value="samples" />
+                <param name="gmql_datasets" value="rep.gmql_repository" />
+                <param name="ds_name" value="Example_Dataset_1" />
+            </conditional>
+            <output name="out_samples" ftype="tabular">
+                <assert_contents>
+                    <has_n_columns n="3" />
+                    <has_text text="S_00000" />
+                    <has_text text="S_00001" />
+                    <has_text text="S_00002" />
+                    <has_text text="S_00003" />
+                    <has_text text="S_00004" />
+                    <has_text text="S_00005" />
+                    <has_text text="S_00006" />
+                </assert_contents>
+            </output>
+        </test>
+    </tests>
   <help>
 This tool serves to access the GMQL public repository, and the user’s private one.
 In particular, within the public repository interesting datasets collected from established sources,
