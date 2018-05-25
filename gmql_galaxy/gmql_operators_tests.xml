@@ -1,0 +1,50 @@
+<macros>
+    <xml name="composer_tests">
+        <tests>
+            <test>
+                <param name="authToken" value="guest.gmql_user"/>
+                <param name="query_name" value="select1"/>
+                <conditional name="query_create">
+                    <param name="create" value="yes"/>
+                </conditional>
+                <repeat name="operations">
+                    <conditional name="operation">
+                        <param name="operator" value="SELECT"/>
+                        <conditional name="input">
+                            <param name="input_type" value="i_ds"/>
+                            <param name="gmql_datasets" value="rep.gmql_repository"/>
+                            <param name="input_ds" value="Example_Dataset_1"/>
+                            <section name="metadata_predicates">
+                                <conditional name="conditions">
+                                    <param name="ad_flags" value="steps"/>
+                                    <param name="negate" value="false"/>
+                                    <param name="attribute" value="grant"/>
+                                    <param name="condition" value="eq"/>
+                                    <param name="value" value="Stam"/>
+                                </conditional>
+                            </section>
+                            <section name="region_predicates">
+                                <conditional name="conditions">
+                                    <param name="ad_flags" value="strings"/>
+                                    <param name="conditions_string" value=""/>
+                                </conditional>
+                            </section>
+                            <section name="semijoin_predicate">
+                                <param name="condition" value="IN"/>
+                                <param name="ds_ext" value=""/>
+                            </section>
+                        </conditional>
+                        <param name="output_var" value="OUT"/>
+                        <conditional name="m_stm">
+                            <param name="materialize_stm" value="false"/>
+                        </conditional>
+                    </conditional>
+                </repeat>
+                <conditional name="materialize">
+                    <param name="materialize_result" value="false"/>
+                </conditional>
+                <output name="query" file="select1.gmql_query"/>
+            </test>
+        </tests>
+    </xml>
+</macros>

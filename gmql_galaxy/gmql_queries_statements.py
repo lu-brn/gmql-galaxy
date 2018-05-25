@@ -98,9 +98,9 @@ class Select(Statement):
 
         if isinstance(pred, list):
             if pred[-1] is Wff.AND or Wff.OR:
-                return w_format[pred[-1]].format(p1=Select.save_wff(syntax, pred[0]), p2=Select.save_wff(syntax, pred[1]))
+                return w_format[pred[-1].value].format(p1=Select.save_wff(syntax, pred[0]), p2=Select.save_wff(syntax, pred[1]))
             if pred[-1] is Wff.NOT or Wff.BLOCK:
-                return w_format[pred[-1]].format(p=Select.save_wff(syntax, pred[0]))
+                return w_format[pred[-1].value].format(p=Select.save_wff(syntax, pred[0]))
         else :
             if isinstance(pred, Predicate):
                 return pred.save(syntax)
