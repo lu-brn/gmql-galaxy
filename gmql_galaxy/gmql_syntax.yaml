@@ -34,7 +34,7 @@ PARAMS:
         metadata: '{predicate}'
         region: 'region: {predicate}'
         semijoin: 'semijoin: {predicate}'
-        semijoin_predicate:
+        semijoin_predicates:
             IN: '{attributes} IN {ds_ext}'
             NOT_IN: '{attributes} NOT IN {ds_ext}'
     PROJECT:

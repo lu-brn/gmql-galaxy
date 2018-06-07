@@ -367,7 +367,7 @@ class Group(Statement):
         params_newMeta = self.params.get('newMetadata', None)
         if params_newMeta:
             newMetadata = map(lambda x: x.save(params_form), params_newMeta)
-            params.append(param_sep.join(newMetadata))
+            params.append(group_format['newMetadata'].format(newAttributes=param_sep.join(newMetadata)))
 
 
         # Check if there are additional grouping options over regions attributes, and in case set them up
@@ -383,7 +383,7 @@ class Group(Statement):
         params_newRegions = self.params.get('newRegions', None)
         if params_newRegions:
             newRegions = map(lambda x: x.save(params_form), params_newRegions)
-            params.append(param_sep.join(newRegions))
+            params.append(group_format['newRegions'].format(newRegions=param_sep.join(newRegions)))
 
         stm = stm.format(parameters=type_sep.join(params))
 
@@ -745,7 +745,7 @@ class OrderingAttributes(AttributesList):
 
     def save(self, syntax, sep):
         self.attributes = map(lambda x: syntax[x[1]].format(att=x[0]), self.attributes)
-        return super(OrderingAttributes, self).save(sep)
+        return super(OrderingAttributes, self).save(syntax,sep)
 
 
 class JoinbyClause(AttributesList):

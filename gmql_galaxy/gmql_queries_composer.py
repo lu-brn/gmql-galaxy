@@ -196,14 +196,14 @@ def create_group(x):
 
         # Check if there are new metadata definitions and set them up
         add_flag = metadata.get('meta_agg').get('meta_agg_flag')
-        if add_flag == 'true':
+        if add_flag:
             nm_data = metadata.get('meta_agg', None)
             if nm_data:
                 new_atts = map(lambda x: MetaAttributesGenerator(newAttribute=x['new_name'],
                                                              function=RegFunction(x['function']),
                                                              argRegion=x['argument']), nm_data['new_attributes'])
-
-                stm.set_new_metadata(new_atts)
+                if new_atts.__len__() > 0:
+                    stm.set_new_metadata(new_atts)
 
     # Check if there are additional region grouping attributes and set them up
     # Note that it may happen that the list is empty

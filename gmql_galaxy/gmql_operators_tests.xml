@@ -1,14 +1,53 @@
 <macros>
+    <xml name="query_intro" token_name="@NAME@">
+        <param name="authToken" value="guest.gmql_user"/>
+        <param name="query_name" value="@NAME@"/>
+        <conditional name="query_create">
+            <param name="create" value="yes"/>
+        </conditional>
+    </xml>
+    <xml name="query_end" token_mat="@MAT@">
+        <conditional name="materialize">
+            <param name="materialize_result" value="@MAT@"/>
+            <yield />
+        </conditional>
+    </xml>
+    <xml name="simple_select" token_ds="@DS@">
+        <repeat name="operations">
+            <conditional name="operation">
+                <param name="operator" value="SELECT"/>
+                <conditional name="input">
+                    <param name="input_type" value="i_ds"/>
+                    <param name="gmql_datasets" value="rep.gmql_repository"/>
+                    <param name="input_ds" value="@DS@"/>
+                    <section name="region_predicates">
+                        <conditional name="conditions">
+                            <param name="ad_flags" value="strings"/>
+                            <param name="conditions_string" value=""/>
+                        </conditional>
+                    </section>
+                    <section name="metadata_predicates">
+                        <conditional name="conditions">
+                            <param name="ad_flags" value="strings"/>
+                            <param name="conditions_string" value=""/>
+                        </conditional>
+                    </section>
+                    <section name="semijoin_predicate">
+                        <param name="condition" value="IN"/>
+                        <param name="ds_ext" value=""/>
+                    </section>
+                </conditional>
+                <yield />
+            </conditional>
+        </repeat>
+    </xml>
     <xml name="composer_tests">
         <tests>
-            <test>
-                <param name="authToken" value="guest.gmql_user"/>
-                <param name="query_name" value="select1"/>
-                <conditional name="query_create">
-                    <param name="create" value="yes"/>
-                </conditional>
+            <!--<test>
+                &lt;!&ndash; TEST 1: Select (Simple Metadata Condition) &ndash;&gt;
+                <expand macro="query_intro" name="test_select1"/>
                 <repeat name="operations">
-                    <conditional name="operation">
+                    <conditional name="operation" >
                         <param name="operator" value="SELECT"/>
                         <conditional name="input">
                             <param name="input_type" value="i_ds"/>
@@ -34,16 +73,361 @@
                                 <param name="ds_ext" value=""/>
                             </section>
                         </conditional>
-                        <param name="output_var" value="OUT"/>
-                        <conditional name="m_stm">
-                            <param name="materialize_stm" value="false"/>
+                    </conditional>
+                </repeat>
+                <param name="output_var" value="OUT"/>
+                <conditional name="m_stm">
+                        <param name="materialize_stm" value="false" />
+                </conditional>
+                <expand macro="query_end" mat="false"/>
+            <output name="query" file="select1.gmql_query"/>
+            </test>
+            <test>
+                &lt;!&ndash; TEST 2: Select (Multiple Metadata, Region condition) &ndash;&gt;
+                <expand macro="query_intro" name="test_select2"/>
+                <repeat name="operations">
+                    <conditional name="operation" >
+                        <param name="operator" value="SELECT"/>
+                        <conditional name="input">
+                            <param name="input_type" value="i_ds"/>
+                            <param name="gmql_datasets" value="rep.gmql_repository"/>
+                            <param name="input_ds" value="Example_Dataset_1" />
+                            <section name="region_predicates">
+                                <conditional name="conditions">
+                                    <param name="is_meta_value" value="false" />
+                                    <param name="ad_flag" value="steps" />
+                                    <param name="attribute" value="score" />
+                                    <param name="value" value="3" />
+                                    <param name="negate" value="false" />
+                                    <param name="condition" value="gt" />
+                                </conditional>
+                            </section>
+                            <section name="metadata_predicates" >
+                                <conditional name="conditions" >
+                                    <param name="ad_flag" value="steps" />
+                                    <param name="attribute" value="patient_age" />
+                                    <param name="value" value="64" />
+                                    <param name="negate" value="false" />
+                                    <param name="condition" value="eq" />
+                                    <repeat name="pm_additional" >
+                                        <param name="negate" value="false" />
+                                        <param name="attribute" value="cell" />
+                                        <param name="logCon" value="AND" />
+                                        <param name="value" value="8988T" />
+                                        <param name="condition" value="eq" />
+                                    </repeat>
+                                </conditional>
+                            </section>
+                            <section name="semijoin_predicate">
+                                <param name="condition" value="IN"/>
+                                <param name="ds_ext" value=""/>
+                            </section>
                         </conditional>
                     </conditional>
                 </repeat>
-                <conditional name="materialize">
-                    <param name="materialize_result" value="false"/>
+                <param name="output_var" value="OUT"/>
+                <conditional name="m_stm">
+                        <param name="materialize_stm" value="false" />
                 </conditional>
-                <output name="query" file="select1.gmql_query"/>
+                <expand macro="query_end" mat="false"/>
+            <output name="query" file="select2.gmql_query"/>
+            </test>
+            <test>
+                &lt;!&ndash; TEST 3: Select (TEST2 + Semijoin predicate) &ndash;&gt;
+                <expand macro="query_intro" name="test_select3"/>
+                <repeat name="operations">
+                    <conditional name="operation" >
+                        <param name="operator" value="SELECT"/>
+                        <conditional name="input">
+                            <param name="input_type" value="i_ds"/>
+                            <param name="gmql_datasets" value="rep.gmql_repository"/>
+                            <param name="input_ds" value="Example_Dataset_1" />
+                            <section name="region_predicates">
+                                <conditional name="conditions">
+                                    <param name="is_meta_value" value="false" />
+                                    <param name="ad_flag" value="steps" />
+                                    <param name="attribute" value="score" />
+                                    <param name="value" value="3" />
+                                    <param name="negate" value="false" />
+                                    <param name="condition" value="gt" />
+                                </conditional>
+                            </section>
+                            <section name="metadata_predicates" >
+                                <conditional name="conditions" >
+                                    <param name="ad_flag" value="steps" />
+                                    <param name="attribute" value="patient_age" />
+                                    <param name="value" value="64" />
+                                    <param name="negate" value="false" />
+                                    <param name="condition" value="eq" />
+                                    <repeat name="pm_additional" >
+                                        <param name="negate" value="false" />
+                                        <param name="attribute" value="cell" />
+                                        <param name="logCon" value="AND" />
+                                        <param name="value" value="8988T" />
+                                        <param name="condition" value="eq" />
+                                    </repeat>
+                                </conditional>
+                            </section>
+                            <section name="semijoin_predicate">
+                                <param name="condition" value="IN"/>
+                                <param name="ds_ext" value=""/>
+                            </section>
+                        </conditional>
+                    </conditional>
+                </repeat>
+                <param name="output_var" value="OUT"/>
+                <conditional name="m_stm">
+                        <param name="materialize_stm" value="false" />
+                </conditional>
+                <repeat name="operations">
+                    <conditional name="operation">
+                        <param name="operator" value="SELECT" />
+                        <conditional name="input">
+                            <param name="input_type" value="i_ds"/>
+                            <param name="gmql_datasets" value="rep.gmql_repository"/>
+                            <param name="input_ds" value="Example_Dataset_2" />
+                            <section name="region_predicates">
+                                <conditional name="conditions">
+                                    <param name="ad_flags" value="strings"/>
+                                    <param name="conditions_string" value=""/>
+                                </conditional>
+                            </section>
+                            <section name="metadata_predicates">
+                                <conditional name="conditions">
+                                    <param name="ad_flags" value="strings"/>
+                                    <param name="conditions_string" value=""/>
+                                </conditional>
+                            </section>
+                            <section name="semijoin_predicate">
+                                <repeat name="sj_attributes" >
+                                    <param name="sj_att" value="cell" />
+                                </repeat>
+                                <param name="ds_ext" value="OUT" />
+                            </section>
+                        </conditional>
+                        <param name="output_var" value="OUT2"/>
+                    </conditional>
+                </repeat>
+                <expand macro="query_end" mat="false"/>
+            <output name="query" file="select3.gmql_query"/>
+            </test>-->
+<!--            <test>
+                &lt;!&ndash; TEST 4: PROJECT &ndash;&gt;
+                <expand macro="query_intro" name="test_project1"/>
+                <expand macro="simple_select" ds="Example_Dataset_1" />
+                <param name="output_var" value="OUT"/>
+                <conditional name="m_stm">
+                        <param name="materialize_stm" value="false" />
+                </conditional>
+                <repeat name="operations">
+                    <conditional name="operation">
+                        <param name="operator" value="PROJECT"/>
+                        <param name="input_var" value="OUT"/>
+                        <section name="region_att">
+                            <conditional name="allbut">
+                                <param name="allbut_flag" value="exclude"/>
+                                <repeat name="list_exclude">
+                                    <param name="attribute" value="name"/>
+                                </repeat>
+                                <repeat name="list_exclude">
+                                    <param name="attribute" value="frame"/>
+                                </repeat>
+                            </conditional>
+                        </section>
+                        <section name="meta_att">
+                            <conditional name="allbut">
+                                <param name="allbut_flag" value="keep"/>
+                                <repeat name="list_keep">
+                                    <param name="attribute" value="cell"/>
+                                </repeat>
+                            </conditional>
+                        </section>
+                        <section name="project_new_meta"/>
+                        <section name="project_new_regions">
+                            <repeat name="new_region_att">
+                                <param name="new_name" value="lengh"/>
+                                <conditional name="gen_function">
+                                    <param name="expression" value="stop - start"/>
+                                    <param name="gen_type" value="arithmetic"/>
+                                </conditional>
+                            </repeat>
+                        </section>
+                        <param name="output_var" value="OUT2"/>
+                    </conditional>
+                </repeat>
+                <output name="query" file="project1.gmql_query"/>
+            </test>
+            <test>
+                &lt;!&ndash; TEST 5: EXTEND &ndash;&gt;
+                <expand macro="query_intro" name="test_extend1"/>
+                <expand macro="simple_select" ds="Example_Dataset_1"/>
+                <param name="output_var" value="OUT"/>
+                <conditional name="m_stm">
+                    <param name="materialize_stm" value="false"/>
+                </conditional>
+                <repeat name="operations">
+                    <conditional name="operation">
+                        <param name="operator" value="EXTEND"/>
+                        <section name="new_metadata_attributes">
+                            <repeat name="new_attributes">
+                                <param name="new_name" value="avg_score"/>
+                                <param name="function" value="AVG"/>
+                                <param name="argument" value="score"/>
+                            </repeat>
+                            <repeat name="new_attributes">
+                                <param name="new_name" value="max_p"/>
+                                <param name="function" value="MAX"/>
+                                <param name="argument" value="pvalue"/>
+                            </repeat>
+                        </section>
+                        <param name="input_var" value="OUT" />
+                        <param name="output_var" value="OUT2"/>
+                    </conditional>
+                </repeat>
+                <output name="query" file="extend1.gmql_query" />
+            </test>-->
+            <!--<test>
+                &lt;!&ndash; TEST 6: ORDER &ndash;&gt;
+                <expand macro="query_intro" name="test_order1" />
+                <expand macro="simple_select" ds="Example_Dataset_1" />
+                <param name="output_var" value="OUT" />
+                <repeat name="operations">
+                    <conditional name="operation">
+                        <param name="operator" value="ORDER"/>
+                        <param name="output_var" value="OUT2"/>
+                        <param name="input_var_ordering_ds" value="OUT"/>
+                        <section name="ordering_attributes">
+                            <repeat name="attributes">
+                                <param name="attribute_name" value="score"/>
+                                <param name="att_type" value="region"/>
+                                <param name="order_type" value="desc"/>
+                            </repeat>
+                            <repeat name="attributes">
+                                <param name="attribute_name" value="start"/>
+                                <param name="att_type" value="region"/>
+                                <param name="order_type" value="asc"/>
+                            </repeat>
+                            <repeat name="attributes">
+                                <param name="attribute_name" value="ID"/>
+                                <param name="att_type" value="metadata"/>
+                                <param name="order_type" value="asc"/>
+                            </repeat>
+                        </section>
+                        <section name="top_options">
+                            <repeat name="to">
+                                <param name="type" value="metadata"/>
+                                <conditional name="opt">
+                                    <param name="k_type" value="n"/>
+                                    <param name="k" value="5"/>
+                                </conditional>
+                            </repeat>
+                        </section>
+                    </conditional>
+                </repeat>
+                <output name="query" file="order1.gmql_query" />
+            </test>-->
+            <!--<test>
+                &lt;!&ndash; TEST 7: GROUP &ndash;&gt;
+                <expand macro="query_intro" name="test_group1"/>
+                <expand macro="simple_select" ds="Example_Dataset_1"/>
+                <param name="output_var" value="OUT"/>
+                <repeat name="operations">
+                    <conditional name="operation">
+                        <param name="operator" value="GROUP"/>
+                        <param name="output_var" value="OUT2"/>
+                        <param name="input_var" value="OUT"/>
+                        <conditional name="add_grouping">
+                            <param name="group_type" value="both"/>
+                            <section name="regions">
+                                <repeat name="group_regions_atts">
+                                    <param name="attribute" value="score"/>
+                                </repeat>
+                                <repeat name="new_attributes">
+                                    <param name="new_name" value="min_signal"/>
+                                    <param name="function" value="MIN"/>
+                                    <param name="argument" value="signal"/>
+                                </repeat>
+                            </section>
+                            <section name="metadata">
+                                <conditional name="meta_agg">
+                                    <param name="meta_agg_flag" value="true"/>
+                                    <repeat name="new_attributes">
+                                        <param name="new_name" value="min_tier"/>
+                                        <param name="function" value="MIN"/>
+                                        <param name="argument" value="cell_tier"/>
+                                    </repeat>
+                                </conditional>
+                                <repeat name="group_meta_atts">
+                                    <param name="metajoin_match" value="SIMPLE"/>
+                                    <param name="j_att" value="cell_tissue"/>
+                                </repeat>
+                            </section>
+                        </conditional>
+                    </conditional>
+                </repeat>
+                <output name="query" file="group1.gmql_query" />
+            </test>-->
+            <test>
+                <!-- TEST 8: MERGE -->
+                <expand macro="query_intro" name="test_merge1"/>
+                <expand macro="simple_select" ds="Example_Dataset_1"/>
+                <param name="output_var" value="OUT"/>
+                <repeat name="operations">
+                    <conditional name="operation">
+                        <param name="operator" value="MERGE"/>
+                        <param name="output_var" value="OUT2"/>
+                        <param name="input_var" value="OUT"/>
+                        <section name="groupby">
+                            <repeat name="group_meta_atts">
+                                <param name="metajoin_match" value="EXACT"/>
+                                <param name="j_att" value="antibody_target"/>
+                            </repeat>
+                        </section>
+                    </conditional>
+                </repeat>
+            </test>
+            <test>
+                <!-- TEST 9: UNION -->
+                <expand macro="query_intro" name="test_merge1"/>
+                <expand macro="simple_select" ds="Example_Dataset_1"/>
+                <param name="output_var" value="IN"/>
+                <expand macro="simple_select" ds="Example_Dataset_2" >
+                    <param name="output_var" value="IN2" />
+                </expand>
+                <repeat name="operations">
+                    <conditional name="operation" >
+                        <param name="operator" value="UNION" />
+                        <param name="output_var" value="OUT" />
+                        <param name="input_var_second" value="IN2" />
+                        <param name="input_var_first" value="IN" />
+                    </conditional>
+                </repeat>
+                <output name="query" file="union1.gmql_query" />
+            </test>
+            <test>
+                <!-- TEST 10: DIFFERENCE -->
+                <expand macro="query_intro" name="test_merge1"/>
+                <expand macro="simple_select" ds="Example_Dataset_1"/>
+                <param name="output_var" value="IN"/>
+                <expand macro="simple_select" ds="Example_Dataset_2">
+                    <param name="output_var" value="IN2"/>
+                </expand>
+                <repeat name="operations">
+                    <conditional name="operation">
+                        <param name="operator" value="DIFFERENCE"/>
+                        <param name="output_var" value="OUT"/>
+                        <param name="input_var_negative" value="IN2"/>
+                        <param name="input_var_reference" value="IN"/>
+                        <param name="exact_flag" value="true"/>
+                        <section name="joinby">
+                            <repeat name="group_meta_atts">
+                                <param name="metajoin_match" value="SIMPLE"/>
+                                <param name="j_att" value="cell"/>
+                            </repeat>
+                        </section>
+                    </conditional>
+                </repeat>
+                <output name="query" file="difference1.gmql_query"/>
             </test>
         </tests>
     </xml>
