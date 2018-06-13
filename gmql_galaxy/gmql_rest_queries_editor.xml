@@ -83,12 +83,12 @@
   </inputs>
   <outputs>
         <data format="txt" name="log" label="${query_name} query log" />
-        <collection name="query_results_m" type="list" label="${query_name}_results metadata">
+        <collection name="query_results_m" type="list" label="${query_name} results metadata">
             <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
                                directory="metadata"/>
             <filter>mode['exec_mode'] == 'execute' and mode['import'] is True</filter>
         </collection>
-        <collection name="query_results_s" type="list" label="${query_name}_results">
+        <collection name="query_results_s" type="list" label="${query_name} results">
             <discover_datasets pattern="(?P&lt;identifier_0&gt;[\w]+)\.(?P&lt;ext&gt;[^\._]+)?"
                                directory="samples"/>
             <filter>mode['exec_mode'] == 'execute' and mode['import'] is True</filter>
@@ -102,38 +102,44 @@
   </outputs>
   <tests>
       <test>
-          <param name="authToken" value="guest.gmql_user" />
-          <param name="query_name" value="testgalaxy" />
+          <param name="authToken" value="guest.gmql_user"/>
+          <param name="query_name" value="testexec"/>
           <conditional name="query_create">
-              <param name="create" value="yes" />
-              <param name="query" value="VAR = SELECT(grant == __dq__Stam__dq__) Example_Dataset_1;__cn__MATERIALIZE VAR INTO TG;" />
+              <param name="create" value="yes"/>
+              <param name="query"
+                     value="VAR = SELECT (grant == __sq__Stam__sq__) Example_Dataset_1 ;__cn__MATERIALIZE VAR INTO TG;"/>
           </conditional>
           <conditional name="mode">
-              <param name="exec_mode" value="execute" />
-              <param name="out_format" value="gdm" />
-              <param name="import" value="true" />
+              <param name="exec_mode" value="execute"/>
+              <param name="out_format" value="gdm"/>
+              <param name="import" value="true"/>
           </conditional>
           <output name="log" ftype="txt">
               <assert_contents>
-                  <has_text text="SUCCESS" />
+                  <has_text text="SUCCESS"/>
+              </assert_contents>
+          </output>
+          <output name="updated_list" ftype="gmql_repository">
+              <assert_contents>
+                  <has_text_matching expression="testexec_\d+_\d+_TG"/>
               </assert_contents>
           </output>
           <collection name="query_results_s" type="list">
-               <metadata name="name" value="testgalaxy_results" />
-               <discovered_dataset designation="S00000" file="TG/S_00000.gdm"/>
-               <discovered_dataset designation="S00001" file="TG/S_00001.gdm"/>
-               <discovered_dataset designation="S00002" file="TG/S_00002.gdm"/>
+              <metadata name="name" value="testexec results"/>
+              <discovered_dataset designation="S00000" file="TG/S_00000.gdm"/>
+              <discovered_dataset designation="S00001" file="TG/S_00001.gdm"/>
+              <discovered_dataset designation="S00002" file="TG/S_00002.gdm"/>
           </collection>
           <collection name="query_results_m" type="list">
-               <metadata name="name" value="testgalaxy_results_metadata" />
-               <discovered_dataset designation="S00000" file="TG/S_00000.gdm.meta"/>
-               <discovered_dataset designation="S00001" file="TG/S_00001.gdm.meta"/>
-               <discovered_dataset designation="S00002" file="TG/S_00002.gdm.meta"/>
+              <metadata name="name" value="testexec results metadata"/>
+              <discovered_dataset designation="S00000" file="TG/S_00000.gdm.meta"/>
+              <discovered_dataset designation="S00001" file="TG/S_00001.gdm.meta"/>
+              <discovered_dataset designation="S00002" file="TG/S_00002.gdm.meta"/>
           </collection>
       </test>
       <test>
           <param name="authToken" value="guest.gmql_user" />
-          <param name="query_name" value="testgalaxy" />
+          <param name="query_name" value="testcompile" />
           <conditional name="query_create">
               <param name="create" value="no" />
               <param name="query_file" value="query.gmql_query" />

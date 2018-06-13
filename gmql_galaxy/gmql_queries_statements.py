@@ -430,7 +430,7 @@ class Cover(Statement):
         jbc = self.params.get('groupby', None)
 
         if jbc:
-            params.append(cover_format['groupby'].format(joinbyClause=jbc.save(params_form,param_sep)))
+            params.append(cover_format['groupby'].format(groupbyClause=jbc.save(params_form,param_sep)))
 
         # Format new region attributes definitions
 
