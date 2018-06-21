@@ -10,8 +10,6 @@ import tempfile
 import json
 from utilities import *
 
-import logging
-
 module = 'repository'
 
 
