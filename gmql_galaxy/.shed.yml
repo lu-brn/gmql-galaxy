@@ -1,0 +1,11 @@
+owner: lu-brn
+categories: [Genomic Interval Operations]
+suite:
+  name: suite_gmql_galaxy
+  description: Tool Suite to integratively use the GenoMetric Query Language within the Galaxy framework
+  remote_repository_url: "https://github.com/galaxyproject/planemo/tree/master/tests/data/repos/multi_repos_flat_configured"
+  include_repositories:
+  - name: ...
+    owner: lu-brn
+owner: lu-brn
+
