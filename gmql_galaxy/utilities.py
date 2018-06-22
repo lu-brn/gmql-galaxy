@@ -172,8 +172,12 @@ def post(url, payload, user=None, params=None, content_type='json', response_typ
     if status_code == requests.codes.ok :
        return response.json()
     elif status_code == requests.codes.unauthorized :
-       expire_user(user)
-       stop_err("You are not authorized to do this. \nPlease login first.")
+       content = response.content
+       if content.__contains__("The username or password you entered don't match") :
+           stop_err("The username or password you entered don't match")
+       else:
+           expire_user(user)
+           stop_err("You are not authorized to do this. \nPlease login first.")
     else :
         stop_err("Error {code}: {reason}\n{message}".format(code=status_code,
                                                  reason=response.reason,

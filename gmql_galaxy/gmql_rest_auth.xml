@@ -1,4 +1,4 @@
-<tool id="gmlq_rest_login" name="GMLQ Access" version="0.1.1">
+<tool id="gmlq_rest_auth" name="GMLQ Access" version="0.1.1">
   <description>Manage the registration, login and logout of users to the GMQL system.</description>
   <macros>
     <import>gmql_rest_macros.xml</import>
@@ -115,17 +115,6 @@
               <assert_contents>
                   <has_n_columns n="3" />
                   <has_line_matching expression="Guest\t.+\tTrue" />
-              </assert_contents>
-          </output>
-      </test>
-      <test>
-          <conditional name="user_ops">
-              <param name="operation" value="logout" />
-              <param name="authToken" value="guest.gmql_user" />
-          </conditional>
-          <output name="logout_output">
-              <assert_contents>
-                  <has_text text="Logout" />
               </assert_contents>
           </output>
       </test>
