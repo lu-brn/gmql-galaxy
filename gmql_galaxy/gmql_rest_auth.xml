@@ -1,4 +1,4 @@
-<tool id="gmql_rest_auth" name="GMLQ Access" version="0.1.1">
+<tool id="gmql_auth" name="GMLQ Access" version="0.1.1">
   <description>Manage the registration, login and logout of users to the GMQL system.</description>
   <macros>
     <import>gmql_rest_macros.xml</import>

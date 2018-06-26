@@ -1,4 +1,4 @@
-<tool id="gmql_rest_queries_monitor" name="GMLQ Jobs Monitor" version="0.1.1">
+<tool id="gmql_queries_monitor" name="GMLQ Jobs Monitor" version="0.1.1">
   <description>List the user's jobs and their status</description>
   <macros>
     <import>gmql_rest_macros.xml</import>

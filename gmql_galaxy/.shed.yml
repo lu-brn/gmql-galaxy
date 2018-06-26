@@ -1,6 +1,7 @@
-owner: lu-brn
+owner: geco-team
 homepage_url: "http://www.bioinformatics.deib.polimi.it/geco"
-categories: [Genomic Interval Operations]
+remote_repository_url: "https://github.com/lu-brn/gmql-galaxy"
+categories: [Genomic Interval Operations, Web Services]
 repositories:
   gmql_datatypes:
     description: Custom datatypes for the GMQL for Galaxy tool suite.
@@ -45,7 +46,7 @@ repositories:
       - test-data
       - dynamic_utils.py
       - gmql_rest_datasets_download.xml
-      - gmql_rest_datasets.py  
+      - gmql_rest_datasets.py
   gmql_queries_editor:
     description: "Compile and run GMQL queries (Advanced Mode)."
     include:
@@ -97,22 +98,27 @@ repositories:
 suite:
   name: suite_gmql_galaxy
   description: Tool Suite to integratively use the GenoMetric Query Language within the Galaxy framework.
+  long_description: >
+    The Bioinformatics group at Politecnico di Milano has been developing the
+    GenoMetric Query Language (GMQL),
+    a high-level, declarative language for querying NGS data. This repository suite contains a set of tools
+    that makes possible to write GMQL queries through a visual interface and to integrate their execution with
+    pre-existing genomic analysis workflows.
   include_repositories:
   - name: gmql_datatypes
-    owner: lu-brn
+    owner: geco-team
   - name: gmql_auth
-    owner: lu-brn
+    owner: geco-team
   - name: gmql_repository
-    owner: lu-brn
+    owner: geco-team
   - name: gmql_upload
-    owner: lu-brn
+    owner: geco-team
   - name: gmql_download
-    owner: lu-brn
+    owner: geco-team
   - name: gmql_queries_editor
-    owner: lu-brn
+    owner: geco-team
   - name: gmql_queries_monitor
-    owner: lu-brn
+    owner: geco-team
   - name: gmql_queries_composer
-    owner: lu-brn
-owner: lu-brn
-
+    owner: geco-team
+owner: geco-team
