@@ -1,4 +1,4 @@
-<tool id="gmlq_rest_datasets_upload" name="GMLQ Upload Dataset" version="0.1.1">
+<tool id="gmql_rest_datasets_upload" name="GMLQ Upload Dataset" version="0.1.1">
   <macros>
     <import>gmql_rest_macros.xml</import>
   </macros>

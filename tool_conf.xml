@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<toolbox monitor="true">  
+<section id="gmql_rest" name="GMQL" >
+    <tool file="gmql/gmql_rest_auth.xml" /> 
+    <tool file="gmql/gmql_rest_repository.xml" />	   
+    <tool file="gmql/gmql_rest_datasets_upload.xml" />
+    <tool file="gmql/gmql_rest_datasets_download.xml"/>
+    <tool file="gmql/gmql_queries_composer.xml" />
+    <tool file="gmql/gmql_rest_queries_editor.xml" />
+    <tool file="gmql/gmql_rest_queries_monitor.xml" />
+  </section>
+</toolbox>
